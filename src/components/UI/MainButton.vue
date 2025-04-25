@@ -32,6 +32,7 @@ defineProps({
   padding: 16px 15px 14px;
   border: 1px solid rgba($color: #000000, $alpha: 0.1);
   border-radius: 12px;
+  cursor: pointer;
 
   span {
     font-family: 'Jost';

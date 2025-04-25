@@ -24,9 +24,17 @@ defineProps({
   text-underline-offset: 3px;
   color: var(--primary-color);
   border: none;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 
   &.orange {
     color: var(--accent-color);
+  }
+  &.gray {
+    color: var(--gray-color);
   }
 }
 </style>

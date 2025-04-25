@@ -48,12 +48,38 @@ export const useAccordionItems = defineStore('accordionItems', () => {
         {
           id: 1,
           title: 'Фасады',
-          table: [],
+          table: [
+            {
+              id: 0,
+              title: 'Изготовление четверти радиуса от 150 мм и выше',
+              unit: 'шт',
+              quantity: 4.0,
+              price: 1718.0,
+              percent: 5,
+            },
+            {
+              id: 1,
+              title: 'Искусственный камень Grandex',
+              unit: 'кв.м.',
+              quantity: 5.48,
+              price: 30012.96,
+              percent: 5,
+            },
+          ],
         },
         {
           id: 2,
           title: 'Фурнитура',
-          table: [],
+          table: [
+            {
+              id: 0,
+              title: 'Изготовление четверти радиуса от 150 мм и выше',
+              unit: 'шт',
+              quantity: 4.0,
+              price: 1718.0,
+              percent: 5,
+            },
+          ],
         },
       ],
       link: false,

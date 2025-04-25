@@ -15,6 +15,7 @@ const { accordionItems } = useAccordionItems()
         <AccordionSmeta v-if="item.id === 0" />
       </AccordionItem>
     </div>
+    <UserBlock class="calculate-block__bottom" />
   </div>
 </template>
 
@@ -26,6 +27,8 @@ const { accordionItems } = useAccordionItems()
   border-radius: 30px;
   padding: 30px 50px;
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
 
   &__header {
     margin-bottom: 30px;
@@ -34,6 +37,12 @@ const { accordionItems } = useAccordionItems()
   &__accordion {
     display: grid;
     gap: 10px;
+  }
+
+  &__bottom {
+    margin-top: auto;
+    padding-top: 30px;
+    border-top: 1px solid rgba($color: #464451, $alpha: 0.1);
   }
 }
 </style>
