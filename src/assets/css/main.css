@@ -1,0 +1,11 @@
+@import './base.css';
+
+#app {
+  max-width: 1920px;
+  height: 100vh;
+  padding: 20px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1320px) minmax(0, 540px);
+  gap: 20px;
+}
