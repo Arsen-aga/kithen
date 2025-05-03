@@ -1,9 +1,13 @@
-export const formatNum = (num) => {
-  const formattedNumber = num.toFixed(2)
+export const formatNum = (num, fixed = true) => {
+  let formattedNumber = num
+
+  if (fixed) {
+    formattedNumber = num.toFixed(2)
+  }
 
   if (formattedNumber > 10000) {
     // Разделяем целую и дробную части
-    const parts = formattedNumber.split('.')
+    const parts = String(formattedNumber).split('.')
 
     // Форматируем целую часть, добавляя пробелы
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ')

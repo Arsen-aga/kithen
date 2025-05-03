@@ -1,14 +1,17 @@
 <script setup>
 import { ref } from 'vue'
 import MainButton from '@/components/UI/MainButton.vue'
-import { useAccordionItems } from '@/stores/accordionItems'
 import TableOpen from '@/components/TableOpen.vue'
-import { formatNum } from '@/components/globalFunctions/func'
+import TitileDotsPrice from '@/components/UI/TitileDotsPrice.vue'
 
-const { accordionItems } = useAccordionItems()
-const items = accordionItems[0].items
+defineProps({
+  items: {
+    type: Array,
+    required: true,
+  },
+})
+
 const smetaPrice = ref(0)
-
 const isOpenAllTable = ref(false)
 const openTable = () => {
   isOpenAllTable.value = !isOpenAllTable.value
@@ -22,13 +25,7 @@ const openTable = () => {
     </MainButton>
     <div class="accordion-smeta__items">
       <div class="accordion-smeta__item" v-for="item in items" :key="item.id">
-        <div class="accordion-smeta__item-top">
-          <h3 class="accordion-smeta__item-title">
-            {{ item.title }}
-          </h3>
-          <div class="accordion-smeta__item-dots"></div>
-          <p class="accordion-smeta__item-price">{{ formatNum(smetaPrice) }} ₽</p>
-        </div>
+        <TitileDotsPrice :title="item.title" :price="smetaPrice" />
         <TableOpen
           v-if="item.table.length"
           :is-open-all-table="isOpenAllTable"
@@ -54,37 +51,6 @@ const openTable = () => {
   &__items {
     display: grid;
     gap: 25px;
-  }
-
-  &__item-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: end;
-    gap: 20px;
-  }
-
-  &__item-title {
-    font-family: 'Jost';
-    font-weight: 500;
-    font-size: 24px;
-    line-height: calc(32 / 24 * 100%);
-  }
-
-  &__item-dots {
-    height: 1px;
-    max-width: 100%;
-    width: 100%;
-    border-bottom: 1px dashed #e4e4ef;
-    margin-bottom: 8px;
-  }
-
-  &__item-price {
-    font-family: 'Jost';
-    font-weight: 500;
-    font-size: 30px;
-    line-height: calc(38 / 30 * 100%);
-    text-align: right;
-    text-wrap-mode: nowrap;
   }
 }
 </style>

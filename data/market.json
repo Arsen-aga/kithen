@@ -1,0 +1,591 @@
+{
+  "id": 0,
+  "title": "Маркет",
+  "link": false,
+  "items": [
+    {
+      "id": 0,
+      "title": "Обязательные товары",
+      "img": "../src/assets/images/market-1.png",
+      "products": []
+    },
+    {
+      "id": 1,
+      "title": "Кухня",
+      "img": "../src/assets/images/market-2.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        },
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Гостиная",
+      "img": "../src/assets/images/market-3.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Спальня",
+      "img": "../src/assets/images/market-4.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Детская комната",
+      "img": "../src/assets/images/market-5.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Ванная комната",
+      "img": "../src/assets/images/market-6.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Гардеробная",
+      "img": "../src/assets/images/market-7.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Кабинет",
+      "img": "../src/assets/images/market-8.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Постирочная",
+      "img": "../src/assets/images/market-9.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Прихожие",
+      "img": "../src/assets/images/market-10.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Ликвидация",
+      "img": "../src/assets/images/market-11.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Для бизнеса",
+      "img": "../src/assets/images/market-12.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Сопутствующие товары",
+      "img": "../src/assets/images/market-13.png",
+      "products": [
+        {
+          "id": 0,
+          "title": "Встраиваемая посудомоечная машина 45 см Gorenje GV520E11 белая",
+          "options": [
+            {
+              "id": 0,
+              "option": "Расход воды за цикл",
+              "value": "9 л"
+            },
+            {
+              "id": 1,
+              "option": "Максимальная вместимость",
+              "value": "11 комплектов"
+            },
+            {
+              "id": 2,
+              "option": "Количество программ мойки",
+              "value": 5
+            },
+            {
+              "id": 3,
+              "option": "Размер ниши, см (В*Ш*Г)",
+              "value": "82*45*56"
+            },
+            {
+              "id": 4,
+              "option": "Сенсор чистоты воды",
+              "value": "Да"
+            }
+          ],
+          "price": 32999,
+          "oldPrice": 49999,
+          "images": [
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png",
+            "../src/assets/images/product-3.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

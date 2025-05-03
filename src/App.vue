@@ -4,8 +4,14 @@ import ReviewBlock from '@/components/ReviewBlock.vue'
 </script>
 
 <template>
-  <CalculateBlock />
+  <CalculateBlock class="app__calculate" />
   <ReviewBlock />
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.app {
+  &__calculate {
+    position: relative;
+  }
+}
+</style>

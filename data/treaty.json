@@ -1,0 +1,157 @@
+{
+  "id": 0,
+  "title": "Коммерческое предложение",
+  "link": false,
+  "items": [
+    {
+      "id": 0,
+      "title": "Детали договора",
+      "elems": [
+        {
+          "id": 0,
+          "title": "Номер договора",
+          "value": 151245772023,
+          "list": false,
+          "calendar": false,
+          "type": "text",
+          "change": false
+        },
+        {
+          "id": 1,
+          "title": "Телефон",
+          "value": "+7 (___) ___-__-__",
+          "list": false,
+          "calendar": false,
+          "type": "tel",
+          "change": true
+        },
+        {
+          "id": 2,
+          "title": "Этаж",
+          "value": "1",
+          "list": false,
+          "calendar": false,
+          "type": "number",
+          "change": true
+        },
+        {
+          "id": 3,
+          "title": "Договор От",
+          "value": "08/04/2025",
+          "list": false,
+          "calendar": false,
+          "type": "text",
+          "change": false
+        },
+        {
+          "id": 4,
+          "title": "Способ доставки",
+          "values": [
+            {
+              "id": 0,
+              "title": "Доставка до ТК",
+              "percent": 5
+            },
+            {
+              "id": 1,
+              "title": "Доставка до ТКк",
+              "percent": 10
+            }
+          ],
+          "list": true,
+          "calendar": false,
+          "change": true
+        },
+        {
+          "id": 5,
+          "title": "Сделка АМО",
+          "values": [
+            {
+              "id": 0,
+              "title": "Название сделки"
+            },
+            {
+              "id": 1,
+              "title": "Название сделка"
+            }
+          ],
+          "list": true,
+          "calendar": false,
+          "change": true
+        },
+        {
+          "id": 6,
+          "title": "Выбрать акцию",
+          "values": [
+            {
+              "id": 0,
+              "title": "До -40% на белые кухни и шкафы!",
+              "percent": -40
+            },
+            {
+              "id": 1,
+              "title": "До -10% на белые кухни и шкафы!",
+              "percent": -10
+            }
+          ],
+          "list": true,
+          "calendar": false,
+          "change": true
+        },
+        {
+          "id": 7,
+          "title": "Доп. скидка",
+          "value": "0",
+          "list": false,
+          "calendar": false,
+          "type": "text",
+          "change": false
+        },
+        {
+          "id": 8,
+          "title": "Способ оплаты",
+          "values": [
+            {
+              "id": 0,
+              "title": "Наличные/безналичные",
+              "percent": 0
+            },
+            {
+              "id": 1,
+              "title": "Наличные",
+              "percent": 0
+            },
+            {
+              "id": 2,
+              "title": "Безналичные",
+              "percent": 5
+            }
+          ],
+          "list": true,
+          "calendar": false,
+          "change": true
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "title": "Даты готовности",
+      "elems": [
+        {
+          "id": 9,
+          "title": "Отгрузка с фабрики",
+          "calendar": true,
+          "list": false,
+          "change": false
+        },
+        {
+          "id": 10,
+          "title": "Ориентировочная дата доставки клиенту",
+          "calendar": true,
+          "list": false,
+          "change": false
+        }
+      ]
+    }
+  ]
+}

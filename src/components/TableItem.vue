@@ -1,5 +1,5 @@
 <script setup>
-import { formatNum } from '@/components/globalFunctions/func'
+import { formatNum } from '@/helpers/formatNum'
 import LinkButton from '@/components/UI/LinkButton.vue'
 
 defineProps({

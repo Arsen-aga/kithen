@@ -1,21 +1,57 @@
 <script setup>
-import { useAccordionItems } from '@/stores/accordionItems'
+import { ref, onBeforeMount } from 'vue'
+import { getData } from '@/api/getData'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
-import AccordionSmeta from './AccordionSmeta.vue'
+import AccordionSmeta from '@/components/AccordionSmeta.vue'
+import MarketBlock from '@/components/MarketBlock.vue'
+import SelectedProducts from '@/components/SelectedProducts.vue'
+import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
+import TreatyBlock from '@/components/TreatyBlock.vue'
 
-const { accordionItems } = useAccordionItems()
+const itemSmeta = ref('')
+const itemMarket = ref('')
+const itemHouseholdAppliances = ref('')
+const itemSelectedProducts = ref('')
+const itemTechnicallyComplexProducts = ref('')
+const itemServices = ref('')
+const itemTreaty = ref('')
+onBeforeMount(async () => {
+  itemSmeta.value = await getData('../../data/smeta.json')
+  itemMarket.value = await getData('../../data/market.json')
+  itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
+  itemSelectedProducts.value = await getData('../../data/selected-products.json')
+  itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
+  itemServices.value = await getData('../../data/services.json')
+  itemTreaty.value = await getData('../../data/treaty.json')
+})
 </script>
 
 <template>
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
-      <AccordionItem v-for="item in accordionItems" :key="item.id" :content="item">
-        <AccordionSmeta v-if="item.id === 0" />
+      <AccordionItem v-if="itemSmeta" :content="itemSmeta">
+        <AccordionSmeta :items="itemSmeta.items" />
+      </AccordionItem>
+      <AccordionItem v-if="itemMarket" :content="itemMarket">
+        <MarketBlock :items="itemMarket.items" />
+      </AccordionItem>
+      <AccordionItem v-if="itemHouseholdAppliances" :content="itemHouseholdAppliances"></AccordionItem>
+      <AccordionItem v-if="itemSelectedProducts" :content="itemSelectedProducts">
+        <SelectedProducts :items="itemSelectedProducts.items" />
+      </AccordionItem>
+      <AccordionItem v-if="itemTechnicallyComplexProducts" :content="itemTechnicallyComplexProducts">
+        <ScrollTableBlock :items="itemTechnicallyComplexProducts.items" />
+      </AccordionItem>
+      <AccordionItem v-if="itemServices" :content="itemServices">
+        <ScrollTableBlock :items="itemServices.items" />
+      </AccordionItem>
+      <AccordionItem v-if="itemTreaty" :content="itemTreaty">
+        <TreatyBlock :items="itemTreaty.items" />
+        <UserBlock class="calculate-block__bottom" />
       </AccordionItem>
     </div>
-    <UserBlock class="calculate-block__bottom" />
   </div>
 </template>
 
@@ -40,7 +76,7 @@ const { accordionItems } = useAccordionItems()
   }
 
   &__bottom {
-    margin-top: auto;
+    margin-top: 50px;
     padding-top: 30px;
     border-top: 1px solid rgba($color: #464451, $alpha: 0.1);
   }
