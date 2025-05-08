@@ -33,6 +33,7 @@ defineProps({
   border: 1px solid rgba($color: #000000, $alpha: 0.1);
   border-radius: 12px;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 
   span {
     font-family: 'Jost';
@@ -42,11 +43,33 @@ defineProps({
     text-align: center;
     text-transform: uppercase;
     opacity: 0.4;
+    transition: all 0.3s ease-in-out;
+  }
+  svg path {
+    transition: all 0.3s ease-in-out;
+  }
+
+  &:hover {
+    background-color: var(--gray-color);
+    color: var(--light-color);
+
+    span {
+      opacity: 1;
+    }
+
+    svg path {
+      fill: var(--light-color);
+    }
   }
 
   &.text-red {
     border-color: var(--primary-color);
     color: var(--primary-color);
+
+    &:hover {
+      background-color: var(--primary-color);
+      color: var(--light-color);
+    }
 
     span {
       opacity: 1;
@@ -57,6 +80,11 @@ defineProps({
     border-color: var(--accent-color);
     color: var(--accent-color);
 
+    &:hover {
+      background-color: var(--accent-color);
+      color: var(--light-color);
+    }
+
     span {
       opacity: 1;
     }
@@ -66,6 +94,11 @@ defineProps({
     border: none;
     background-color: var(--primary-color);
     color: var(--light-color);
+
+    &:hover {
+      background-color: #ff1f1f;
+      color: var(--light-color);
+    }
 
     span {
       opacity: 1;

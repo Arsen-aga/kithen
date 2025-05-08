@@ -22,7 +22,7 @@ const formatPhone = (phone) => {
   if (!phone) return ''
 
   let formattedInputValue = ''
-  const inputNumbersValue = phone.replace(/\D/g, '')
+  let inputNumbersValue = phone.replace(/\D/g, '')
 
   if (['7', '8', '9'].indexOf(inputNumbersValue[0]) > -1) {
     if (inputNumbersValue[0] === '9') {

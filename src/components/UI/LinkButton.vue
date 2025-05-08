@@ -15,6 +15,7 @@ defineProps({
 
 <style lang="scss" scoped>
 .link-btn {
+  position: relative;
   background-color: transparent;
   font-style: normal;
   font-family: var(--font-default);

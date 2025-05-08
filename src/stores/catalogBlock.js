@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-export const usemarketBlock = defineStore('marketBlock', () => {
-  const marketBlock = ref([])
+export const useCatalogBlock = defineStore('catalogBlock', () => {
+  const catalogBlock = ref([])
 
-  return { marketBlock }
+  return { catalogBlock }
 })

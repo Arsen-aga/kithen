@@ -1,32 +1,23 @@
 <script setup>
-import { ref } from 'vue'
-import CatalogBlock from '@/components/CatalogBlock.vue'
+import { useCatalogBlock } from '@/stores/catalogBlock'
 
-defineProps({
+const props = defineProps({
   marketItem: {
     type: Object,
     required: true,
   },
 })
-const isOpenCatalog = ref(false)
+const { catalogBlock } = useCatalogBlock()
 const openCatalog = () => {
-  isOpenCatalog.value = !isOpenCatalog.value
+  catalogBlock.value = props.marketItem.products
 }
 </script>
 
 <template>
-  <div>
-    <div class="market-item" @click="openCatalog">
-      <img class="market-item__img _img" :src="marketItem.img" :alt="marketItem.title" />
-      <div v-if="marketItem.products.length" class="market-item__num">{{ marketItem.products.length }}</div>
-      <h4 class="market-item__title">{{ marketItem.title }}</h4>
-    </div>
-    <CatalogBlock
-      v-show="isOpenCatalog && marketItem.products.length"
-      :is-show="isOpenCatalog"
-      @update:is-show="isOpenCatalog = $event"
-      :products="marketItem.products"
-    />
+  <div class="market-item" @click="openCatalog">
+    <img class="market-item__img _img" :src="marketItem.img" :alt="marketItem.title" />
+    <div v-if="marketItem.products.length" class="market-item__num">{{ marketItem.products.length }}</div>
+    <h4 class="market-item__title">{{ marketItem.title }}</h4>
   </div>
 </template>
 

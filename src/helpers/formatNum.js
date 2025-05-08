@@ -1,11 +1,11 @@
 export const formatNum = (num, fixed = true) => {
-  let formattedNumber = num
+  let formattedNumber = num < 0 ? num * -1 : num
 
   if (fixed) {
     formattedNumber = num.toFixed(2)
   }
 
-  if (formattedNumber > 10000) {
+  if (formattedNumber >= 10000) {
     // Разделяем целую и дробную части
     const parts = String(formattedNumber).split('.')
 
@@ -13,7 +13,8 @@ export const formatNum = (num, fixed = true) => {
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 
     // Объединяем целую и дробную части обратно
-    return parts.join('.')
+    return num < 0 ? '-' + parts.join('.') : parts.join('.')
   }
-  return formattedNumber
+
+  return num < 0 ? formattedNumber * -1 : formattedNumber
 }

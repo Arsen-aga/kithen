@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue'
+import { ref, onBeforeMount, watch } from 'vue'
 import { getData } from '@/api/getData'
+import { useCatalogBlock } from '@/stores/catalogBlock'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -8,9 +9,11 @@ import MarketBlock from '@/components/MarketBlock.vue'
 import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
+import CatalogBlock from '@/components/CatalogBlock.vue'
 
 const itemSmeta = ref('')
 const itemMarket = ref('')
+const { catalogBlock } = useCatalogBlock()
 const itemHouseholdAppliances = ref('')
 const itemSelectedProducts = ref('')
 const itemTechnicallyComplexProducts = ref('')
@@ -25,29 +28,50 @@ onBeforeMount(async () => {
   itemServices.value = await getData('../../data/services.json')
   itemTreaty.value = await getData('../../data/treaty.json')
 })
+
+const isOpenCatalog = ref(false)
+watch(
+  () => catalogBlock.value,
+  () => {
+    isOpenCatalog.value = !isOpenCatalog.value
+  }
+)
 </script>
 
 <template>
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
-      <AccordionItem v-if="itemSmeta" :content="itemSmeta">
+      <AccordionItem v-if="itemSmeta" :content="itemSmeta" :title="itemSmeta.title">
         <AccordionSmeta :items="itemSmeta.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemMarket" :content="itemMarket">
-        <MarketBlock :items="itemMarket.items" />
+      <AccordionItem
+        v-if="itemMarket"
+        :content="itemMarket"
+        :title="isOpenCatalog ? 'Каталог товаров' : itemMarket.title"
+      >
+        <MarketBlock :items="itemMarket.items" v-show="!isOpenCatalog" />
+        <CatalogBlock v-show="catalogBlock.value && isOpenCatalog" :products="catalogBlock.value" />
       </AccordionItem>
-      <AccordionItem v-if="itemHouseholdAppliances" :content="itemHouseholdAppliances"></AccordionItem>
-      <AccordionItem v-if="itemSelectedProducts" :content="itemSelectedProducts">
+      <AccordionItem
+        v-if="itemHouseholdAppliances"
+        :content="itemHouseholdAppliances"
+        :title="itemHouseholdAppliances.title"
+      ></AccordionItem>
+      <AccordionItem v-if="itemSelectedProducts" :content="itemSelectedProducts" :title="itemSelectedProducts.title">
         <SelectedProducts :items="itemSelectedProducts.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemTechnicallyComplexProducts" :content="itemTechnicallyComplexProducts">
+      <AccordionItem
+        v-if="itemTechnicallyComplexProducts"
+        :content="itemTechnicallyComplexProducts"
+        :title="itemTechnicallyComplexProducts.title"
+      >
         <ScrollTableBlock :items="itemTechnicallyComplexProducts.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemServices" :content="itemServices">
+      <AccordionItem v-if="itemServices" :content="itemServices" :title="itemServices.title">
         <ScrollTableBlock :items="itemServices.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemTreaty" :content="itemTreaty">
+      <AccordionItem v-if="itemTreaty" :content="itemTreaty" :title="itemTreaty.title">
         <TreatyBlock :items="itemTreaty.items" />
         <UserBlock class="calculate-block__bottom" />
       </AccordionItem>
