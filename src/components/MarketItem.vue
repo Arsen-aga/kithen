@@ -29,6 +29,16 @@ const openCatalog = () => {
   height: 280px;
   cursor: pointer;
 
+  img {
+    transition: all 0.5s ease-in-out;
+  }
+
+  &:hover {
+    img {
+      scale: 1.5;
+    }
+  }
+
   &__num {
     position: absolute;
     right: 10px;

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { formatDate } from '@/helpers/formatDate'
 import CustomCalendar from '@/components/UI/CustomCalendar.vue'
 import IconCalendar from '@/components/icons/IconCalendar.vue'
-const startDate = ref(formatDate(new Date()))
+const startDate = ref(new Date())
 const isOpen = ref(false)
 const openCalendar = () => {
   isOpen.value = !isOpen.value
@@ -14,7 +14,7 @@ const openCalendar = () => {
   <div class="input-calendar">
     <div class="input-calendar__inner" @click.stop="openCalendar">
       <input type="hidden" :value="startDate" />
-      {{ startDate }}
+      {{ formatDate(startDate) }}
       <IconCalendar class="input-calendar__icon" />
     </div>
     <CustomCalendar

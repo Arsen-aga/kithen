@@ -7,9 +7,3 @@ import ReviewBlock from '@/components/ReviewBlock.vue'
   <CalculateBlock />
   <ReviewBlock />
 </template>
-
-<style lang="scss" scoped>
-.app {
-  position: relative;
-}
-</style>

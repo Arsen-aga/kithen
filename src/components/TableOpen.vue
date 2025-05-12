@@ -14,6 +14,7 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['update-table-state'])
 const isOpenTable = ref(props.isOpenAllTable)
 
 watch(
@@ -25,6 +26,7 @@ watch(
 
 const openTable = () => {
   isOpenTable.value = !isOpenTable.value
+  emit('update-table-state', isOpenTable.value)
 }
 </script>
 
@@ -33,22 +35,22 @@ const openTable = () => {
     <LinkButton class="table-block__btn" @click="() => openTable()"
       >{{ isOpenTable ? 'Скрыть' : 'Раскрыть' }} перечень</LinkButton
     >
-    <table class="table-block" v-show="isOpenTable">
-      <thead class="table-block__head">
-        <tr>
-          <th>Наименование</th>
-          <th>Ед</th>
-          <th>Кол-во</th>
-          <th>Цена</th>
-          <th>Сумма</th>
-          <th>Замена материала</th>
-          <th>Доп. выгода</th>
-        </tr>
-      </thead>
-      <tbody class="table-block__body">
+    <div class="table-block" v-show="isOpenTable">
+      <div class="table-block__head">
+        <div class="table-block__tr">
+          <div class="table-block__th">Наименование</div>
+          <div class="table-block__th">Ед</div>
+          <div class="table-block__th">Кол-во</div>
+          <div class="table-block__th">Цена</div>
+          <div class="table-block__th">Сумма</div>
+          <div class="table-block__th">Замена материала</div>
+          <div class="table-block__th">Доп. выгода</div>
+        </div>
+      </div>
+      <div class="table-block__body">
         <TableItem :table-items="tableItems" />
-      </tbody>
-    </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -57,6 +59,11 @@ const openTable = () => {
   border-spacing: 0;
   border-collapse: collapse;
   width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  overflow-y: auto;
+  max-width: 930px;
+
   &__btn {
     margin-bottom: 15px;
   }
@@ -65,8 +72,12 @@ const openTable = () => {
     background-color: var(--page-bg);
   }
 
-  th,
-  td {
+  &__tr {
+    display: flex;
+  }
+
+  &__th {
+    width: 100%;
     border: 1px solid var(--table-color);
     min-height: 60px;
     height: 60px;
@@ -76,10 +87,10 @@ const openTable = () => {
     font-family: 'Jost';
     text-align: center;
     box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    &:nth-child(1) {
-      max-width: 260px;
-    }
     &:nth-child(2) {
       max-width: 64px;
     }
@@ -93,22 +104,16 @@ const openTable = () => {
       max-width: 138px;
     }
     &:nth-child(6) {
-      max-width: 165px;
+      max-width: 168px;
     }
     &:nth-child(7) {
       max-width: 82px;
     }
   }
 
-  th {
+  &__th {
     font-weight: 500;
     padding: 6px 15px;
-  }
-
-  td {
-    &:nth-child(1) {
-      text-align: left;
-    }
   }
 }
 </style>

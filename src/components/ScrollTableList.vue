@@ -48,6 +48,7 @@ defineProps({
     overflow: hidden;
     overflow-y: scroll;
     margin-bottom: 15px;
+    max-width: 930px;
   }
 
   &__head {

@@ -11,6 +11,9 @@ import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
 
+import { useResultItems } from '@/stores/result'
+const { resultItems, addItem } = useResultItems()
+
 const itemSmeta = ref('')
 const itemMarket = ref('')
 const { catalogBlock } = useCatalogBlock()
@@ -21,6 +24,14 @@ const itemServices = ref('')
 const itemTreaty = ref('')
 onBeforeMount(async () => {
   itemSmeta.value = await getData('../../data/smeta.json')
+  if (itemSmeta.value) {
+    itemSmeta.value.items.forEach((item) => {
+      item.table.forEach((elem) => {
+        addItem(item.id, elem)
+      })
+    })
+    console.log(resultItems)
+  }
   itemMarket.value = await getData('../../data/market.json')
   itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
   itemSelectedProducts.value = await getData('../../data/selected-products.json')

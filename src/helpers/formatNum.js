@@ -1,8 +1,8 @@
-export const formatNum = (num, fixed = true) => {
+export const formatNum = (num, fixed = true, round = 2) => {
   let formattedNumber = num < 0 ? num * -1 : num
 
   if (fixed) {
-    formattedNumber = num.toFixed(2)
+    formattedNumber = num.toFixed(round)
   }
 
   if (formattedNumber >= 10000) {

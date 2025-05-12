@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { formatDate } from '@/helpers/formatDate'
 
 const emit = defineEmits(['update:isShow', 'update:changeDate'])
 const props = defineProps({
@@ -9,7 +8,7 @@ const props = defineProps({
     default: false,
   },
   changeDate: {
-    type: String,
+    type: null,
   },
 })
 
@@ -52,7 +51,7 @@ const nextMonth = () => {
 const selectDate = (date) => {
   if (date) {
     selectedDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), date)
-    emit('update:changeDate', formatDate(selectedDate.value))
+    emit('update:changeDate', selectedDate.value)
     closeCalendar()
   }
 }
@@ -97,6 +96,7 @@ const closeCalendar = () => {
 
 <style lang="scss" scoped>
 .calendar {
+  max-width: 308px;
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 8px;

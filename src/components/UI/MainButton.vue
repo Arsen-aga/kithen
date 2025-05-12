@@ -45,7 +45,7 @@ defineProps({
     opacity: 0.4;
     transition: all 0.3s ease-in-out;
   }
-  svg path {
+  svg {
     transition: all 0.3s ease-in-out;
   }
 
@@ -57,8 +57,9 @@ defineProps({
       opacity: 1;
     }
 
-    svg path {
-      fill: var(--light-color);
+    svg {
+      stroke: var(--light-color);
+      fill: var(--light-color) !important;
     }
   }
 
