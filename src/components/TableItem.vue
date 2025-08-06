@@ -14,9 +14,9 @@ defineProps({
   <div class="table-item__tr" v-for="item in tableItems" :key="item.key">
     <div class="table-item__td">{{ item.title }}</div>
     <div class="table-item__td">{{ item.unit }}</div>
-    <div class="table-item__td">{{ formatNum(item.quantity) }}</div>
-    <div class="table-item__td">{{ formatNum(item.price) }} ₽</div>
-    <div class="table-item__td">{{ formatNum(item.quantity * item.price) }} ₽</div>
+    <div class="table-item__td">{{ formatNum(item.quantity, 2) }}</div>
+    <div class="table-item__td">{{ formatNum(item.price, 2) }} ₽</div>
+    <div class="table-item__td">{{ formatNum(item.quantity * item.price, 2) }} ₽</div>
     <div class="table-item__td"><LinkButton class="table-item__link" color="gray">Заменить материал</LinkButton></div>
     <div class="table-item__td">{{ item.percent ? item.percent + '%' : '' }}</div>
   </div>

@@ -21,7 +21,7 @@ defineProps({
       {{ title }}
     </h3>
     <div v-if="dots" class="title-dots-price__dots"></div>
-    <p v-if="price !== undefined" class="title-dots-price__price">{{ formatNum(price, true, 2) }} ₽</p>
+    <p v-if="price !== undefined" class="title-dots-price__price">{{ formatNum(price, 2) }} ₽</p>
   </div>
 </template>
 

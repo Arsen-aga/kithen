@@ -1,18 +1,19 @@
 <script setup>
 import { formatNum } from '@/helpers/formatNum'
-
 import ScrollTableItem from '@/components/ScrollTableItem.vue'
+import { ref } from 'vue'
 
-defineProps({
-  items: {
-    type: Array,
-    required: true,
-  },
-  price: {
-    type: Number,
+const props = defineProps({
+  item: {
+    type: Object,
     required: true,
   },
 })
+
+const newPrice = ref(props.item.price)
+const changePrice = (test) => {
+  newPrice.value += test
+}
 </script>
 
 <template>
@@ -27,12 +28,12 @@ defineProps({
         </div>
       </div>
       <div class="scroll-table-list__body">
-        <ScrollTableItem :items="items" />
+        <ScrollTableItem :items="item.services" @update-price="changePrice" />
       </div>
     </div>
     <div class="scroll-table-list__price">
       <p class="scroll-table-list__price-text">Общая сумма:</p>
-      <p class="scroll-table-list__price-num">{{ formatNum(price, false) }} ₽</p>
+      <p class="scroll-table-list__price-num">{{ formatNum(newPrice, 0) }} ₽</p>
     </div>
   </div>
 </template>

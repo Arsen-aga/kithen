@@ -5,6 +5,8 @@ import IconArrow from '@/components/icons/IconArrow.vue'
 import ReviewElem from '@/components/ReviewElem.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
 import CustomCalendar from '@/components/UI/CustomCalendar.vue'
+import { useShippingDate } from '@/stores/shippingDate'
+
 const props = defineProps({
   item: {
     type: Object,
@@ -24,7 +26,6 @@ const formatDateNotYear = (date) => {
   return date.toLocaleString('default', { day: 'numeric', month: 'long' })
 }
 
-const startDate = ref(new Date())
 const isOpenCalendar = ref(false)
 const openCalendar = () => {
   isOpenCalendar.value = !isOpenCalendar.value
@@ -37,6 +38,29 @@ watch(
   },
   { immediate: true }
 )
+
+const shippingDateStore = useShippingDate()
+
+// Слежение за изменениями shippingDate в store
+watch(
+  () => shippingDateStore.shippingDate,
+  (newDate) => {
+    startDate.value = newDate
+  }
+)
+
+// Локальная переменная для хранения даты
+const startDate = ref(shippingDateStore.shippingDate)
+
+// Обновление даты в store при изменении
+const updateDate = (date) => {
+  shippingDateStore.changeShippingDate(date)
+}
+
+// Обновление локальной даты при изменении
+watch(startDate, (newDate) => {
+  updateDate(newDate)
+})
 </script>
 
 <template>
@@ -44,7 +68,7 @@ watch(
     <div class="review-accordion__header">
       <h2 class="review-accordion__title" :class="{ uppercase: item.id === 700 }">{{ item.title }}:</h2>
       <p class="review-accordion__value" :class="{ orange: item.id === 600 }">
-        {{ typeof value === 'number' ? formatNum(value, true, 0) + ' ₽' : value }}
+        {{ typeof value === 'number' ? formatNum(value, 0) + ' ₽' : value }}
       </p>
       <div
         v-if="item.id !== 700"
@@ -71,7 +95,7 @@ watch(
       <p v-if="item.id === 500" class="review-accordion__bottom">
         Ваша кухня будет готова к отгрузке<br />
         с фабрики
-        <LinkButton class="review-accordion__date" color="orange" @click="openCalendar">{{
+        <LinkButton class="review-accordion__date" color="orange" @click.stop="openCalendar">{{
           formatDateNotYear(startDate)
         }}</LinkButton>
       </p>

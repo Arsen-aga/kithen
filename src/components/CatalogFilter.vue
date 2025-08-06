@@ -1,14 +1,51 @@
 <script setup>
+import { ref, onBeforeMount, watch } from 'vue'
 import { getData } from '@/api/getData'
-import { ref, onBeforeMount } from 'vue'
 import IconArrowLink from '@/components/icons/IconArrowLink.vue'
 import IconCheckbox from '@/components/icons/IconCheckbox.vue'
-import LinkButton from './UI/LinkButton.vue'
+import LinkButton from '@/components/UI/LinkButton.vue'
+import RangeInput from '@/components/UI/RangeInput.vue'
+
+const props = defineProps({
+  minPrice: Number,
+  maxPrice: Number,
+})
+const emit = defineEmits(['update:min-price', 'update:max-price'])
 
 const catalogCategories = ref('')
 onBeforeMount(async () => {
   catalogCategories.value = await getData('../../data/catalogCategories.json')
 })
+
+// Используем локальные reactive refs для min и max цены, чтобы отслеживать изменения внутренне
+const localMinPrice = ref(props.minPrice)
+const localMaxPrice = ref(props.maxPrice)
+
+// При изменении пропсов синхронизируем локальные значения
+watch(
+  () => props.minPrice,
+  (val) => {
+    if (val !== undefined) localMinPrice.value = val
+  }
+)
+watch(
+  () => props.maxPrice,
+  (val) => {
+    if (val !== undefined) localMaxPrice.value = val
+  }
+)
+
+// Обработчики для RangeInput, эмитим обратно обновления в родитель
+const updateMinPrice = (val) => {
+  localMinPrice.value = val
+  emit('update:min-price', val)
+}
+
+const updateMaxPrice = (val) => {
+  localMaxPrice.value = val
+  emit('update:max-price', val)
+}
+
 const isShowSubcategory = ref([])
 
 const showSubcategory = (index) => {
@@ -54,7 +91,7 @@ const colors = ref([
 
 <template>
   <form class="catalog-filter">
-    <div class="catalog-filter__item" v-if="catalogCategories">
+    <div class="catalog-filter__item" v-if="catalogCategories.length">
       <h4 class="catalog-filter__item-title">Выбор категории</h4>
       <ul class="catalog-filter__cat">
         <li
@@ -78,16 +115,13 @@ const colors = ref([
     </div>
     <div class="catalog-filter__item">
       <h4 class="catalog-filter__item-title">Цена</h4>
-      <div class="catalog-filter__price">
-        <div class="catalog-filter__price-inputs">
-          <input class="catalog-filter__price-inp" type="text" value="10 000" />
-          <svg width="9" height="1" viewBox="0 0 9 1" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 1V0H9V1H0Z" fill="#464451" />
-          </svg>
-          <input class="catalog-filter__price-inp" type="text" value="3 130 000" />
-        </div>
-        <div class="catalog-filter__price-rate"></div>
-      </div>
+      <RangeInput
+        class="catalog-filter__price"
+        :min-price-value="localMinPrice"
+        :max-price-value="localMaxPrice"
+        @update:minPrice="updateMinPrice"
+        @update:maxPrice="updateMaxPrice"
+      />
     </div>
     <div class="catalog-filter__item">
       <h4 class="catalog-filter__item-title">Бренд</h4>
@@ -230,23 +264,8 @@ const colors = ref([
     }
   }
 
-  &__price-inputs {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-  }
-
-  &__price-inp {
-    max-width: 95px;
-    height: 30px;
-    border-radius: 4px;
-    border: 1px solid var(--border-color);
-    text-align: center;
-    padding: 3px;
-    font-family: 'Jost';
-    font-weight: 500;
-    font-size: 16px;
-    line-height: calc(24 / 16 * 100%);
+  &__price {
+    padding-right: 15px;
   }
 
   &__labels {

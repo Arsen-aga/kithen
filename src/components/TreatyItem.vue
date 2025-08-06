@@ -15,6 +15,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isShipping: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const isInputPhone = computed(() => props.item.id === 1)
@@ -42,7 +46,7 @@ const inputPlaceholder = computed(() => (props.item.id === 7 ? props.item.value 
     />
 
     <SelectItems v-if="isSelectItems" class="treaty-item__inp" :items="item.values" />
-    <InputCalendar v-if="isCalendar" />
+    <InputCalendar v-if="isCalendar" :isShipping="isShipping" />
 
     <div v-if="isRefreshVisible" class="treaty-item__refresh">
       <IconRefresh />

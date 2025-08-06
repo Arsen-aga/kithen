@@ -12,7 +12,7 @@ import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
 
 import { useResultItems } from '@/stores/result'
-const { resultItems, addItem } = useResultItems()
+const { addItem } = useResultItems()
 
 const itemSmeta = ref('')
 const itemMarket = ref('')
@@ -30,7 +30,6 @@ onBeforeMount(async () => {
         addItem(item.id, elem)
       })
     })
-    console.log(resultItems)
   }
   itemMarket.value = await getData('../../data/market.json')
   itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')

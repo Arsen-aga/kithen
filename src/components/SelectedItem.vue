@@ -1,24 +1,30 @@
 <script setup>
-import { ref } from 'vue'
 import { formatNum } from '@/helpers/formatNum'
 import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import CounterBlock from '@/components/UI/CounterBlock.vue'
-defineProps({
+import { ref } from 'vue'
+const props = defineProps({
   item: {
     type: Object,
     required: true,
   },
+  checked: {
+    type: Boolean,
+    required: true,
+  },
 })
+const emit = defineEmits(['update-checked'])
 
-const isChecked = ref(false)
-const checkItem = () => {
-  isChecked.value = !isChecked.value
+const toggleCheck = () => {
+  emit('update-checked', !props.checked)
 }
+
+const newPrice = ref(props.item.price)
 </script>
 
 <template>
   <div class="selected-item">
-    <CheckboxButtonIcon :checked="isChecked" @click="checkItem" />
+    <CheckboxButtonIcon :checked="checked" @click="toggleCheck" />
     <div class="selected-item__inner">
       <div class="selected-item__wrapper-img">
         <img class="selected-item__img" :src="item.img" :alt="item.title" />
@@ -33,8 +39,8 @@ const checkItem = () => {
       </div>
     </div>
     <div class="selected-item__right">
-      <p class="selected-item__old-price" v-if="item.oldPrice">{{ formatNum(item.oldPrice, false) }} ₽</p>
-      <p class="selected-item__price">{{ formatNum(item.price, false) }} ₽</p>
+      <p class="selected-item__old-price" v-if="item.oldPrice">{{ formatNum(item.oldPrice, 0) }} ₽</p>
+      <p class="selected-item__price">{{ formatNum(newPrice, 0) }} ₽</p>
       <CounterBlock class="selected-item__counter" />
     </div>
   </div>

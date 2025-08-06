@@ -115,9 +115,12 @@ export const useResultItems = defineStore('resultItems', () => {
         sum += computePrice(child)
       })
     }
+    if (item.quantity && item.price) {
+      item.sum = item.quantity * item.price
+    }
     // Обновляем цену текущего элемента
     item.price = sum || item.price // Если сумма 0, оставляем старую цену
-    return item.price
+    return item.sum ? item.sum : item.price
   }
 
   /**

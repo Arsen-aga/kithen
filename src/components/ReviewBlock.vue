@@ -20,7 +20,7 @@ const { resultItems, addPrice, putPrice } = useResultItems()
     </div>
     <div class="review-block__bottom">
       <div class="review-block__btns">
-        <MainButton size-button="middle-btn" class="review-block__btn text-red" @click="() => addPrice(500, 110)"
+        <MainButton size-button="middle-btn" class="review-block__btn text-red" @click="() => addPrice(500, 310)"
           >Сформировать предложение в PDF</MainButton
         >
         <MainButton size-button="middle-btn" class="review-block__btn text-orange" @click="() => putPrice(200, 141)"
@@ -40,7 +40,7 @@ const { resultItems, addPrice, putPrice } = useResultItems()
   max-width: 540px;
   width: 100%;
   padding: 50px;
-  top: 0;
+  top: 20px;
   height: fit-content;
 
   &__btns {

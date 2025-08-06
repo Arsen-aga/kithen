@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 
 const emit = defineEmits(['update:isShow', 'update:changeDate'])
 const props = defineProps({
@@ -65,6 +65,19 @@ const isSelected = (date) => {
 const closeCalendar = () => {
   emit('update:isShow', !props.isShow)
 }
+
+const handleClickOutside = (event) => {
+  const selectElement = event.target.closest('.calendar')
+  if (!selectElement) {
+    emit('update:isShow')
+  }
+}
+
+document.addEventListener('click', handleClickOutside)
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -79,7 +92,7 @@ const closeCalendar = () => {
       <div
         class="calendar__date"
         v-for="date in dates"
-        :key="date"
+        :key="date + Math.random()"
         @click="
           () => {
             selectDate(date)

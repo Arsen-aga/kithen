@@ -13,7 +13,7 @@ defineProps({
 <template>
   <div class="scroll-table-elem">
     <TitileDotsPrice class="scroll-table-elem__title" :title="item.title" />
-    <ScrollTableList :items="item.services" :price="item.price" />
+    <ScrollTableList :item="item" />
   </div>
 </template>
 

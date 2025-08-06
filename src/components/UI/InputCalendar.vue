@@ -1,13 +1,47 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { formatDate } from '@/helpers/formatDate'
 import CustomCalendar from '@/components/UI/CustomCalendar.vue'
 import IconCalendar from '@/components/icons/IconCalendar.vue'
-const startDate = ref(new Date())
+import { useShippingDate } from '@/stores/shippingDate'
+
+const props = defineProps({
+  isShipping: {
+    type: Boolean,
+    default: false,
+  },
+})
+
+const shippingDateStore = useShippingDate()
 const isOpen = ref(false)
 const openCalendar = () => {
   isOpen.value = !isOpen.value
 }
+
+// Локальная переменная для хранения даты
+const startDate = ref(props.isShipping ? shippingDateStore.shippingDate : new Date())
+
+// Слежение за изменениями shippingDate в store, если isShipping true
+if (props.isShipping) {
+  watch(
+    () => shippingDateStore.shippingDate,
+    (newDate) => {
+      startDate.value = newDate
+    }
+  )
+}
+
+// Обновление даты в store при изменении, если isShipping true
+const updateDate = (date) => {
+  if (props.isShipping) {
+    shippingDateStore.changeShippingDate(date)
+  }
+}
+
+// Обновление локальной даты при изменении
+watch(startDate, (newDate) => {
+  updateDate(newDate)
+})
 </script>
 
 <template>

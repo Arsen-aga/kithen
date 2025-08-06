@@ -14,7 +14,13 @@ defineProps({
   <div class="treaty-dates">
     <TitileDotsPrice class="treaty-dates__title" :title="item.title" :dots="false" />
     <div class="treaty-dates__items">
-      <TreatyItem v-for="elem in item.elems" :key="elem.id" :item="elem" :is-calendar="true" />
+      <TreatyItem
+        v-for="(elem, index) in item.elems"
+        :key="elem.id"
+        :item="elem"
+        :is-calendar="true"
+        :is-shipping="!index ? true : false"
+      />
     </div>
   </div>
 </template>

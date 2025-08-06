@@ -27,8 +27,8 @@ defineProps({
         </li>
       </ul>
       <div class="catalog-product__price">
-        <span class="catalog-product__price-new">{{ formatNum(product.price, false) }} ₽</span>
-        <span class="catalog-product__price-old">{{ formatNum(product.oldPrice, false) }} ₽</span>
+        <span class="catalog-product__price-new">{{ formatNum(product.price, 0) }} ₽</span>
+        <span class="catalog-product__price-old">{{ formatNum(product.oldPrice, 0) }} ₽</span>
       </div>
       <div class="catalog-product__btns">
         <MainButton>Узнать подробнее</MainButton>
@@ -41,6 +41,7 @@ defineProps({
 <style lang="scss" scoped>
 .catalog-product {
   background-color: var(--light-color);
+  max-height: 650px;
   width: 100%;
   display: flex;
   flex-direction: column;

@@ -6,6 +6,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  classArrow: String,
 })
 
 const isOpen = ref(false)
@@ -13,7 +14,7 @@ const selectedValue = ref('')
 
 const selectedText = computed(() => {
   const selectedItem = props.items.find((item) => item.title === selectedValue.value)
-  return selectedItem ? selectedItem.title : 'Select an option'
+  return selectedItem ? selectedItem.title : props.items[0].title
 })
 
 const toggleSelect = () => {
@@ -43,8 +44,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="custom-select" @click="toggleSelect">
-    <IconArrow class="custom-select__arrow" />
+  <div class="custom-select" @click.stop="toggleSelect">
+    <IconArrow class="custom-select__arrow" :class="classArrow" />
     <div class="custom-select__wrapper">
       <div class="select-selected">{{ selectedText }}</div>
     </div>
@@ -54,7 +55,7 @@ onBeforeUnmount(() => {
         v-for="item in items"
         :key="item.title"
         :data-select="item.title"
-        @click="selectItem(item)"
+        @click.stop="selectItem(item)"
         :class="{ active: selectedValue === item.title }"
       >
         {{ item.title }}
@@ -77,6 +78,10 @@ onBeforeUnmount(() => {
     background-position: center center;
     /* x y */
     background-repeat: no-repeat;
+
+    &.rigth20 {
+      right: 20px;
+    }
   }
 
   &__wrapper {
@@ -103,6 +108,8 @@ onBeforeUnmount(() => {
     width: 100%;
     overflow-y: auto;
     z-index: 10;
+    bottom: 0;
+    transform: translateY(100%);
 
     p,
     div {

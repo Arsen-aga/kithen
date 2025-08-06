@@ -1,13 +1,14 @@
 <script setup>
+import { ref, computed } from 'vue'
 import { useCatalogBlock } from '@/stores/catalogBlock'
 import MainButton from '@/components/UI/MainButton.vue'
 import IconSearch from '@/components/icons/IconSearch.vue'
 import CatalogFilter from '@/components/CatalogFilter.vue'
 import CatalogProduct from '@/components/CatalogProduct.vue'
-defineProps({
+const props = defineProps({
   products: {
     type: Array,
-    default: null,
+    default: () => [],
   },
 })
 
@@ -15,6 +16,20 @@ const { catalogBlock } = useCatalogBlock()
 const closeCatalog = () => {
   catalogBlock.value = []
 }
+
+const searchQuery = ref('')
+
+// Значения минимальной и максимальной цены для фильтрации, по умолчанию с диапазоном от минимальной до максимальной цены в товарах
+const minPrice = ref(Math.min(...props.products.map((p) => p.price), 10000) || 10000)
+const maxPrice = ref(Math.max(...props.products.map((p) => p.price), 3130000) || 3130000)
+
+const filteredProducts = computed(() => {
+  return props.products.filter((product) => {
+    const matchesSearch = !searchQuery.value || product.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesPrice = product.price >= minPrice.value && product.price <= maxPrice.value
+    return matchesSearch && matchesPrice
+  })
+})
 </script>
 
 <template>
@@ -23,17 +38,23 @@ const closeCatalog = () => {
       <MainButton class="catalog-block__btn" :show-arrows="true" @click="closeCatalog">Вернуться</MainButton>
       <div class="catalog-block__search-wrapper">
         <IconSearch class="catalog-block__search-icon" />
-        <input class="catalog-block__search" type="text" placeholder="Поиск" />
+        <input class="catalog-block__search" type="text" placeholder="Поиск" v-model="searchQuery" />
       </div>
     </div>
     <div class="catalog-block__inner">
       <div class="catalog-block__content">
-        <CatalogFilter class="catalog-block__filter" />
+        <CatalogFilter
+          class="catalog-block__filter"
+          :min-price="minPrice"
+          :max-price="maxPrice"
+          @update:min-price="(val) => (minPrice = val)"
+          @update:max-price="(val) => (maxPrice = val)"
+        />
         <div class="catalog-block__items">
           <CatalogProduct
             class="catalog-block__item"
-            v-for="product in products"
-            :key="product.id"
+            v-for="product in filteredProducts"
+            :key="product.id + searchQuery + Math.random()"
             :product="product"
           />
         </div>
@@ -84,6 +105,7 @@ const closeCatalog = () => {
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
+    padding-left: 1px;
   }
 
   &__content {

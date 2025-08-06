@@ -23,7 +23,7 @@ const toggleList = () => {
   <div class="review-elem">
     <div class="review-elem__header">
       <h5 class="review-elem__title" :class="{ bold: item.discount }">{{ item.title }}:</h5>
-      <p class="review-elem__value">{{ typeof value === 'number' ? formatNum(value, false) + ' ₽' : value }}</p>
+      <p class="review-elem__value">{{ typeof value === 'number' ? formatNum(value, 0) + ' ₽' : value }}</p>
     </div>
     <div v-if="item.items || item.list" class="review-elem__body">
       <div class="review-elem__items" v-show="isOpenList">

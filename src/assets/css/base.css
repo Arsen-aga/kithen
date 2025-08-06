@@ -40,6 +40,7 @@ body {
   font-size: var(--font-size);
   line-height: var(--line-height);
   min-height: 100vh;
+  overflow-y: scroll;
 }
 
 a {

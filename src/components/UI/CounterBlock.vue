@@ -1,19 +1,21 @@
 <script setup>
 import { ref } from 'vue'
-defineProps({})
+const emit = defineEmits(['update-price'])
 
 const counter = ref(1)
 const increment = () => {
   counter.value++
+  emit('update-price', counter.value)
 }
 const decrement = () => {
   counter.value--
+  emit('update-price', counter.value)
 }
 </script>
 
 <template>
   <div class="counter">
-    <button class="counter__btn counter__decrement" @click="decrement">
+    <button class="counter__btn counter__decrement" @click="decrement" :disabled="counter <= 1">
       <div class="bar"></div>
     </button>
     <p class="counter__num">{{ counter }}</p>
@@ -47,6 +49,11 @@ const decrement = () => {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: auto;
+    }
 
     .bar {
       position: absolute;

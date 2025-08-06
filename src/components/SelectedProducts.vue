@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, reactive } from 'vue'
 
-defineProps({
+const props = defineProps({
   items: {
     type: Array,
     required: true,
@@ -12,12 +12,28 @@ import IconCart from '@/components/icons/IconCart.vue'
 import CheckboxButton from '@/components/UI/CheckboxButton.vue'
 import SelectedProduct from '@/components/SelectedProduct.vue'
 
+const itemsStates = reactive(props.items.map((group) => group.products.map(() => false)))
 const isChooseAll = ref(false)
-const isDeleteAll = ref(false)
 
 const chooseAll = () => {
-  isChooseAll.value = !isChooseAll.value
+  const newState = !isChooseAll.value
+  props.items.forEach((group, i) => {
+    group.products.forEach((_, j) => {
+      itemsStates[i][j] = newState
+    })
+  })
+  isChooseAll.value = newState
 }
+
+watch(
+  () => itemsStates.map((group) => group.every((state) => state)),
+  (allGroupsSelected) => {
+    isChooseAll.value = allGroupsSelected.every(Boolean)
+  },
+  { deep: true }
+)
+
+const isDeleteAll = ref(false)
 const deleteAll = () => {
   isDeleteAll.value = !isDeleteAll.value
 }
@@ -36,7 +52,18 @@ const deleteAll = () => {
       </CheckboxButton>
     </div>
     <div class="selected-products__items">
-      <SelectedProduct class="selected-products__item" v-for="item in items" :key="item.id" :item="item" />
+      <SelectedProduct
+        class="selected-products__item"
+        v-for="(item, groupIndex) in items"
+        :key="item.id"
+        :item="item"
+        :checkedGroup="itemsStates[groupIndex]"
+        @update-checked="
+          (productIndex, value) => {
+            itemsStates[groupIndex][productIndex] = value
+          }
+        "
+      />
     </div>
   </div>
 </template>
