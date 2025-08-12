@@ -1,20 +1,17 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useDefaultItems } from '@/stores/default'
 import MainButton from '@/components/UI/MainButton.vue'
-import TreatyItem from '@/components/TreatyItem.vue'
+import { useCookies } from 'vue3-cookies'
+import router from '@/router/router'
+import { toast } from "vue3-toastify";
+
+const { cookies } = useCookies();
 
 const { apiDomain } = useDefaultItems()
-const { user } = useDefaultItems()
-const token = ref('')
-
-watch(
-  () => user.value,
-  (val) => {
-    token.value = val.bearer
-  }
-)
+const store = useDefaultItems()
+const token = store.getBearer
 
 const login = ref('')
 const password = ref('')
@@ -30,12 +27,20 @@ const goLogin = () => {
       {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: 'Bearer ' + token.value,
+          Authorization: 'Bearer ' + token,
         },
       }
     )
     .then((response) => {
-      console.log('then', response.data)
+      if (response.data.id ){
+        cookies.set('user-id', response.data.id)
+        router.push('/admin')
+        toast.success('Успешная авторизация')
+      } else {
+        toast.error('Неправильный логин или пароль')
+      }
+
+
     })
     .catch((error) => {
       console.error(error)
@@ -43,7 +48,7 @@ const goLogin = () => {
 }
 
 onMounted(() => {
-  console.log('auth', user.value)
+
 })
 </script>
 
