@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useDefaultItems } from '@/stores/default'
 import MainButton from '@/components/UI/MainButton.vue'
+import TreatyItem from '@/components/TreatyItem.vue'
 
 const { apiDomain } = useDefaultItems()
 const { user } = useDefaultItems()
@@ -95,9 +96,12 @@ onMounted(() => {
   }
 
   &__label-title {
-    font-size: 20px;
+    font-family: 'Jost';
+    font-weight: 600;
+    font-size: 12px;
+    line-height: calc(20 / 12 * 100%);
+    text-transform: uppercase;
     margin-bottom: 5px;
-    display: inline-block;
   }
 
   &__inp {
@@ -127,6 +131,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 15px;
+    flex-wrap: wrap;
   }
 }
 </style>
