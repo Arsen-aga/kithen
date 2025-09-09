@@ -41,7 +41,7 @@ defineProps({
 <style lang="scss" scoped>
 .catalog-product {
   background-color: var(--light-color);
-  max-height: 650px;
+  // max-height: 650px;
   width: 100%;
   display: flex;
   flex-direction: column;

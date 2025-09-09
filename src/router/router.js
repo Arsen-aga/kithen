@@ -1,36 +1,38 @@
-import Main from '@/pages/loginAuth.vue';
-import ErrorPage from '@/pages/404Page.vue';
+import Home from '@/pages/AccountPage.vue'
+import Login from '@/pages/loginAuth.vue'
+import ErrorPage from '@/pages/404Page.vue'
 
-import { createRouter, createWebHistory } from 'vue-router';
-
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-
-    {
-        name: 'Home',
-        path: '',
-        component: Main,
-    },
-    {
-        name: 'Admin',
-        path: '/admin',
-        component: () => import('@/pages/AccountPage.vue'),
-    },
-    {
-        path: '/:pathMatch(.*)*',
-        component: ErrorPage,
-    },
-
-
-];
+  {
+    name: 'Login',
+    path: '/login',
+    component: Login,
+  },
+  {
+    name: 'Home',
+    path: '/',
+    component: Home,
+  },
+  {
+    name: 'Admin',
+    path: '/admin',
+    component: () => import('@/pages/AdminPage.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    component: ErrorPage,
+  },
+]
 
 const router = createRouter({
-    mode: 'history',
-    routes,
-    history: createWebHistory(),
-    scrollBehavior() {
-        document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
-    },
-});
+  mode: 'history',
+  routes,
+  history: createWebHistory(),
+  scrollBehavior() {
+    document.getElementById('app').scrollIntoView({ behavior: 'smooth' })
+  },
+})
 
-export default router;
+export default router

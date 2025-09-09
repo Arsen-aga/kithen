@@ -5,9 +5,9 @@ import { useDefaultItems } from '@/stores/default'
 import MainButton from '@/components/UI/MainButton.vue'
 import { useCookies } from 'vue3-cookies'
 import router from '@/router/router'
-import { toast } from "vue3-toastify";
+import { toast } from 'vue3-toastify'
 
-const { cookies } = useCookies();
+const { cookies } = useCookies()
 
 const { apiDomain } = useDefaultItems()
 const store = useDefaultItems()
@@ -32,24 +32,20 @@ const goLogin = () => {
       }
     )
     .then((response) => {
-      if (response.data.id ){
+      if (response.data.id) {
         cookies.set('user-id', response.data.id)
         router.push('/admin')
         toast.success('Успешная авторизация')
       } else {
         toast.error('Неправильный логин или пароль')
       }
-
-
     })
     .catch((error) => {
       console.error(error)
     })
 }
 
-onMounted(() => {
-
-})
+onMounted(() => {})
 </script>
 
 <template>
@@ -83,6 +79,10 @@ onMounted(() => {
     border-radius: 20px;
     box-shadow: 0px 2px 8px 0px #00000042;
     padding: 40px;
+    position: absolute;
+    top: 100px;
+    left: 0;
+    right: 0;
   }
 
   &__title {

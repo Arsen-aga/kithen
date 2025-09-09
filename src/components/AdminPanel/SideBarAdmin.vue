@@ -1,173 +1,153 @@
-<script>
-import gsap from "gsap";
-export default {
-  name: "HeaderAdmin",
-  data() {
-    return {
-      user: this.$store.getters.getUser,
-      apiUrl: this.$store.getters.getApiUrl,
-      apiDomain: this.$store.getters.getApiDomain,
-      menuItems: [
-        {
-          name: "Подкасты",
-          category: "podcasts",
-          subcategories: [
-            { name: "Категории подкастов", category: "podcast-category" },
-            { name: "Все подкасты", category: "podcasts" },
-          ],
-          open: false,
-        },
-        { name: "Новости", category: "news", subcategories: [], open: false },
-        {
-          name: "Видео",
-          category: "video",
-          subcategories: [
-            { name: "Категории видео", category: "video-category" },
-            { name: "Все видео", category: "video" },
-            { name: "Блогеры", category: "blogger" },
-          ],
-          open: false,
-        },
-        {
-          name: "Библиотека",
-          category: "book",
-          subcategories: [
-            { name: "Категории книг", category: "book-category" },
-            { name: "Все книги", category: "book" },
-          ],
-          open: false,
-        },
-        {
-          name: "Материалы",
-          category: "material",
-          subcategories: [],
-          open: false,
-        },
-        {
-          name: "Тесты",
-          category: "test",
-          subcategories: [
-            { name: "Категории тестов", category: "test-category" },
-            { name: "Все тесты", category: "test" },
-          ],
-          open: false,
-        },
-        { name: "Темы", category: "theme", subcategories: [], open: false },
-        {
-          name: "Прогресс пользователя",
-          category: "progress",
-          subcategories: [],
-          open: false,
-        },
-        { name: "Уведомления", category: "notify", subcategories: [], open: false },
-      ],
-    };
+<script setup>
+import { ref, onMounted } from 'vue'
+import gsap from 'gsap'
+
+const menuItems = ref([
+  {
+    name: 'Подкасты',
+    category: 'podcasts',
+    subcategories: [
+      { name: 'Категории подкастов', category: 'podcast-category' },
+      { name: 'Все подкасты', category: 'podcasts' },
+    ],
+    open: false,
   },
-  methods: {
-    getRandomPath() {
-      const paths = document.querySelectorAll(".anim-path");
-      const randomIndex = Math.floor(Math.random() * paths.length);
-      return paths[randomIndex];
-    },
+  { name: 'Новости', category: 'news', subcategories: [], open: false },
+  {
+    name: 'Видео',
+    category: 'video',
+    subcategories: [
+      { name: 'Категории видео', category: 'video-category' },
+      { name: 'Все видео', category: 'video' },
+      { name: 'Блогеры', category: 'blogger' },
+    ],
+    open: false,
+  },
+  {
+    name: 'Библиотека',
+    category: 'book',
+    subcategories: [
+      { name: 'Категории книг', category: 'book-category' },
+      { name: 'Все книги', category: 'book' },
+    ],
+    open: false,
+  },
+  {
+    name: 'Материалы',
+    category: 'material',
+    subcategories: [],
+    open: false,
+  },
+  {
+    name: 'Тесты',
+    category: 'test',
+    subcategories: [
+      { name: 'Категории тестов', category: 'test-category' },
+      { name: 'Все тесты', category: 'test' },
+    ],
+    open: false,
+  },
+  { name: 'Темы', category: 'theme', subcategories: [], open: false },
+  {
+    name: 'Прогресс пользователя',
+    category: 'progress',
+    subcategories: [],
+    open: false,
+  },
+  { name: 'Уведомления', category: 'notify', subcategories: [], open: false },
+])
 
-    // Функция для случайного выбора цвета
-    getRandomColor() {
-      const colors = [
-        "#439563",
-        "#FFC32A",
-        // "#5F22C1",
-        "#2971EB",
-        "#EF8933",
-        "#F092F9",
-        "#E90037",
-      ];
-      const randomColorIndex = Math.floor(Math.random() * colors.length);
-      return colors[randomColorIndex];
-    },
+// Функция для выбора случайного пути
+const getRandomPath = () => {
+  const paths = document.querySelectorAll('.anim-path')
+  const randomIndex = Math.floor(Math.random() * paths.length)
+  return paths[randomIndex]
+}
 
-    // Анимация рандомного path с вращением и сменой цвета
-    animateRandomPath() {
-      const path = this.getRandomPath();
-      // const randomDirection = Math.random() > 0.5 ? "horizontal" : "vertical"; // Случайное направление переворота
-      // const flipValue = randomDirection === "horizontal" ? -1 : 1;
-      const randomColor = this.getRandomColor(); // Случайный цвет
+// Функция для выбора случайного цвета
+const getRandomColor = () => {
+  const colors = ['#439563', '#FFC32A', '#2971EB', '#EF8933', '#F092F9', '#E90037']
+  const randomColorIndex = Math.floor(Math.random() * colors.length)
+  return colors[randomColorIndex]
+}
 
-      // Анимация переворота и смены цвета
+// Анимация случайного path с вращением и сменой цвета
+const animateRandomPath = () => {
+  const path = getRandomPath()
+  const randomColor = getRandomColor()
+
+  gsap.to(path, {
+    duration: 0.3,
+    rotation: 360,
+    fill: randomColor,
+    transformOrigin: 'center',
+    onComplete: () => {
       gsap.to(path, {
         duration: 0.3,
-        // scaleX: randomDirection === "horizontal" ? flipValue : 1,
-        // scaleY: randomDirection === "vertical" ? flipValue : 1,
-        rotation: 360, // Вращение на 360 градусов
-        fill: randomColor, // Случайный цвет
-        transformOrigin: "center",
-        onComplete: () => {
-          // Возвращаем path в исходное состояние через 1 секунду
-          gsap.to(path, {
-            duration: 0.3,
-            delay: 1,
-            scaleX: 1,
-            scaleY: 1,
-            rotation: 0, // Возвращаем элемент в исходное положение
-            fill: "#fff", // Возвращаем белый цвет
-          });
-        },
-      });
+        delay: 1,
+        scaleX: 1,
+        scaleY: 1,
+        rotation: 0,
+        fill: '#fff',
+      })
     },
+  })
+}
 
-    // Запуск бесконечной анимации с заданной задержкой
-    startAnimation() {
-      this.animateRandomPath();
-      setTimeout(this.startAnimation, 2500); // Задержка 2.5 секунды
-    },
-    handleClick(event, item) {
+// Запуск бесконечной анимации
+const startAnimation = () => {
+  animateRandomPath()
+  setTimeout(startAnimation, 2500)
+}
 
-      this.toggleActive(event);
-      this.goTo(item.category);
-    },
-    toggleActive(event) {
-      const link = event.target;
+// Обработка клика по элементу меню
+const handleClick = (event, item) => {
+  toggleActive(event)
+  goTo(item.category)
+}
 
-      const items = document.querySelectorAll(".acc__link");
-      items.forEach((item) => {
-        item.classList.remove("active");
-      });
-      link.classList.add("active");
-    },
-    goTo(category) {
-      this.$emit("goTo", category);
-    },
-    toggleSubcategories(item) {
-      for (let i of this.menuItems) {
-        i.open = false;
-      }
-      item.open = !item.open;
-    },
-  },
-  mounted() {
-    this.startAnimation();
-  },
-};
+// Переключение активного класса
+const toggleActive = (event) => {
+  const link = event.target
+  const items = document.querySelectorAll('.acc__link')
+  items.forEach((item) => {
+    item.classList.remove('active')
+  })
+  link.classList.add('active')
+}
+
+// Эмиссия события goTo
+const goTo = (category) => {
+  emit('goTo', category)
+}
+
+// Переключение подкатегорий
+const toggleSubcategories = (item) => {
+  menuItems.value.forEach((i) => {
+    i.open = false
+  })
+  item.open = !item.open
+}
+
+// Определение emit для события goTo
+const emit = defineEmits(['goTo'])
+
+// Запуск анимации при монтировании
+onMounted(() => {
+  startAnimation()
+})
 </script>
 <template>
   <div class="sideBar__content">
     <div class="accHead">
       <div class="logo">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="149"
-          height="35"
-          viewBox="0 0 149 35"
-          fill="none"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="149" height="35" viewBox="0 0 149 35" fill="none">
           <path d="M12.983 0.00195312H0V35H12.983V0.00195312Z" fill="white" />
           <path
             d="M17.3066 26.251C17.3066 21.419 21.1806 17.502 25.9594 17.502C30.7381 17.502 34.6121 21.419 34.6121 26.251C34.6121 31.0829 30.7381 35 25.9594 35C21.1806 35 17.3066 31.0829 17.3066 26.251Z"
             fill="white"
           />
-          <path
-            d="M21.6293 0.00195312H34.6005L25.9517 17.502H12.9805L21.6293 0.00195312Z"
-            fill="white"
-          />
+          <path d="M21.6293 0.00195312H34.6005L25.9517 17.502H12.9805L21.6293 0.00195312Z" fill="white" />
           <path
             class="anim-path"
             d="M46.877 15.2503V0.00195312H50.3279V6.09735H52.4587L56.0369 0.00195312H59.9775L55.3123 7.36871L59.9559 15.2523H55.9292L52.5429 9.30743H50.3279V15.2523H46.877V15.2503Z"
@@ -235,14 +215,12 @@ export default {
     <div class="accBody">
       <div v-for="item in menuItems" :key="item.category">
         <a
-          @click="
-            [
-              toggleSubcategories(item),
-              handleClick($event, {
-                category: item.category,
-              }),
-            ]
-          "
+          @click="[
+            toggleSubcategories(item),
+            handleClick($event, {
+              category: item.category,
+            }),
+          ]"
           class="acc__link"
           :class="{ active: item.open }"
         >
@@ -308,7 +286,7 @@ export default {
   cursor: pointer;
 }
 .acc__link.active::before {
-  content: "";
+  content: '';
   position: absolute;
   bottom: 5px;
   left: 0;

@@ -58,8 +58,16 @@ defineProps({
     }
 
     svg {
-      stroke: var(--light-color);
-      fill: var(--light-color) !important;
+      // stroke: var(--light-color);
+      // fill: var(--light-color) !important;
+
+      g {
+        opacity: 1;
+      }
+      path {
+        stroke: var(--light-color);
+        fill: var(--light-color);
+      }
     }
   }
 

@@ -31,27 +31,14 @@ watch(
     }
   }
 )
-// watch(
-//   () => props.minPriceValue,
-//   (val) => {
-//     if (val !== undefined && val !== minPrice.value) {
-//       minPrice.value = val
-//       emit('update:minPrice', minPrice.value)
-//     }
-//   }
-// )
-// watch(
-//   () => props.maxPriceValue,
-//   (val) => {
-//     if (val !== undefined && val !== maxPrice.value) {
-//       maxPrice.value = val
-//       emit('update:maxPrice', maxPrice.value)
-//     }
-//   }
-// )
 
 // Форматируем цены с разделением пробелами по тысячам
-const formatPrice = (value) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+const formatPrice = (value) => {
+  // Преобразуем значение в строку и удаляем все, кроме цифр
+  const cleanedValue = value.toString().replace(/[^0-9]/g, '')
+  // Форматируем с пробелами каждые три цифры
+  return cleanedValue.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
 
 const formattedMinPrice = computed(() => formatPrice(minPrice.value))
 const formattedMaxPrice = computed(() => formatPrice(maxPrice.value))

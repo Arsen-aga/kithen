@@ -179,6 +179,7 @@ const colors = ref([
 <style lang="scss" scoped>
 .catalog-filter {
   border-right: 1px solid var(--table-color);
+  height: fit-content;
 
   &__item {
     padding: 15px 0;

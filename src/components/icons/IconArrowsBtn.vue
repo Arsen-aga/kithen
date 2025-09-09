@@ -10,12 +10,11 @@
         fill="#464451"
       />
     </g>
-    <defs>
-      <clipPath id="clip0_2943_30">
-        <rect width="26" height="9" fill="white" transform="matrix(-1 0 0 1 26 0)" />
-      </clipPath>
-    </defs>
   </svg>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+svg {
+  transition: all 0.3s ease-in-out;
+}
+</style>
