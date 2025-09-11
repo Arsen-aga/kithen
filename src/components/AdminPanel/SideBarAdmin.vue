@@ -4,52 +4,16 @@ import gsap from 'gsap'
 
 const menuItems = ref([
   {
-    name: 'Подкасты',
-    category: 'podcasts',
+    name: 'Товары',
+    category: 'products',
     subcategories: [
-      { name: 'Категории подкастов', category: 'podcast-category' },
-      { name: 'Все подкасты', category: 'podcasts' },
-    ],
-    open: false,
-  },
-  { name: 'Новости', category: 'news', subcategories: [], open: false },
-  {
-    name: 'Видео',
-    category: 'video',
-    subcategories: [
-      { name: 'Категории видео', category: 'video-category' },
-      { name: 'Все видео', category: 'video' },
-      { name: 'Блогеры', category: 'blogger' },
+      { name: 'Группы товаров', category: 'product-groups' },
+      { name: 'Все товары', category: 'products' },
     ],
     open: false,
   },
   {
-    name: 'Библиотека',
-    category: 'book',
-    subcategories: [
-      { name: 'Категории книг', category: 'book-category' },
-      { name: 'Все книги', category: 'book' },
-    ],
-    open: false,
-  },
-  {
-    name: 'Материалы',
-    category: 'material',
-    subcategories: [],
-    open: false,
-  },
-  {
-    name: 'Тесты',
-    category: 'test',
-    subcategories: [
-      { name: 'Категории тестов', category: 'test-category' },
-      { name: 'Все тесты', category: 'test' },
-    ],
-    open: false,
-  },
-  { name: 'Темы', category: 'theme', subcategories: [], open: false },
-  {
-    name: 'Прогресс пользователя',
+    name: 'Пользователи',
     category: 'progress',
     subcategories: [],
     open: false,
@@ -140,7 +104,7 @@ onMounted(() => {
 <template>
   <div class="sideBar__content">
     <div class="accHead">
-      <div class="logo">
+      <a class="logo" href="/">
         <svg xmlns="http://www.w3.org/2000/svg" width="149" height="35" viewBox="0 0 149 35" fill="none">
           <path d="M12.983 0.00195312H0V35H12.983V0.00195312Z" fill="white" />
           <path
@@ -209,7 +173,7 @@ onMounted(() => {
             fill="white"
           />
         </svg>
-      </div>
+      </a>
       <div class="head-text">Административная панель</div>
     </div>
     <div class="accBody">

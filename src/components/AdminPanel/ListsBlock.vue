@@ -16,59 +16,15 @@ const searchQuery = ref('')
 const sortBy = ref('idAsc') // Возможные значения: idAsc, idDesc, nameAsc, nameDesc
 const categories = ref([])
 const user = ref(store.getUser)
-const apiUrl = ref(store.getApiUrl)
+const apiUrl = ref(store.getApiDomain)
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
+  console.log(categories.value)
   let filtered = []
-  if (categories.value?.categories) {
-    filtered = categories.value?.categories.filter((category) =>
-      category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.news) {
-    filtered = categories.value?.news.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.podcasts) {
-    filtered = categories.value?.podcasts.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.themes) {
-    filtered = categories.value?.themes.filter((category) =>
-      category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.videos) {
-    filtered = categories.value?.videos.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.books) {
-    filtered = categories.value?.books.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.materials) {
-    filtered = categories.value?.materials.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.notifies) {
-    filtered = categories.value?.notifies.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.tests) {
-    filtered = categories.value?.tests.filter((category) =>
-      category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  if (categories.value?.bloggers) {
-    filtered = categories.value?.bloggers.filter((category) =>
-      category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+  if (Array.isArray(categories.value)) {
+    filtered = categories.value?.filter((category) =>
+      category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
   }
   if (sortBy.value === 'idAsc') {
@@ -80,7 +36,6 @@ const filteredCategories = computed(() => {
   } else if (sortBy.value === 'nameDesc') {
     return filtered.sort((a, b) => b.name.localeCompare(a.name))
   }
-
   return filtered
 })
 
@@ -115,7 +70,7 @@ const editCategory = (category) => {
 // Метод для удаления категории
 const deleteCategory = async (id) => {
   if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
-    let authGet = `&auth=${user.value.username}:${user.value.auth_key}`
+    let authGet = `&auth=${user.value.name}:${user.value.bearer}`
     let params = {
       id: id,
     }
@@ -133,18 +88,15 @@ const deleteCategory = async (id) => {
   }
 }
 const getContent = () => {
-  let cat = props.propsPage.includes('-category')
-  let authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  if (props.propsPage === 'theme' || props.propsPage === 'blogger' || cat) {
-    axios.get(apiUrl.value + 'api-' + props.propsPage + '/get-list' + authGet).then((response) => {
-      categories.value = response.data
-      console.log(categories.value)
-    })
-  } else {
-    axios.get(apiUrl.value + 'api-' + props.propsPage + '/get-admin-list' + authGet).then((response) => {
-      categories.value = response.data
-    })
+  console.log(user.value.bearer)
+  const config = {
+    headers: {
+      Authorization: `Bearer ${user.value.bearer}`,
+    },
   }
+  axios.get(apiUrl.value + '/' + props.propsPage, config).then((response) => {
+    categories.value = response.data
+  })
 }
 
 // Метод для добавления категории
@@ -191,7 +143,7 @@ watch(
         <tr v-for="category in filteredCategories" :key="category.id">
           <td>{{ category.id }}</td>
           <td @click="goToCategory(category, propsPage)" class="category-name">
-            {{ category?.name || category?.title }}
+            {{ category?.Name || category?.title }}
           </td>
           <td class="table-actions">
             <button class="btn-white" @click="goToCategory(category, propsPage)">
@@ -212,7 +164,7 @@ watch(
                 />
               </svg>
             </button>
-            <button v-if="!this.categories.themes" class="btn-white btn-danger" @click="deleteCategory(category.id)">
+            <button v-if="!categories.Group" class="btn-white btn-danger" @click="deleteCategory(category.id)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

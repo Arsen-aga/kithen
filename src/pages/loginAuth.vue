@@ -34,6 +34,8 @@ const goLogin = () => {
     .then((response) => {
       if (response.data.id) {
         cookies.set('user-id', response.data.id)
+        cookies.set('user-bearer', response.data.bearer)
+
         router.push('/admin')
         toast.success('Успешная авторизация')
       } else {

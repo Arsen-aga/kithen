@@ -172,74 +172,6 @@ const uploadPhoto = async (event, dopBanner = false, headerBanner = false, dopBa
   }
 }
 
-// Загрузка книги
-const uploadBook = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
-  const validFileTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  ]
-
-  if (!validFileTypes.includes(file.type)) {
-    alert('Можно загружать только файлы формата PDF, DOC, DOCX, PPT или PPTX.')
-    return
-  }
-
-  const fileSizeKB = file.size / 1024
-  let fileSizeDisplay = fileSizeKB > 1024 ? `${(fileSizeKB / 1024).toFixed(2)} MB` : `${fileSizeKB.toFixed(2)} KB`
-
-  const uploadFormData = new FormData()
-  uploadFormData.append('UploadForm[file]', file)
-  uploadFormData.append('folder', 'books/book')
-  uploadFormData.append('filenamePrefix', 'book_')
-
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-
-  try {
-    const response = await axios.post(`${apiUrl.value}upload${authGet}`, uploadFormData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    bookSrc.value = response.data
-    sizePdf.value = fileSizeDisplay
-  } catch (error) {
-    console.error('Ошибка:', error)
-    alert('Ошибка при загрузке файла. Попробуйте еще раз.')
-  }
-}
-
-// Загрузка аудио
-const onAudioChange = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
-  const validFileTypes = ['audio/mpeg', 'audio/ogg', 'audio/wav']
-  if (!validFileTypes.includes(file.type)) {
-    alert('Можно загружать только файлы формата MP3, OGG или WAV.')
-    return
-  }
-
-  const uploadFormData = new FormData()
-  uploadFormData.append('UploadForm[file]', file)
-  uploadFormData.append('folder', 'users/audio')
-  uploadFormData.append('filenamePrefix', 'audio_')
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-
-  try {
-    const response = await axios.post(`${apiUrl.value}upload${authGet}`, uploadFormData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    formData.audio = response.data
-  } catch (error) {
-    console.error('Ошибка:', error)
-  }
-}
-
 // Получение категорий
 const getCategories = async () => {
   if (!flagCategry.value && !['news', 'theme', 'notify', 'blogger'].includes(props.propsPage)) {
@@ -284,40 +216,8 @@ const saveContent = async () => {
     return
   }
 
-  if (props.propsPage === 'news') {
-    params = {
-      theme_id: formData.theme,
-      author_id: user.value.user_id,
-      title: formData.title,
-      description: formData.shortText,
-      content: formData.text,
-      date_add: new Date(),
-      title_photo: srcPhoto.value,
-      short_text: formData.shortText,
-      text: formData.text,
-      date_publication: timestampPublish.value / 1000,
-    }
-  } else if (props.propsPage === 'video') {
-    params = {
-      theme_id: formData.theme,
-      category_id: formData.categorieId,
-      title: formData.title,
-      description: formData.shortText,
-      link: formData.link,
-      poster: srcPhoto.value,
-      date_add: new Date(),
-      sort: sort.value,
-      date_publication: timestampPublish.value / 1000,
-      blogger_id: bloggerId.value,
-    }
-  } else if (props.propsPage === 'blogger') {
-    params = {
-      title: formData.title,
-      description: formData.shortText,
-      link: formData.link,
-      poster: srcPhoto.value,
-    }
-  } else if (props.propsPage === 'podcast') {
+  if (props.propsPage === 'products') {
+    console.log(props.propsPage)
     params = {
       theme_id: formData.theme,
       category_id: formData.categorieId,
@@ -327,38 +227,6 @@ const saveContent = async () => {
       date_add: new Date(),
       pic: srcPhoto.value,
       sort: sort.value,
-      date_publication: timestampPublish.value / 1000,
-    }
-  } else if (props.propsPage === 'theme') {
-    params = {
-      id: itemData.value.id,
-      name: formData.title,
-      description: formData.shortText,
-      podcast_banner: srcPhoto.value,
-      banner: dopBannerSrc.value,
-      banner_full: dopBannerSrc2.value,
-      img: headerBannerSrc.value,
-      quote: dopQuote.value,
-      date_add: new Date(),
-      date_publication: timestampPublish.value / 1000,
-    }
-  } else if (props.propsPage === 'book' || props.propsPage === 'material') {
-    params = {
-      theme_id: formData.theme,
-      title: formData.title,
-      category_id: formData.categorieId,
-      format: 'PDF',
-      size: sizePdf.value,
-      link: bookSrc.value,
-      poster: srcPhoto.value,
-      date_add: new Date(),
-      date_publication: timestampPublish.value / 1000,
-    }
-  } else if (props.propsPage === 'notify') {
-    params = {
-      title: formData.title,
-      text: formData.shortText,
-      link: formData.link,
       date_publication: timestampPublish.value / 1000,
     }
   }
@@ -590,7 +458,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="content-editor">
-    <div class="wrap-calendar">
+    <!-- <div class="wrap-calendar">
       <div class="price__item-btnCalendar" @click="toggleCalendar" ref="button">
         {{ formattedDate }}
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -618,7 +486,7 @@ onBeforeUnmount(() => {
         />
         <VCalendar />
       </div>
-    </div>
+    </div> -->
     <div v-if="propsPage != 'test'" class="form-group">
       <label for="title">Наименование</label>
       <input

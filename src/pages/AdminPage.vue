@@ -25,47 +25,11 @@ const goToCategory = (item = false) => {
 }
 const goTo = (item) => {
   switch (item) {
-    case 'podcasts':
-      propsPage.value = 'podcast'
+    case 'products':
+      propsPage.value = 'products'
       break
-    case 'news':
-      propsPage.value = 'news'
-      break
-    case 'video':
-      propsPage.value = 'video'
-      break
-    case 'podcast-category':
-      propsPage.value = 'podcast-category'
-      break
-    case 'news-category':
-      propsPage.value = 'news-category'
-      break
-    case 'video-category':
-      propsPage.value = 'video-category'
-      break
-    case 'book-category':
-      propsPage.value = 'book-category'
-      break
-    case 'test-category':
-      propsPage.value = 'test-category'
-      break
-    case 'material':
-      propsPage.value = 'material'
-      break
-    case 'theme':
-      propsPage.value = 'theme'
-      break
-    case 'notify':
-      propsPage.value = 'notify'
-      break
-    case 'test':
-      propsPage.value = 'test'
-      break
-    case 'blogger':
-      propsPage.value = 'blogger'
-      break
-    case 'book':
-      propsPage.value = 'book'
+    case 'product-groups':
+      propsPage.value = 'product-groups'
       break
   }
   if (!list.value) {

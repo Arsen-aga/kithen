@@ -11,12 +11,18 @@ const { cookies } = useCookies()
 
 const apiDomain = store.apiDomain
 const userId = ref(null)
+const userBearer = ref(null)
 
 const getUser = (id) => {
   axios
-    .get(apiDomain + '/users/' + id)
+    .get(apiDomain + '/users/' + id, {
+      headers: {
+        Authorization: 'Bearer ' + userBearer.value,
+      },
+    })
     .then((response) => {
       store.setUser(response.data)
+      console.log(response.data)
     })
     .catch((error) => {
       console.error(error)
@@ -25,8 +31,9 @@ const getUser = (id) => {
 
 onMounted(() => {
   userId.value = cookies.get('user-id')
+  userBearer.value = cookies.get('user-bearer')
   if (!userId.value) {
-    router.push('/admin')
+    router.push('/login')
   } else {
     getUser(userId.value)
   }
