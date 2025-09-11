@@ -53,7 +53,6 @@ const formData = reactive({
   audio: '',
   videoUrl: '',
   categorieId: '',
-  bookSrc: '',
   title: '',
   link: '',
 })
@@ -62,8 +61,6 @@ const srcPhoto = ref(null)
 const dopBannerSrc = ref(null)
 const dopBannerSrc2 = ref(null)
 const headerBannerSrc = ref(null)
-const bookSrc = ref(null)
-const sizePdf = ref(null)
 const dopQuote = ref('')
 const themesReset = ref([])
 const categoriesReset = ref([])
