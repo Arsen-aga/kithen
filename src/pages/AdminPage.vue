@@ -31,6 +31,12 @@ const goTo = (item) => {
     case 'product-groups':
       propsPage.value = 'product-groups'
       break
+    case 'users':
+      propsPage.value = 'users'
+      break
+    case 'notify':
+      propsPage.value = 'notify'
+      break
   }
   if (!list.value) {
     list.value = true
@@ -54,7 +60,7 @@ onMounted(() => {
 
     <div class="info">
       <HeaderAdmin />
-      <metrika-block v-if="propsPage == 'metrika'" />
+      <!-- <metrika-block v-if="propsPage == 'metrika'" /> -->
       <ListsBlock
         v-if="list && propsPage != 'metrika'"
         @goToCategory="goToCategory"

@@ -1,48 +1,29 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useDefaultItems } from '@/stores/default'
-import axios from 'axios'
-
-import VCalendar from 'v-calendar'
+import { useApi } from '@/helpers/useApi'
+import { useUpload } from '@/helpers/useUpload'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
-import 'v-calendar/style.css'
 
 // Пропсы
 const props = defineProps({
-  propsPage: {
-    type: String,
-  },
-  item: {
-    type: Object,
-    required: false,
-  },
+  propsPage: String,
+  item: Object,
   modelValue: String,
 })
 
 // Эмиты
-// const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
-// Получаем данные из Vuex
-
-const store = useDefaultItems()
-const user = computed(() => store.getUser)
-const apiUrl = computed(() => store.getApiUrl)
-const apiDomain = computed(() => store.getApiDomain)
+// Helpers
+const { makeRequest, user, apiUrl, apiDomain } = useApi()
+const { uploadFile } = useUpload()
 
 // Реактивные переменные
 const isCalendarVisible = ref(false)
 const dateRange = ref(null)
 const timestampPublish = ref(null)
 const formattedDate = ref('Выберите дату')
-const attributes = ref([
-  {
-    highlight: true,
-    dates: new Date(),
-  },
-])
-const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
-const disabledDates = ref([{ start: null, end: yesterday }])
 const testData = ref(null)
 const formData = reactive({
   image: '',
@@ -56,44 +37,58 @@ const formData = reactive({
   title: '',
   link: '',
 })
-const itemData = ref({})
-const srcPhoto = ref(null)
-const dopBannerSrc = ref(null)
-const dopBannerSrc2 = ref(null)
-const headerBannerSrc = ref(null)
+const images = reactive({
+  srcPhoto: null,
+  dopBanner: null,
+  dopBanner2: null,
+  headerBanner: null,
+})
 const dopQuote = ref('')
-const themesReset = ref([])
-const categoriesReset = ref([])
-const bloggerReset = ref([])
+const themes = ref([])
+const categories = ref([])
+const bloggers = ref([])
 const bloggerId = ref(null)
 const sort = ref(0)
-const flagCategry = ref(false)
+const isCategory = ref(computed(() => props.propsPage?.includes('-category')))
 const editor = ref(null)
+const stateCategory = ref(null)
 
+// Computed
+const calendarAttributes = computed(() => [
+  {
+    highlight: true,
+    dates: new Date(),
+  },
+])
+const disabledDates = computed(() => {
+  const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
+  return [{ start: null, end: yesterday }]
+})
+
+// Methods
 // Функция обработки изменения даты
 const handleDateChange = (timestamp = false) => {
   if (timestamp) {
     const date = new Date(timestamp)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = date.getFullYear()
-    formattedDate.value = `${day}.${month}.${year}`
+    formattedDate.value = formDate(date)
+    timestampPublish.value = date.getTime()
+    return
   }
   if (dateRange.value) {
     const date = new Date(dateRange.value)
-    formattedDate.value = date
-      .toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
-      .replace(/\//g, '.')
+    formattedDate.value = formDate(date)
     timestampPublish.value = date.getTime()
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
   }
+}
+
+const formDate = (date) => {
+  return date
+    .toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+    .replace(/\//g, '.')
 }
 
 // Переключение видимости календаря
@@ -104,8 +99,9 @@ const toggleCalendar = () => {
 // Загрузка изображения
 const handleImageUpload = async (event) => {
   try {
-    await uploadPhoto(event, false, false, false, true)
-    const imageUrl = formData.image
+    const file = event.target.files[0]
+    const imageUrl = await uploadFile(file)
+    formData.image = imageUrl
     editor.value
       .chain()
       .focus()
@@ -117,136 +113,77 @@ const handleImageUpload = async (event) => {
   }
 }
 
-// Добавление изображения через URL
-// const addImage = () => {
-//   const url = window.prompt('URL')
-//   if (url) {
-//     editor.value.chain().focus().setImage({ src: url }).run()
-//   }
-// }
-
-// Загрузка фото
-const uploadPhoto = async (event, dopBanner = false, headerBanner = false, dopBanner2 = false, content = false) => {
-  let file
-  if (headerBanner) {
-    file = document.getElementById('headerBanner')?.files[0]
-  } else if (dopBanner) {
-    file = document.getElementById('dopBanner')?.files[0]
-  } else if (dopBanner2) {
-    file = document.getElementById('dopBanner2')?.files[0]
-  } else {
-    file = event.target.files[0]
-  }
-
-  if (!file) return
-
-  const validFileTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-  if (!validFileTypes.includes(file.type)) {
-    alert('Можно загружать только файлы формата JPG, PNG, GIF, WEBP или SVG.')
-    return
-  }
-
-  const uploadFormData = new FormData()
-  uploadFormData.append('UploadForm[file]', file)
-  uploadFormData.append('folder', 'users/avatar')
-  uploadFormData.append('filenamePrefix', 'avatar_')
-
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-
+const handleBannerUpload = async (event, bannerType) => {
   try {
-    const response = await axios.post(`${apiUrl.value}upload${authGet}`, uploadFormData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-
-    if (dopBanner) dopBannerSrc.value = response.data
-    else if (headerBanner) headerBannerSrc.value = response.data
-    else if (dopBanner2) dopBannerSrc2.value = response.data
-    else if (content) formData.image = response.data
-    else srcPhoto.value = response.data
+    const file = event.target.files[0]
+    const imageUrl = await uploadFile(file)
+    images.value[bannerType] = imageUrl
   } catch (error) {
-    console.error('Ошибка:', error)
-    alert('Ошибка при загрузке фото. Попробуйте еще раз.')
+    console.error('Ошибка загрузки баннера:', error)
+    alert(error.message)
+  }
+}
+
+const fetchData = async (endpoint, stateProperty) => {
+  try {
+    const response = await makeRequest(endpoint)
+    stateCategory.value = response.data[stateProperty] || response.data
+  } catch (error) {
+    console.error(`Ошибка получения ${stateProperty}:`, error)
   }
 }
 
 // Получение категорий
-const getCategories = async () => {
-  if (!flagCategry.value && !['news', 'theme', 'notify', 'blogger'].includes(props.propsPage)) {
-    const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-    try {
-      const response = await axios.get(`${apiUrl.value}api-${props.propsPage}-category/get-list${authGet}`)
-      categoriesReset.value = response.data.categories
-    } catch (error) {
-      console.error('Ошибка получения категорий:', error)
-    }
+const getCategories = () => {
+  if (!isCategory.value && !['news', 'theme', 'notify', 'blogger'].includes(props.propsPage)) {
+    return fetchData(`api-${props.propsPage}`, 'categories')
   }
 }
 
-// Получение блогеров
-const getBloggers = async () => {
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  try {
-    const response = await axios.get(`${apiUrl.value}api-blogger/get-list${authGet}`)
-    bloggerReset.value = response.data.bloggers
-  } catch (error) {
-    console.error('Ошибка получения блогеров:', error)
+const getBloggers = () => {
+  if (props.propsPage === 'video') {
+    return fetchData('api', 'bloggers')
   }
 }
+
+const getThemes = () => fetchData('api', 'themes')
 
 // Сохранение контента
 const saveContent = async () => {
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  let params = {}
-
-  if (flagCategry.value) {
-    params = {
-      name: formData.title,
-      description: formData.shortText,
-    }
-    if (props.item) params.id = props.item.id
-    try {
-      await axios.post(`${apiUrl.value}api-${props.propsPage}/${props.item ? 'update' : 'set'}${authGet}`, params)
-      toast.success('Сохранено', { autoClose: 1000 })
-    } catch (error) {
-      toast.error(`Произошла ошибка: ${error}`, { autoClose: 1000 })
-    }
-    return
-  }
-
-  if (props.propsPage === 'products') {
-    console.log(props.propsPage)
-    params = {
-      theme_id: formData.theme,
-      category_id: formData.categorieId,
-      title: formData.title,
-      description: formData.shortText,
-      link: formData.audio,
-      date_add: new Date(),
-      pic: srcPhoto.value,
-      sort: sort.value,
-      date_publication: timestampPublish.value / 1000,
-    }
-  }
-
-  if (props.item) params.id = props.item.id
-
   try {
-    await axios.post(`${apiUrl.value}api-${props.propsPage}/${props.item ? 'update' : 'set'}${authGet}`, params)
+    const endpoint = `api-${props.propsPage}/${props.item ? 'update' : 'set'}`
+    const params = buildParams()
+
+    await makeRequest(endpoint, params, 'post')
     toast.success('Сохранено', { autoClose: 1000 })
   } catch (error) {
     toast.error(`Произошла ошибка: ${error}`, { autoClose: 1000 })
   }
 }
 
-// Получение тем
-const getThemes = async () => {
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  try {
-    const response = await axios.get(`${apiUrl.value}api-theme/get-list${authGet}`)
-    themesReset.value = response.data.themes
-  } catch (error) {
-    console.error('Ошибка получения тем:', error)
+const buildParams = () => {
+  if (isCategory.value) {
+    return {
+      name: formData.title,
+      description: formData.shortText,
+      ...(props.item && { id: props.item.id }),
+    }
   }
+
+  const baseParams = {
+    theme_id: formData.theme,
+    category_id: formData.categorieId,
+    title: formData.title,
+    description: formData.shortText,
+    link: formData.audio,
+    date_add: new Date(),
+    pic: images.srcPhoto,
+    sort: sort,
+    date_publication: timestampPublish.value / 1000,
+    ...(props.item && { id: props.item.id }),
+  }
+
+  return baseParams
 }
 
 // Сохранение теста
@@ -255,113 +192,55 @@ const handleSaveTest = (test) => {
   toast.success('Тест сохранен', { autoClose: 1000 })
 }
 
-// Отправка теста на сервер
-const sendToServer = async () => {
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  if (!testData.value) {
-    alert('Сначала сохраните тест.')
-    return
-  }
-
-  try {
-    if (props.item) {
-      await axios.post(`${apiUrl.value}api-test/update${authGet}`, {
-        id: props.item.id,
-        theme_id: formData.theme,
-        category_id: formData.categorieId,
-        name: testData.value.name,
-        description: testData.value.description,
-        photo: srcPhoto.value,
-      })
-
-      const questionResponse = await axios.get(`${apiUrl.value}api-test-q/get-list${authGet}&test_id=${props.item.id}`)
-      const questionIds = questionResponse.data.qs
-
-      for (const q of questionIds) {
-        const answersResponse = await axios.get(`${apiUrl.value}api-test-a/get-list${authGet}&question_id=${q.id}`)
-        for (const answer of answersResponse.data.answer) {
-          await axios.post(`${apiUrl.value}api-test-a/del${authGet}`, { id: answer.id })
-        }
-        await axios.post(`${apiUrl.value}api-test-q/del${authGet}`, { id: q.id })
-      }
-
-      for (let i = 0; i < testData.value.questions.length; i++) {
-        const question = testData.value.questions[i]
-        const questionResponse = await axios.post(
-          `${apiUrl.value}api-test-q/set${authGet}`,
-          {
-            test_id: props.item.id,
-            question: question.question,
-            sort: i,
-          },
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        )
-
-        const questionId = questionResponse.data.testQ.id
-        for (let j = 0; j < question.answers.length; j++) {
-          const answer = question.answers[j]
-          await axios.post(`${apiUrl.value}api-test-a/set${authGet}`, {
-            question_id: questionId,
-            text: answer.text,
-            points: answer.points,
-            sort: j,
-          })
-        }
-      }
-    } else {
-      const testResponse = await axios.post(`${apiUrl.value}api-test/set${authGet}`, {
-        theme_id: formData.theme,
-        category_id: formData.categorieId,
-        name: testData.value.name,
-        description: testData.value.description,
-        photo: srcPhoto.value,
-      })
-
-      const testId = testResponse.data.test.id
-      for (let i = 0; i < testData.value.questions.length; i++) {
-        const question = testData.value.questions[i]
-        const questionResponse = await axios.post(
-          `${apiUrl.value}api-test-q/set${authGet}`,
-          {
-            test_id: testId,
-            question: question.question,
-            sort: i,
-          },
-          { headers: { 'Content-Type': 'multipart/form-data' } }
-        )
-
-        const questionId = questionResponse.data.testQ.id
-        for (let j = 0; j < question.answers.length; j++) {
-          const answer = question.answers[j]
-          await axios.post(`${apiUrl.value}api-test-a/set${authGet}`, {
-            question_id: questionId,
-            text: answer.text,
-            points: answer.points,
-            sort: j,
-          })
-        }
-      }
-
-      toast.success('Тест успешно сохранен!', { autoClose: 1000 })
+const initializeEditorData = () => {
+  if (props.propsPage === 'test') {
+    images.value.srcPhoto = props.item?.photo
+    testData.value = {
+      name: props.item?.name,
+      description: props.item?.description,
+      questions: [],
     }
-  } catch (error) {
-    console.error('Ошибка при отправке теста:', error)
-    toast.error('Ошибка при сохранении теста.')
+  } else {
+    const itemData = props.item || {}
+
+    formData.shortText = itemData.description || itemData.short_text || itemData.text
+    formData.text = itemData.content || itemData.text
+    formData.title = itemData.title || itemData.name
+    formData.categorieId = itemData.category_id
+    formData.link = itemData.link
+    formData.audio = itemData.link
+
+    images.value.srcPhoto = itemData.title_photo || itemData.poster || itemData.podcast_banner || itemData.pic
+    images.value.dopBanner = itemData.banner
+    images.value.dopBanner2 = itemData.banner_full
+    images.value.headerBanner = itemData.img
+
+    dopQuote.value = itemData.quote
+    sort.value = itemData.sort
+    timestampPublish.value = itemData.date_publication * 1000
+    bloggerId.value = itemData.blogger_id
+  }
+
+  if (timestampPublish.value) {
+    handleDateChange(timestampPublish.value)
   }
 }
 
-// Получение вопросов
-const getQuestions = async (testId) => {
-  const authGet = `&auth=${user.value.username}:${user.value.auth_key}`
-  try {
-    const response = await axios.get(`${apiUrl.value}api-test-q/get-list&test_id=${testId}${authGet}`)
-    return response.data.qs
-  } catch (error) {
-    console.error('Ошибка получения вопросов:', error)
-  }
-}
+// Lifecycle
+onMounted(async () => {
+  formData.type = props.propsPage
 
-// Наблюдение за modelValue
+  await Promise.all([getCategories(), getThemes(), getBloggers()])
+
+  initializeEditorData()
+})
+
+onBeforeUnmount(() => {
+  if (editor.value) {
+    editor.value.destroy()
+  }
+})
+// Watchers
 watch(
   () => props.modelValue,
   (value) => {
@@ -371,79 +250,15 @@ watch(
   }
 )
 
-// Инициализация при монтировании
-onMounted(async () => {
-  if (props.propsPage.includes('-category')) {
-    flagCategry.value = true
-  }
-  formData.type = props.propsPage
+watch(() => dateRange.value, handleDateChange)
 
-  await getCategories()
-  await getThemes()
-  if (props.propsPage === 'video') {
-    await getBloggers()
-  }
-
-  if (props.propsPage === 'test') {
-    srcPhoto.value = props.item?.photo
-    testData.value = {
-      name: props.item?.name,
-      description: props.item?.description,
-      questions: [],
-    }
-    try {
-      const questions = await getQuestions(props.item?.id)
-      testData.value.questions = questions
-    } catch (error) {
-      console.error('Ошибка при загрузке вопросов:', error)
-    }
-  } else {
-    itemData.value = props.item || {}
-    formData.shortText = itemData.value?.description || itemData.value?.short_text || itemData.value?.text
-    formData.text = itemData.value?.content || itemData.value?.text
-    formData.title = itemData.value?.title || itemData.value?.name
-    formData.categorieId = itemData.value?.category_id
-    formData.link = itemData.value?.link
-    formData.audio = itemData.value?.link
-    srcPhoto.value =
-      itemData.value?.title_photo ||
-      itemData.value?.poster ||
-      itemData.value?.podcast_banner ||
-      itemData.value?.pic ||
-      null
-    dopBannerSrc.value = itemData.value?.banner || null
-    dopBannerSrc2.value = itemData.value?.banner_full || null
-    dopQuote.value = itemData.value?.quote || null
-    sort.value = itemData.value?.sort
-    timestampPublish.value = itemData.value?.date_publication * 1000 || null
-    bloggerId.value = itemData.value?.blogger_id
-  }
-
-  if (timestampPublish.value) {
-    handleDateChange(timestampPublish.value)
-  }
-
-  // editor.value = new Editor({
-  //   content: formData.text,
-  //   extensions: [
-  //     Document,
-  //     Paragraph,
-  //     Text,
-  //     Image,
-  //     Dropcursor,
-  //     StarterKit.configure({
-  //       heading: {
-  //         levels: [1, 2, 3],
-  //       },
-  //     }),
-  //     Image,
-  //   ],
-  //   onUpdate: ({ editor }) => {
-  //     formData.text = editor.getHTML()
-  //     emit('update:modelValue', formData.text)
-  //   },
-  // })
-})
+// Добавление изображения через URL
+// const addImage = () => {
+//   const url = window.prompt('URL')
+//   if (url) {
+//     editor.value.chain().focus().setImage({ src: url }).run()
+//   }
+// }
 
 // Очистка перед размонтированием
 onBeforeUnmount(() => {
@@ -455,7 +270,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="content-editor">
-    <!-- <div class="wrap-calendar">
+    <div class="wrap-calendar">
       <div class="price__item-btnCalendar" @click="toggleCalendar" ref="button">
         {{ formattedDate }}
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -472,85 +287,38 @@ onBeforeUnmount(() => {
       <div v-if="isCalendarVisible" class="calendar-container" ref="calendar">
         <VDatePicker
           v-model="dateRange"
-          :attributes="attributes"
+          :attributes="calendarAttributes"
           :disabled-dates="disabledDates"
           mode="dateTime"
           is24hr
           :columns="1"
           :is-range="false"
           @click:outside="isCalendarVisible = false"
-          @update:model-value="handleDateChange()"
         />
-        <VCalendar />
       </div>
-    </div> -->
+    </div>
     <div v-if="propsPage != 'test'" class="form-group">
       <label for="title">Наименование</label>
-      <input
-        type="text"
-        v-model="formData.title"
-        value="{{itemData?.title || itemData?.name}}"
-        placeholder="Название"
-      />
+      <input type="text" v-model="formData.title" placeholder="Название" />
     </div>
     <div v-if="propsPage == 'test'" class="form-group">
-      <test-element v-if="!testData" :initialTestData="testData" @save="handleSaveTest" />
-      <test-element v-if="testData?.questions" :initialTestData="testData" @save="handleSaveTest" />
+      <test-element :initialTestData="testData" @save="handleSaveTest" />
     </div>
-    <div
-      v-if="propsPage === 'podcast-category' || propsPage === 'video-category' || propsPage === 'news-category'"
-      class="form-group"
-    >
+    <div v-if="['podcast-category', 'video-category', 'news-category'].includes(propsPage)" class="form-group">
       <label for="text">Краткое описание</label>
-      <textarea
-        v-model="formData.shortText"
-        placeholder="Введите текст"
-        value="{{itemData?.description || itemData?.short_text}}"
-        rows="5"
-      ></textarea>
+      <textarea v-model="formData.shortText" placeholder="Введите текст" rows="5"></textarea>
     </div>
     <!-- Поле для загрузки изображения -->
 
     <div v-if="propsPage === 'theme'" class="form-group">
       <label for="image">Баннер страницы темы Шапка</label>
-      <input
-        accept=".jpg,.jpeg,.png,.gif,.webp,.svg"
-        type="file"
-        id="headerBanner"
-        @change="uploadPhoto(event, false, true)"
+      <input accept="image/*" type="file" @change="handleBannerUpload($event, 'headerBanner')" />
+      <img
+        v-if="images.headerBanner"
+        :src="`${apiDomain}/web/uploads/${state.images.headerBanner}`"
+        alt="Preview"
+        class="image-preview"
       />
-      <div v-if="!headerBannerSrc">
-        <img
-          v-if="itemData?.img"
-          :src="apiDomain + 'web/uploads/' + itemData?.img"
-          alt="Preview"
-          class="image-preview"
-        />
-      </div>
-      <div v-if="headerBannerSrc">
-        <img :src="apiDomain + 'web/uploads/' + headerBannerSrc" alt="Preview" class="image-preview" />
-      </div>
-    </div>
-
-    <div v-if="!this.flagCategry && propsPage != 'notify'" class="form-group">
-      <label v-if="propsPage != 'theme'" for="image">Изображение</label>
-      <label v-if="propsPage === 'theme'" for="image">Баннер подкастов</label>
-      <input accept=".jpg,.jpeg,.png,.gif,.webp,.svg" type="file" @change="uploadPhoto" />
-      <div v-if="!srcPhoto">
-        <img
-          v-if="itemData?.title_photo || itemData?.poster || itemData?.podcast_banner"
-          :src="apiDomain + 'web/uploads/' + itemData?.title_photo || itemData?.poster || itemData?.podcast_banner"
-          alt="Preview"
-          class="image-preview"
-        />
-      </div>
-      <div v-if="srcPhoto">
-        <img :src="apiDomain + 'web/uploads/' + srcPhoto" alt="Preview" class="image-preview" />
-      </div>
-    </div>
-    <div v-if="propsPage === 'book' || propsPage === 'material'" class="form-group">
-      <label for="image">Файл книги / материала</label>
-      <input accept=".pdf,.epub,.fb2" type="file" id="fileBook" @change="uploadBook" />
     </div>
     <div v-if="propsPage === 'theme'" class="form-group">
       <label for="image">Баннер страницы темы</label>
@@ -570,6 +338,23 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="dopBannerSrc">
         <img :src="apiDomain + 'web/uploads/' + dopBannerSrc" alt="Preview" class="image-preview" />
+      </div>
+    </div>
+
+    <div v-if="!this.flagCategry && propsPage != 'notify'" class="form-group">
+      <label v-if="propsPage != 'theme'" for="image">Изображение</label>
+      <label v-if="propsPage === 'theme'" for="image">Баннер подкастов</label>
+      <input accept=".jpg,.jpeg,.png,.gif,.webp,.svg" type="file" @change="uploadPhoto" />
+      <div v-if="!srcPhoto">
+        <img
+          v-if="itemData?.title_photo || itemData?.poster || itemData?.podcast_banner"
+          :src="apiDomain + 'web/uploads/' + itemData?.title_photo || itemData?.poster || itemData?.podcast_banner"
+          alt="Preview"
+          class="image-preview"
+        />
+      </div>
+      <div v-if="srcPhoto">
+        <img :src="apiDomain + 'web/uploads/' + srcPhoto" alt="Preview" class="image-preview" />
       </div>
     </div>
     <div v-if="propsPage === 'theme'" class="form-group">
