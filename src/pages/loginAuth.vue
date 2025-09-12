@@ -34,11 +34,28 @@ const goLogin = () => {
     .then((response) => {
       if (response.data.id) {
         cookies.set('user-id', response.data.id)
+        cookies.set('user-bearer', response.data.bearer)
+        getUser(response.data.id, response.data.bearer)
         router.push('/admin')
         toast.success('Успешная авторизация')
       } else {
         toast.error('Неправильный логин или пароль')
       }
+    })
+    .catch((error) => {
+      console.error(error)
+    })
+}
+const getUser = (id, token) => {
+  axios
+    .get(apiDomain + '/users/' + id, {
+      headers: {
+        Authorization: 'Bearer ' + token,
+      },
+    })
+    .then((response) => {
+      store.setUser(response.data)
+      console.log(response.data)
     })
     .catch((error) => {
       console.error(error)
