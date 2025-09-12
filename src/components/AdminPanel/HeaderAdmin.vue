@@ -20,7 +20,6 @@
 }
 .link {
   color: #383838;
-  font-family: Onest;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;

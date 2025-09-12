@@ -32,9 +32,9 @@ const filteredCategories = computed(() => {
   } else if (sortBy.value === 'idDesc') {
     return filtered.sort((a, b) => b.id - a.id)
   } else if (sortBy.value === 'nameAsc') {
-    return filtered.sort((a, b) => a.name.localeCompare(b.name))
+    return filtered.sort((a, b) => a.Name.localeCompare(b.Name))
   } else if (sortBy.value === 'nameDesc') {
-    return filtered.sort((a, b) => b.name.localeCompare(a.name))
+    return filtered.sort((a, b) => b.Name.localeCompare(a.Name))
   }
   return filtered
 })
@@ -49,15 +49,7 @@ const sortByF = (event, asc) => {
   item.classList.add('active')
   sortBy.value = asc
 }
-const sortByIdDesc = () => {
-  sortBy.value = 'idDesc'
-}
-const sortByNameAsc = () => {
-  sortBy.value = 'nameAsc'
-}
-const sortByNameDesc = () => {
-  sortBy.value = 'nameDesc'
-}
+
 // Метод для навигации к компоненту категории
 const goToCategory = (item, type) => {
   item.type = type
@@ -88,21 +80,21 @@ const deleteCategory = async (id) => {
   }
 }
 const getContent = () => {
-  console.log(user.value.bearer)
   const config = {
     headers: {
       Authorization: `Bearer ${user.value.bearer}`,
     },
   }
+
   axios.get(apiUrl.value + '/' + props.propsPage, config).then((response) => {
     categories.value = response.data
   })
 }
 
 // Метод для добавления категории
-const addCategory = () => {
-  emit('goToCategory')
-}
+// const addCategory = () => {
+//   emit('goToCategory')
+// }
 
 onMounted(() => getContent())
 watch(
@@ -116,9 +108,9 @@ watch(
 <template>
   <div class="categories">
     <!-- Кнопка для добавления категории -->
-    <div class="categories__actions">
+    <!-- <div class="categories__actions">
       <button class="btn-white" @click="addCategory">Добавить</button>
-    </div>
+    </div> -->
 
     <!-- Поиск и фильтры -->
     <div class="categories__filters">
@@ -144,6 +136,7 @@ watch(
           <td>{{ category.id }}</td>
           <td @click="goToCategory(category, propsPage)" class="category-name">
             {{ category?.Name || category?.title }}
+            {{ category.exists }}
           </td>
           <td class="table-actions">
             <button class="btn-white" @click="goToCategory(category, propsPage)">
@@ -164,7 +157,14 @@ watch(
                 />
               </svg>
             </button>
-            <button v-if="!categories.Group" class="btn-white btn-danger" @click="deleteCategory(category.id)">
+            <!-- <button v-if="!categories.Group " class="btn-white btn-danger" @click="deleteCategory(category.id)"> -->
+            <button
+              v-if="!categories.Group"
+              class="btn-white"
+              :class="{
+                'btn-danger': category.exists === 0,
+              }"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -230,10 +230,6 @@ td {
   text-decoration: underline;
 }
 
-.btn-danger {
-  background-color: #e90037;
-  color: white;
-}
 .btn-white {
   color: #5f22c1;
   text-align: center;
@@ -251,6 +247,10 @@ td {
   width: max-content;
   padding: 8px;
   cursor: pointer;
+}
+.btn-danger {
+  background-color: #e90037;
+  color: white;
 }
 .table-actions {
   display: flex;
