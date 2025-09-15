@@ -75,7 +75,6 @@ onMounted(() => {
 <style scoped>
 .wrapperAcc {
   display: flex;
-  background: #f5f7f8;
   padding-right: 30px;
   gap: 51px;
 }
@@ -85,7 +84,7 @@ onMounted(() => {
   top: 0;
   height: 100vh;
   flex-shrink: 0;
-  background: #333333;
+  background: #464649;
 }
 .info {
   width: 100%;

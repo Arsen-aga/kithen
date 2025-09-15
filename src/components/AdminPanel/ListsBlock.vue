@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useDefaultItems } from '@/stores/default'
 import axios from 'axios'
-import router from '@/router/router'
 
 const props = defineProps({
   propsPage: String,
@@ -55,30 +54,7 @@ const goToCategory = (item, type) => {
   item.type = type
   emit('goToCategory', item)
 }
-// Метод для редактирования категории
-const editCategory = (category) => {
-  router.push({ name: 'EditCategory', params: { id: category.id } })
-}
-// Метод для удаления категории
-const deleteCategory = async (id) => {
-  if (confirm('Вы уверены, что хотите удалить этот элемент?')) {
-    let authGet = `&auth=${user.value.name}:${user.value.bearer}`
-    let params = {
-      id: id,
-    }
 
-    try {
-      await axios.post(apiUrl.value + 'api-' + props.propsPage + '/del' + authGet, params, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      getContent() // обновить данные после удаления
-    } catch (error) {
-      console.error('Ошибка при удалении категории:', error)
-    }
-  } else {
-    console.log('Удаление отменено пользователем')
-  }
-}
 const getContent = () => {
   const config = {
     headers: {
@@ -90,11 +66,6 @@ const getContent = () => {
     categories.value = response.data
   })
 }
-
-// Метод для добавления категории
-// const addCategory = () => {
-//   emit('goToCategory')
-// }
 
 onMounted(() => getContent())
 watch(
@@ -216,8 +187,9 @@ td {
 }
 
 th {
-  background-color: #f1f1f1;
+  background-color: #707070;
   font-weight: bold;
+  color: #fff;
 }
 
 td {
@@ -233,7 +205,6 @@ td {
 .btn-white {
   color: #5f22c1;
   text-align: center;
-  font-family: 'Proxima Nova';
   font-size: 16px;
   font-style: normal;
   font-weight: 600;

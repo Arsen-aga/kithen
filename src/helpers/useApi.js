@@ -9,8 +9,6 @@ export const useApi = () => {
   const apiDomain = computed(() => store.getApiDomain)
 
   const makeRequest = async (endpoint, data = null, method = 'get') => {
-    const auth = `&auth=${user.value.username}:${user.value.auth_key}`
-
     try {
       const config = {
         headers: {
@@ -18,7 +16,7 @@ export const useApi = () => {
         },
       }
 
-      const url = `${apiUrl.value}${endpoint}${auth}`
+      const url = `${apiUrl.value}${endpoint}`
 
       if (method === 'get') {
         return await axios.get(url, config)
