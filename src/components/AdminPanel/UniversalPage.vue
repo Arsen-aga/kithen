@@ -74,6 +74,38 @@ const uploadImages = async () => {
     }
   })
 }
+const uploadImagesTEST = async () => {
+  const endpoint = `https://xn--b1agnepfhjfgc3i.fun/ApiConnector2.php`
+  images.value.forEach(async (img) => {
+    let params = {
+      action: "uploads",
+      method: "POSTFILE",
+      token: token,
+    };
+    let formData = new FormData()
+    for (let key in params) {
+      formData.append(key, params[key]);
+    }
+    formData.append("file", img.file);
+    formData.append("body[folder]", "users/avatar");
+    formData.append("body[filenamePrefix]", "avatar");
+    formData.append("headers[]", "Content-Type: multipart/form-data");
+
+    try {
+      let resImg = await axios.post(endpoint,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+      console.log('resImg: ', resImg)
+    } catch (error) {
+      console.error('Ошибка:', error)
+      alert('Ошибка при загрузке фото. Попробуйте еще раз.')
+    }
+  })
+}
 
 // Сохранение контента
 const saveContent = async () => {
