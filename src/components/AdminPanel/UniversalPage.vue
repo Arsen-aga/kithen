@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios'
 import { ref, computed, onMounted, watch } from 'vue'
-import { useApi } from '@/helpers/useApi'
+import { useMultiUploadImages } from '@/helpers/useMultiUploadImages'
 import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
@@ -21,9 +21,6 @@ const props = defineProps({
 // Эмиты
 defineEmits(['update:modelValue'])
 
-// Helpers
-const { makeRequest } = useApi()
-
 // Реактивные переменные
 const timestampPublish = ref(null)
 
@@ -33,16 +30,15 @@ const formData = ref({
   type: 'text',
   // Заголовок
   title: '',
-  // картинки
-  images: [],
   // Ссылка на видео
-  videoUrl: '',
+  video: '',
 
   text: props.modelValue || '',
 })
 
 // массив загрузки картинок
 const images = ref([])
+const imagesSrc = ref([])
 
 // Computed
 
@@ -52,64 +48,34 @@ const disabledDates = computed(() => {
 })
 
 // Methods
-const uploadImages = async () => {
-  const endpoint = `https://back.love-kitchen.ru/web/index.php/uploads`
-  images.value.forEach(async (img) => {
-    let newFormData = new FormData()
-    newFormData.append('UploadForm[file]', img.file)
-    newFormData.append('folder', 'users/avatar')
-    newFormData.append('filenamePrefix', 'avatar_')
+// const uploadImages = useMultiUploadImages(`uploads/file`, token, props.item.id, images.value)
+// const uploadImages = async () => {
+//   const endpoint = `https://back.love-kitchen.ru/web/index.php/uploads/file`
+//   images.value.forEach(async (img) => {
+//     let newFormData = new FormData()
+//     newFormData.append('UploadForm[file]', img.file)
+//     newFormData.append('folder', `products/${props.item.id}`)
+//     newFormData.append('filenamePrefix', 'product_')
 
-    try {
-      let resImg = await axios.post(endpoint, newFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: 'Bearer ' + token,
-        },
-      })
-      console.log('resImg: ', resImg)
-    } catch (error) {
-      console.error('Ошибка:', error)
-      alert('Ошибка при загрузке фото. Попробуйте еще раз.')
-    }
-  })
-}
-const uploadImagesTEST = async () => {
-  const endpoint = `https://xn--b1agnepfhjfgc3i.fun/ApiConnector2.php`
-  images.value.forEach(async (img) => {
-    let params = {
-      action: "uploads",
-      method: "POSTFILE",
-      token: token,
-    };
-    let formData = new FormData()
-    for (let key in params) {
-      formData.append(key, params[key]);
-    }
-    formData.append("file", img.file);
-    formData.append("body[folder]", "users/avatar");
-    formData.append("body[filenamePrefix]", "avatar");
-    formData.append("headers[]", "Content-Type: multipart/form-data");
-
-    try {
-      let resImg = await axios.post(endpoint,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-      console.log('resImg: ', resImg)
-    } catch (error) {
-      console.error('Ошибка:', error)
-      alert('Ошибка при загрузке фото. Попробуйте еще раз.')
-    }
-  })
-}
+//     try {
+//       let resImg = await axios.post(endpoint, newFormData, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//           Authorization: 'Bearer ' + token,
+//         },
+//       })
+//       console.log('resImg: ', resImg)
+//     } catch (error) {
+//       console.error('Ошибка:', error)
+//       alert('Ошибка при загрузке фото. Попробуйте еще раз.')
+//     }
+//   })
+// }
 
 // Сохранение контента
 const saveContent = async () => {
-  await uploadImages()
+  imagesSrc.value = await useMultiUploadImages(`uploads/file`, token, props.item.id, images.value)
+  if (imagesSrc.value && imagesSrc.value.length > 0) console.log(imagesSrc.value)
   return
   try {
     const endpoint = `https://api.24pteam.ru/web/index.php/uploads`
@@ -126,7 +92,7 @@ const buildParams = () => {
   const baseParams = {
     title: formData.value.title,
     date_add: new Date(),
-    pic: images.value,
+    pic: imagesSrc.value,
     date_publication: timestampPublish.value ? Math.floor(timestampPublish.value / 1000) : null,
     ...(props.item && { id: props.item.id }),
   }

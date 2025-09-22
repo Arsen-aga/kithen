@@ -8,6 +8,8 @@ const menuItems = ref([
     subcategories: [
       { name: 'Группы товаров', category: 'product-groups' },
       { name: 'Все товары', category: 'products' },
+      { name: 'Группы атрибутов', category: 'attribute-groups' },
+      { name: 'Атрибуты', category: 'attribute' },
     ],
     open: false,
   },
