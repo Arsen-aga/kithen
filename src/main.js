@@ -1,5 +1,6 @@
 import './assets/css/main.css'
 import 'v-calendar/style.css'
+import "vue3-toastify/dist/index.css";
 import router from './router/router'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

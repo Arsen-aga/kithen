@@ -44,6 +44,7 @@ const goLogin = () => {
       }
     })
     .catch((error) => {
+      toast.error('Неправильный логин или пароль')
       console.error(error)
     })
 }
