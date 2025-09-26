@@ -1,4 +1,4 @@
-import { ref, onBeforeMount, watch, onMounted } from 'vue'
+import { ref, onBeforeMount, nextTick, onMounted } from 'vue'
 import { useCookies } from 'vue3-cookies'
 import { useRouter, useRoute } from 'vue-router'
 import { useDefaultItems } from '@/stores/default'
@@ -42,7 +42,7 @@ export function useAuth() {
 
       await getUser(data.id, data.bearer)
 
-      router.replace('/admin') // заменяем URL, убираем ?token=...
+      router.replace('/') // заменяем URL, убираем ?token=...
       toast.success('Успешная авторизация')
     } catch (error) {
       console.error(error)
@@ -52,8 +52,10 @@ export function useAuth() {
   }
 
   onMounted(async () => {
-    const token = route.query?.token
-    console.log('TOKEN:', token)
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    console.log('TOKEN:',token);
 
     if (token) {
       await loginWithToken(token)
@@ -62,7 +64,7 @@ export function useAuth() {
       userBearer.value = cookies.get('user-bearer')
 
       if (!userId.value || !userBearer.value) {
-        // router.push('/login')
+        router.push('/login')
       } else {
         await getUser(userId.value, userBearer.value)
       }
@@ -70,14 +72,14 @@ export function useAuth() {
   })
 
   // на случай если route поменяется после загрузки
-  watch(
-    () => route.query.token,
-    async (token) => {
-      if (token) {
-        await loginWithToken(token)
-      }
-    }
-  )
+  // watch(
+  //   () => route.query.token,
+  //   async (token) => {
+  //     if (token) {
+  //       await loginWithToken(token)
+  //     }
+  //   }
+  // )
 
   return {
     userId,
