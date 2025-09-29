@@ -16,10 +16,8 @@ const updatePage = ref(false)
 const propsPage = ref('metrika')
 const itemPage = ref(null)
 
-const goToCategory = (item = false) => {
-  if (item) {
-    itemPage.value = item
-  }
+const goToCategory = (item = null) => {
+  itemPage.value = item
   list.value = false
   updatePage.value = true
 }
@@ -31,6 +29,12 @@ const goTo = (item) => {
     case 'product-groups':
       propsPage.value = 'product-groups'
       break
+    case 'product-attribute-groups':
+      propsPage.value = 'product-attribute-groups'
+      break
+    case 'product-attributes':
+      propsPage.value = 'product-attributes'
+      break
     case 'users':
       propsPage.value = 'users'
       break
@@ -38,10 +42,10 @@ const goTo = (item) => {
       propsPage.value = 'notify'
       break
   }
-  if (!list.value) {
-    list.value = true
-    updatePage.value = false
-  }
+
+  list.value = true
+  updatePage.value = false
+  itemPage.value = null
 }
 
 onMounted(() => {
@@ -61,17 +65,12 @@ onMounted(() => {
     <div class="info">
       <HeaderAdmin />
       <!-- <metrika-block v-if="propsPage == 'metrika'" /> -->
-      <ListsBlock
-        v-if="list && propsPage != 'metrika'"
-        @goToCategory="goToCategory"
-        :propsPage="propsPage"
-        :type="typePage"
-      />
-      <UniversalPage v-if="updatePage && !itemPage && propsPage != 'metrika'" :propsPage="propsPage" />
-      <UniversalPage v-if="updatePage && itemPage && propsPage != 'metrika'" :propsPage="propsPage" :item="itemPage" />
+      <ListsBlock v-if="list && propsPage != 'metrika'" @goToCategory="goToCategory" :propsPage="propsPage" />
+      <UniversalPage v-if="updatePage && propsPage != 'metrika'" :propsPage="propsPage" :item="itemPage" />
     </div>
   </div>
 </template>
+
 <style scoped>
 .wrapperAcc {
   display: flex;

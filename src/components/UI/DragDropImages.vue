@@ -7,6 +7,7 @@ const props = defineProps({
     type: Array,
     default: () => Array,
   },
+  multiple: String,
 })
 const fileInput = ref(null)
 const isDragActive = ref(false)
@@ -83,7 +84,14 @@ const dragLeave = () => {
     <!-- Кнопка для выбора файлов -->
     <button @click="triggerFileInput" class="btn-white">Добавить изображение</button>
     <!-- Скрытый input -->
-    <input type="file" ref="fileInput" multiple accept="image/*" @change="handleFileUpload" style="display: none" />
+    <input
+      type="file"
+      ref="fileInput"
+      :multiple="multiple"
+      accept="image/*"
+      @change="handleFileUpload"
+      style="display: none"
+    />
 
     <!-- Область для перетаскивания -->
     <div
@@ -137,6 +145,7 @@ const dragLeave = () => {
   padding: 10px;
   margin-top: 20px;
   min-height: 200px;
+  font-size: 14px;
 }
 
 .drag-active {
@@ -151,8 +160,8 @@ const dragLeave = () => {
 }
 
 .image-item img {
-  width: 100px;
-  height: 100px;
+  width: 175px;
+  height: 175px;
   object-fit: cover;
   cursor: pointer;
 }

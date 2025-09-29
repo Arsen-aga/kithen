@@ -2,10 +2,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useDefaultItems } from '@/stores/default'
 import axios from 'axios'
-
+import { toast } from 'vue3-toastify'
 const props = defineProps({
   propsPage: String,
-  typePage: String,
 })
 
 const emit = defineEmits(['goToCategory'])
@@ -16,24 +15,46 @@ const sortBy = ref('idAsc') // Возможные значения: idAsc, idDes
 const categories = ref([])
 const user = ref(store.getUser)
 const apiUrl = ref(store.getApiDomain)
+const attributeGroups = ref([])
+console.log(store.getBearer)
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
   console.log(categories.value)
   let filtered = []
   if (Array.isArray(categories.value)) {
-    filtered = categories.value?.filter((category) =>
-      category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
+    filtered = categories.value?.filter((category) => {
+      if (category.Name) {
+        return category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      } else {
+        return category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      }
+    })
   }
   if (sortBy.value === 'idAsc') {
     return filtered.sort((a, b) => a.id - b.id)
   } else if (sortBy.value === 'idDesc') {
     return filtered.sort((a, b) => b.id - a.id)
   } else if (sortBy.value === 'nameAsc') {
-    return filtered.sort((a, b) => a.Name.localeCompare(b.Name))
+    return filtered.sort((a, b) => {
+      if (a.Name) {
+        return a.Name.localeCompare(b.Name)
+      } else {
+        return a.name.localeCompare(b.name)
+      }
+    })
   } else if (sortBy.value === 'nameDesc') {
-    return filtered.sort((a, b) => b.Name.localeCompare(a.Name))
+    return filtered.sort((a, b) => {
+      if (b.Name) {
+        return b.Name.localeCompare(a.Name)
+      } else {
+        return b.name.localeCompare(a.name)
+      }
+    })
+  } else if (sortBy.value === 'groupIdAsc') {
+    return filtered.sort((a, b) => a.group_id - b.group_id)
+  } else if (sortBy.value === 'groupIdDesc') {
+    return filtered.sort((a, b) => b.group_id - a.group_id)
   }
   return filtered
 })
@@ -51,8 +72,12 @@ const sortByF = (event, asc) => {
 
 // Метод для навигации к компоненту категории
 const goToCategory = (item, type) => {
-  item.type = type
+  item.typePage = type
   emit('goToCategory', item)
+}
+
+const addCategory = () => {
+  emit('goToCategory', null)
 }
 
 const getContent = () => {
@@ -61,17 +86,72 @@ const getContent = () => {
       Authorization: `Bearer ${user.value.bearer}`,
     },
   }
-
   axios.get(apiUrl.value + '/' + props.propsPage, config).then((response) => {
     categories.value = response.data
+    console.log(props.propsPage)
   })
 }
 
-onMounted(() => getContent())
+const deleteCategory = async (id) => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${user.value.bearer}`,
+    },
+  }
+  const link = `${store.getApiDomain}/${props.propsPage}/${id}`
+  console.log(link)
+  try {
+    const response = await axios.delete(link, config)
+    categories.value = categories.value.filter((category) => category.id !== id)
+    console.log(response.data)
+    toast.success('Категория удалена', { autoClose: 1000 })
+  } catch (error) {
+    console.error(error)
+    toast.error('Ошибка в удалении', { autoClose: 1000 })
+    await getContent()
+  }
+}
+
+const loadAttributeGroups = async () => {
+  const config = {
+    headers: {
+      Authorization: `Bearer ${user.value.bearer}`,
+    },
+  }
+  try {
+    const response = await axios.get(`${store.getApiDomain}/product-attribute-groups`, config)
+    attributeGroups.value = response.data || []
+    console.log('Загруженные группы атрибутов:', attributeGroups.value)
+  } catch (error) {
+    console.error('Ошибка загрузки групп атрибутов:', error)
+  }
+}
+
+// Получение названия группы атрибутов
+const getGroupName = computed(() => {
+  return (groupId) => {
+    if (!groupId) return 'Без группы'
+    const group = attributeGroups.value.find((g) => g.id === groupId)
+    return group?.Name || group?.name || 'Неизвестная группа'
+  }
+})
+
+onMounted(async () => {
+  await getContent()
+  // Загружаем группы атрибутов если это страница атрибутов
+  if (props.propsPage === 'product-attributes') {
+    await loadAttributeGroups()
+  }
+})
+
 watch(
   () => props.propsPage,
-  () => {
-    getContent()
+  async () => {
+    await getContent()
+    // Загружаем группы атрибутов если это страница атрибутов
+    if (props.propsPage === 'product-attributes') {
+      await loadAttributeGroups()
+    }
   }
 )
 </script>
@@ -79,9 +159,9 @@ watch(
 <template>
   <div class="categories">
     <!-- Кнопка для добавления категории -->
-    <!-- <div class="categories__actions">
-      <button class="btn-white" @click="addCategory">Добавить</button>
-    </div> -->
+    <div class="categories__actions">
+      <button class="btn-white" @click="addCategory" v-if="propsPage !== 'products'">Добавить</button>
+    </div>
 
     <!-- Поиск и фильтры -->
     <div class="categories__filters">
@@ -91,6 +171,8 @@ watch(
       <button class="btn-white filteres" @click="sortByF($event, 'idDesc')">ID ↓</button>
       <button class="btn-white filteres" @click="sortByF($event, 'nameAsc')">Имя A-Z</button>
       <button class="btn-white filteres" @click="sortByF($event, 'nameDesc')">Имя Z-A</button>
+      <button class="btn-white filteres" @click="sortByF($event, 'groupIdAsc')">Группа ID</button>
+      <button class="btn-white filteres" @click="sortByF($event, 'groupIdDesc')">Группа ID</button>
     </div>
 
     <!-- Таблица категорий -->
@@ -99,6 +181,7 @@ watch(
         <tr>
           <th>ID</th>
           <th>Название категории</th>
+          <th v-if="props.propsPage === 'product-attributes'">Название Группы</th>
           <th>Действия</th>
         </tr>
       </thead>
@@ -106,8 +189,11 @@ watch(
         <tr v-for="category in filteredCategories" :key="category.id">
           <td>{{ category.id }}</td>
           <td @click="goToCategory(category, propsPage)" class="category-name">
-            {{ category?.Name || category?.title }}
+            {{ category?.Name || category?.name }}
             {{ category.exists }}
+          </td>
+          <td class="category-name" v-if="props.propsPage === 'product-attributes'">
+            {{ getGroupName(category.group_id || category.attribute_group_id) }}
           </td>
           <td class="table-actions">
             <button class="btn-white" @click="goToCategory(category, propsPage)">
@@ -128,13 +214,13 @@ watch(
                 />
               </svg>
             </button>
-            <!-- <button v-if="!categories.Group " class="btn-white btn-danger" @click="deleteCategory(category.id)"> -->
             <button
               v-if="!categories.Group"
               class="btn-white"
               :class="{
                 'btn-danger': category.exists === 0,
               }"
+              @click="deleteCategory(category.id)"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

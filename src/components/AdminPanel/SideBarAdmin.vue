@@ -4,12 +4,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 const menuItems = ref([
   {
     name: 'Товары',
-    category: 'products',
+    category: '',
     subcategories: [
-      { name: 'Группы товаров', category: 'product-groups' },
-      { name: 'Все товары', category: 'products' },
-      { name: 'Группы атрибутов', category: 'attribute-groups' },
-      { name: 'Атрибуты', category: 'attribute' },
+      { name: 'Категории товаров', category: 'product-groups' },
+      { name: 'Товары', category: 'products' },
+      { name: 'Группы атрибутов', category: 'product-attribute-groups' },
+      { name: 'Атрибуты', category: 'product-attributes' },
     ],
     open: false,
   },
