@@ -136,6 +136,16 @@ const getGroupName = computed(() => {
   }
 })
 
+const getPageTitle = () => {
+  const titles = {
+    products: 'Товары',
+    'product-groups': 'Группы товаров',
+    'product-attribute-groups': 'Группы атрибутов',
+    'product-attributes': 'Атрибуты',
+  }
+  return titles[props.propsPage] || 'Список'
+}
+
 onMounted(async () => {
   await getContent()
   // Загружаем группы атрибутов если это страница атрибутов
@@ -155,163 +165,405 @@ watch(
   }
 )
 </script>
-
 <template>
-  <div class="categories">
-    <!-- Кнопка для добавления категории -->
-    <div class="categories__actions">
-      <button class="btn-white" @click="addCategory" v-if="propsPage !== 'products'">Добавить</button>
+  <div class="categories-container">
+    <!-- Заголовок и кнопка добавления -->
+    <div class="categories-header">
+      <h2 class="page-title">{{ getPageTitle() }}</h2>
+      <button class="btn-primary" @click="addCategory" v-if="propsPage !== 'products'">
+        <span class="btn-icon">➕</span>
+        Добавить
+      </button>
     </div>
 
-    <!-- Поиск и фильтры -->
-    <div class="categories__filters">
-      <input v-model="searchQuery" type="text" placeholder="Поиск категории..." />
+    <!-- Панель поиска и фильтров -->
+    <div class="filters-panel">
+      <div class="search-box">
+        <div class="search-icon">🔍</div>
+        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input" />
+      </div>
 
-      <button class="btn-white filteres" @click="sortByF($event, 'idAsc')">ID ↑</button>
-      <button class="btn-white filteres" @click="sortByF($event, 'idDesc')">ID ↓</button>
-      <button class="btn-white filteres" @click="sortByF($event, 'nameAsc')">Имя A-Z</button>
-      <button class="btn-white filteres" @click="sortByF($event, 'nameDesc')">Имя Z-A</button>
-      <button class="btn-white filteres" @click="sortByF($event, 'groupIdAsc')">Группа ID</button>
-      <button class="btn-white filteres" @click="sortByF($event, 'groupIdDesc')">Группа ID</button>
+      <div class="filters-group">
+        <button class="filter-btn" :class="{ active: sortBy === 'idAsc' }" @click="sortByF($event, 'idAsc')">
+          <span>ID ↑</span>
+        </button>
+        <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
+          <span>ID ↓</span>
+        </button>
+        <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
+          <span>Имя A-Z</span>
+        </button>
+        <button class="filter-btn" :class="{ active: sortBy === 'nameDesc' }" @click="sortByF($event, 'nameDesc')">
+          <span>Имя Z-A</span>
+        </button>
+        <button class="filter-btn" :class="{ active: sortBy === 'groupIdAsc' }" @click="sortByF($event, 'groupIdAsc')">
+          <span>Группа ↑</span>
+        </button>
+        <button
+          class="filter-btn"
+          :class="{ active: sortBy === 'groupIdDesc' }"
+          @click="sortByF($event, 'groupIdDesc')"
+        >
+          <span>Группа ↓</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Таблица категорий -->
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Название категории</th>
-          <th v-if="props.propsPage === 'product-attributes'">Название Группы</th>
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="category in filteredCategories" :key="category.id">
-          <td>{{ category.id }}</td>
-          <td @click="goToCategory(category, propsPage)" class="category-name">
-            {{ category?.Name || category?.name }}
-            {{ category.exists }}
-          </td>
-          <td class="category-name" v-if="props.propsPage === 'product-attributes'">
-            {{ getGroupName(category.group_id || category.attribute_group_id) }}
-          </td>
-          <td class="table-actions">
-            <button class="btn-white" @click="goToCategory(category, propsPage)">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-pencil-square"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
-                />
-                <path
-                  fill-rule="evenodd"
-                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-                />
-              </svg>
-            </button>
-            <button
-              v-if="!categories.Group"
-              class="btn-white"
-              :class="{
-                'btn-danger': category.exists === 0,
-              }"
-              @click="deleteCategory(category.id)"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-trash3"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"
-                />
-              </svg>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Таблица -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="column-id">ID</th>
+            <th class="column-name">Название</th>
+            <th v-if="props.propsPage === 'product-attributes'" class="column-group">Группа</th>
+            <th class="column-actions">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="category in filteredCategories" :key="category.id" class="table-row">
+            <td class="cell-id">{{ category.id }}</td>
+            <td class="cell-name clickable" @click="goToCategory(category, propsPage)">
+              <div class="name-content">
+                <span class="name-text">{{ category?.Name || category?.name }}</span>
+                <span v-if="category.exists === 0" class="status-badge inactive">Неактивно</span>
+              </div>
+            </td>
+            <td v-if="props.propsPage === 'product-attributes'" class="cell-group">
+              <span class="group-badge">
+                {{ getGroupName(category.group_id || category.attribute_group_id) }}
+              </span>
+            </td>
+            <td class="cell-actions">
+              <div class="actions-group">
+                <button class="action-btn edit-btn" @click="goToCategory(category, propsPage)" title="Редактировать">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  @click="deleteCategory(category.id)"
+                  title="Удалить"
+                  :class="{ disabled: category.exists === 0 }"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Состояние пустой таблицы -->
+      <div v-if="filteredCategories.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3 class="empty-title">Ничего не найдено</h3>
+        <p class="empty-description">Попробуйте изменить параметры поиска или фильтрации</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.categories__actions {
-  margin-bottom: 20px;
+.categories-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e5e9;
 }
 
-.categories__filters {
-  margin-bottom: 15px;
+.categories-header {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 }
 
-input[type='text'] {
-  padding: 8px;
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #dba250;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #fbaf45;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(246, 184, 59, 0.3);
+}
+
+.btn-icon {
   font-size: 16px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
 }
 
-table {
+/* Панель фильтров */
+.filters-panel {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #dba250;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filters-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  border-color: #dba250;
+  color: #dba250;
+}
+
+.filter-btn.active {
+  background: #dba250;
+  border-color: #dba250;
+  color: white;
+}
+
+/* Таблица */
+.table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table {
   width: 100%;
   border-collapse: collapse;
+  background: white;
 }
 
-th,
-td {
-  padding: 12px 15px;
+.data-table th {
+  background: #f8fafc;
+  padding: 16px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
   text-align: left;
 }
 
-th {
-  background-color: #707070;
-  font-weight: bold;
-  color: #fff;
+.column-id {
+  width: 80px;
 }
 
-td {
-  border-bottom: 1px solid #ddd;
+.column-name {
+  width: auto;
 }
 
-.category-name {
+.column-group {
+  width: 200px;
+}
+
+.column-actions {
+  width: 120px;
+}
+
+.table-row {
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table-row:hover {
+  background: #f9fafb;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.data-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.cell-id {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.cell-name.clickable {
   cursor: pointer;
-  color: #5f22c1;
-  text-decoration: underline;
+  transition: color 0.2s ease;
 }
 
-.btn-white {
-  color: #5f22c1;
-  text-align: center;
-  font-size: 16px;
-  font-style: normal;
+.cell-name.clickable:hover {
+  color: #dba250;
+}
+
+.name-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name-text {
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 18px; /* 112.5% */
+  text-transform: uppercase;
+}
+
+.status-badge.inactive {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.group-badge {
+  background: #f8fafc;
+  color: #f24343;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #f24343;
+}
+
+.cell-actions {
+  text-align: right;
+}
+
+.actions-group {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: #f1f1f1;
-  border-radius: 10px;
-  width: max-content;
-  padding: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.btn-danger {
-  background-color: #e90037;
-  color: white;
+
+.edit-btn {
+  background: #f0f9ff;
+  color: #0369a1;
 }
-.table-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+
+.edit-btn:hover {
+  background: #e0f2fe;
+  transform: scale(1.05);
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.delete-btn:hover:not(.disabled) {
+  background: #fee2e2;
+  transform: scale(1.05);
+}
+
+.delete-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Состояние пустой таблицы */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #374151;
+}
+
+.empty-description {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.7;
 }
 </style>
