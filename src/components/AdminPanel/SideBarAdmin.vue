@@ -19,7 +19,6 @@ const menuItems = ref([
     subcategories: [],
     open: false,
   },
-  { name: 'Уведомления', category: 'notify', subcategories: [], open: false },
 ])
 
 const pathRefs = ref([])

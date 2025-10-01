@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios'
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
@@ -39,6 +39,7 @@ const formData = ref({
   title: '',
   // Ссылка на видео
   video: null,
+  attrs: [],
   images: [],
   description: '',
   groupProduct: '',
@@ -52,6 +53,7 @@ const selectedAttributes = ref([]) // выбранные атрибуты для
 const imagesSrc = ref([])
 const videoSrc = ref(null)
 
+console.log('imagesSrc.value', imagesSrc.value)
 // Computed
 // const disabledDates = computed(() => {
 //   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
@@ -79,7 +81,6 @@ const useMultiUploadImages = async () => {
         },
       })
       srcImages.push(response.data)
-      console.log('Изображение загружено:', response.data)
     } catch (error) {
       console.error('Ошибка загрузки изображения:', error)
       throw new Error(`Ошибка при загрузке фото: ${error.message}`)
@@ -100,7 +101,6 @@ const useUploadVideo = async () => {
         Authorization: 'Bearer ' + token,
       },
     })
-    console.log('Видео загружено:', response.data)
     return response.data
   } catch (error) {
     console.error('Ошибка загрузки видео:', error)
@@ -111,7 +111,6 @@ const productToFile = async (fileNames, type) => {
   if (!props.item?.id) {
     throw new Error('ID товара не найден')
   }
-  console.log('fileNames', fileNames)
   // type = 'photo' || 'video'
   const createConnection = async (filename, type) => {
     try {
@@ -126,8 +125,6 @@ const productToFile = async (fileNames, type) => {
           Authorization: 'Bearer ' + token,
         },
       })
-
-      console.log('Файл связан с товаром:', response.data)
       return response.data
     } catch (error) {
       console.error('Ошибка связи файла с товаром:', error)
@@ -138,15 +135,12 @@ const productToFile = async (fileNames, type) => {
   if (Array.isArray(fileNames) && fileNames.length > 0) {
     const results = []
     for (const imgUrl of fileNames) {
-      console.log(imgUrl)
       const res = await createConnection(imgUrl, type)
       if (res) results.push(res)
     }
-    console.log('images', results)
     return results
   } else if (fileNames) {
     const res = await createConnection(fileNames, type)
-    console.log('video', res)
     if (res) return res
   }
 }
@@ -158,7 +152,6 @@ const filterAttributesByGroup = (groupId) => {
     return
   }
   filteredAttributes.value = attributes.value.filter((attr) => attr.group_id === groupId)
-  console.log('Отфильтрованные атрибуты:', filteredAttributes.value)
 }
 
 // Загрузка всех атрибутов
@@ -166,7 +159,6 @@ const loadAttributes = async () => {
   try {
     const response = await axios.get(`${store.getApiDomain}/product-attributes`, headersGet)
     attributes.value = response.data || []
-    console.log('Загруженные атрибуты:', attributes.value)
   } catch (error) {
     console.error('Ошибка загрузки атрибутов:', error)
   }
@@ -198,7 +190,6 @@ const loadGroupsProducts = async () => {
   try {
     const response = await axios.get(`${store.getApiDomain}/product-groups`, headersGet)
     groupsProduct.value = response.data || []
-    console.log('Загруженные группы:', groupsProduct.value)
   } catch (error) {
     console.error('Ошибка загрузки групп:', error)
   }
@@ -207,7 +198,6 @@ const loadGroupsAttributes = async () => {
   try {
     const response = await axios.get(`${store.getApiDomain}/product-attribute-groups`, headersGet)
     groupsAttribute.value = response.data || []
-    console.log('Загруженные группы:', groupsAttribute.value)
   } catch (error) {
     console.error('Ошибка загрузки групп:', error)
   }
@@ -241,6 +231,13 @@ const saveContent = async () => {
     if (videoSrc.value && props.item?.id) {
       await productToFile(videoSrc.value, 'video')
       formData.value.video = videoSrc.value
+      console.log('Видео связано с товаром')
+    }
+    // 5. Связываем атрибут с товаром
+    if (selectedAttributes.value.length > 0 && props.item?.id) {
+      // await productToAttributes()
+      console.log(selectedAttributes.value)
+      formData.value.attrs = selectedAttributes.value
       console.log('Видео связано с товаром')
     }
     let newObject, link
@@ -308,16 +305,64 @@ const getContent = async () => {
   // }
 }
 
+const initImages = (fileImages) => {
+  if (!fileImages || !Array.isArray(fileImages)) return []
+
+  return fileImages.map((img) => ({
+    id: img.id || Date.now() + Math.random(),
+    url: `https://back.love-kitchen.ru/web/uploads/${img.filename}`,
+    nameUrl: img.filename,
+    name: img.filename,
+    isExisting: true,
+  }))
+}
+
+const deleteFile = async (file) => {
+  console.log(file)
+  try {
+    if (!file.nameUrl) {
+      console.log('Файл не загружен на сервер, удаляем только локально')
+      return
+    }
+
+    const response = await axios.delete(`https://back.love-kitchen.ru/web/uploads/${file.id}`, {
+      // data: { filename: file.nameUrl },
+      headersGet,
+    })
+
+    console.log('Файл удален с сервера:', response.data)
+    toast.success('Файл удален', { autoClose: 1000 })
+  } catch (error) {
+    console.error('Ошибка удаления файла:', error)
+    toast.error(`Ошибка удаления файла: ${error.message}`, { autoClose: 1000 })
+  }
+}
+
+// Обработчик удаления изображения
+const handleImageRemove = async (image) => {
+  try {
+    // Если изображение уже загружено на сервер - удаляем его
+    if (image.isExisting && image.nameUrl) {
+      await deleteFile(image)
+    }
+
+    // Удаляем изображение из формы
+    formData.value.images = formData.value.images.filter((img) => img.id !== image.id)
+  } catch (error) {
+    console.error('Ошибка при удалении изображения:', error)
+  }
+}
+
 const initializeEditorData = () => {
   const itemData = props.item || {}
-
   formData.value.title = itemData.Name || itemData.name || ''
   formData.value.description = itemData.description || ''
   formData.value.groupProduct = itemData.Group || null
   formData.value.groupAttribute = itemData.group_id || null
-  formData.value.images = itemData.images || []
+  formData.value.images = initImages(itemData.files?.filter((file) => file.type === 'photo'))
+  formData.value.video = itemData.files?.filter((file) => file.type === 'video')
 
-  // formData.value.videoUrl = itemData.videoUrl
+  console.log('formData.value.images', formData.value.images)
 
   // if (itemData.date_publication) {
   //   timestampPublish.value = itemData.date_publication * 1000
@@ -478,7 +523,11 @@ watch(
       <div class="attributes-container">
         <!-- Выбор группы атрибутов -->
         <div class="form-group">
-          <DragDropImages v-model="formData.images" :multiple="propsPage === 'products'" />
+          <DragDropImages
+            v-model="formData.images"
+            :multiple="propsPage === 'products'"
+            @remove-image="handleImageRemove"
+          />
         </div>
       </div>
     </div>

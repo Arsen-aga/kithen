@@ -26,6 +26,8 @@ const filteredCategories = computed(() => {
     filtered = categories.value?.filter((category) => {
       if (category.Name) {
         return category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      } else if (category.username) {
+        return category.username.toLowerCase().includes(searchQuery.value.toLowerCase())
       } else {
         return category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
       }
@@ -39,6 +41,8 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => {
       if (a.Name) {
         return a.Name.localeCompare(b.Name)
+      } else if (a.username) {
+        return a.username.localeCompare(b.username)
       } else {
         return a.name.localeCompare(b.name)
       }
@@ -47,6 +51,8 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => {
       if (b.Name) {
         return b.Name.localeCompare(a.Name)
+      } else if (b.username) {
+        return b.username.localeCompare(a.username)
       } else {
         return b.name.localeCompare(a.name)
       }
@@ -196,10 +202,16 @@ watch(
         <button class="filter-btn" :class="{ active: sortBy === 'nameDesc' }" @click="sortByF($event, 'nameDesc')">
           <span>Имя Z-A</span>
         </button>
-        <button class="filter-btn" :class="{ active: sortBy === 'groupIdAsc' }" @click="sortByF($event, 'groupIdAsc')">
+        <button
+          v-if="props.propsPage === 'product-attributes'"
+          class="filter-btn"
+          :class="{ active: sortBy === 'groupIdAsc' }"
+          @click="sortByF($event, 'groupIdAsc')"
+        >
           <span>Группа ↑</span>
         </button>
         <button
+          v-if="props.propsPage === 'product-attributes'"
           class="filter-btn"
           :class="{ active: sortBy === 'groupIdDesc' }"
           @click="sortByF($event, 'groupIdDesc')"
@@ -225,7 +237,7 @@ watch(
             <td class="cell-id">{{ category.id }}</td>
             <td class="cell-name clickable" @click="goToCategory(category, propsPage)">
               <div class="name-content">
-                <span class="name-text">{{ category?.Name || category?.name }}</span>
+                <span class="name-text">{{ category?.Name || category?.name || category?.username }}</span>
                 <span v-if="category.exists === 0" class="status-badge inactive">Неактивно</span>
               </div>
             </td>
@@ -244,6 +256,7 @@ watch(
                   </svg>
                 </button>
                 <button
+                  v-if="props.propsPage !== 'products'"
                   class="action-btn delete-btn"
                   @click="deleteCategory(category.id)"
                   title="Удалить"

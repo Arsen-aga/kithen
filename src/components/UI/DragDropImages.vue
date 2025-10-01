@@ -5,16 +5,25 @@ import vuedraggable from 'vuedraggable'
 const props = defineProps({
   modelValue: {
     type: Array,
-    default: () => Array,
+    default: () => [],
   },
-  multiple: String,
+  multiple: Boolean, // исправил тип на Boolean
 })
+
 const fileInput = ref(null)
 const isDragActive = ref(false)
+const images = ref([])
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'removeImage'])
 
-const images = ref([...props.modelValue])
+// Синхронизация с внешним modelValue
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    images.value = [...newValue]
+  },
+  { immediate: true, deep: true }
+)
 
 // Обновляем родительский компонент при изменениях
 watch(
@@ -53,16 +62,20 @@ const processFiles = (files) => {
         id: Date.now() + Math.random(),
         url: e.target.result,
         file: file,
+        isExisting: false, // добавляем флаг для новых файлов
       })
     }
     reader.readAsDataURL(file)
   })
-  // console.log(images.value)
 }
 
 // Удаление изображения
-const removeImage = (id) => {
-  images.value = images.value.filter((img) => img.id !== id)
+const removeImage = (image) => {
+  // Отправляем событие в родительский компонент
+  emit('removeImage', image)
+
+  // Удаляем изображение из локального состояния
+  images.value = images.value.filter((img) => img.id !== image.id)
 }
 
 // Стили для области перетаскивания
@@ -107,7 +120,7 @@ const dragLeave = () => {
         <template #item="{ element }">
           <div class="image-item">
             <img :src="element.url" :alt="element.name" />
-            <button @click="removeImage(element.id)" class="remove-btn">x</button>
+            <button @click="removeImage(element)" class="remove-btn">x</button>
           </div>
         </template>
       </vuedraggable>
