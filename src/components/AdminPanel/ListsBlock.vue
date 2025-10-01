@@ -20,7 +20,7 @@ console.log(store.getBearer)
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
-  console.log(categories.value)
+  // console.log(categories.value)
   let filtered = []
   if (Array.isArray(categories.value)) {
     filtered = categories.value?.filter((category) => {

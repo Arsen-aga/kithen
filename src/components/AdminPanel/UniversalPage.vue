@@ -2,11 +2,13 @@
 import axios from 'axios'
 import { ref, onMounted, watch } from 'vue'
 import { useDefaultItems } from '@/stores/default'
+import { useFileUpload } from '@/helpers/useFileUpload'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 // import AdminCalendar from '@/components/UI/AdminCalendar.vue'
-import AdminAddVideo from '../UI/AdminAddVideo.vue'
+import AdminAddVideo from '@/components/UI/AdminAddVideo.vue'
+const { uploadFile, uploadMultipleFiles } = useFileUpload()
 
 const store = useDefaultItems()
 const token = store.getBearer
@@ -53,7 +55,7 @@ const selectedAttributes = ref([]) // выбранные атрибуты для
 const imagesSrc = ref([])
 const videoSrc = ref(null)
 
-console.log('imagesSrc.value', imagesSrc.value)
+// console.log('imagesSrc.value', imagesSrc.value)
 // Computed
 // const disabledDates = computed(() => {
 //   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
@@ -64,12 +66,35 @@ const useMultiUploadImages = async () => {
   const srcImages = []
 
   for (const img of formData.value.images) {
-    if (img.isExisting) {
-      srcImages.push(img.url)
-      continue
+    // Загружаем только новые изображения
+    if (!img.isExisting) {
+      const newFormData = new FormData()
+      newFormData.append('UploadForm[file]', img.file)
+      newFormData.append('folder', `products/${props.item?.id || 'temp'}`)
+      newFormData.append('filenamePrefix', 'product_')
+
+      try {
+        const response = await axios.post(`${store.getApiDomain}/uploads/file`, newFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: 'Bearer ' + token,
+          },
+        })
+        srcImages.push(response.data)
+      } catch (error) {
+        console.error('Ошибка загрузки изображения:', error)
+        throw new Error(`Ошибка при загрузке фото: ${error.message}`)
+      }
     }
+  }
+
+  return srcImages
+}
+const useUploadVideo = async () => {
+  // Загружаем только новое видео
+  if (formData.value.video && !formData.value.video.isExisting) {
     const newFormData = new FormData()
-    newFormData.append('UploadForm[file]', img.file)
+    newFormData.append('UploadForm[file]', formData.value.video.file)
     newFormData.append('folder', `products/${props.item?.id || 'temp'}`)
     newFormData.append('filenamePrefix', 'product_')
 
@@ -80,32 +105,13 @@ const useMultiUploadImages = async () => {
           Authorization: 'Bearer ' + token,
         },
       })
-      srcImages.push(response.data)
+      return response.data
     } catch (error) {
-      console.error('Ошибка загрузки изображения:', error)
-      throw new Error(`Ошибка при загрузке фото: ${error.message}`)
+      console.error('Ошибка загрузки видео:', error)
+      throw new Error(`Ошибка при загрузке видео: ${error.message}`)
     }
   }
-
-  return srcImages
-}
-const useUploadVideo = async () => {
-  const newFormData = new FormData()
-  newFormData.append('UploadForm[file]', formData.value.video.file)
-  newFormData.append('folder', `products/${props.item?.id || 'temp'}`)
-  newFormData.append('filenamePrefix', 'product_')
-  try {
-    const response = await axios.post(`${store.getApiDomain}/uploads/file`, newFormData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: 'Bearer ' + token,
-      },
-    })
-    return response.data
-  } catch (error) {
-    console.error('Ошибка загрузки видео:', error)
-    throw new Error(`Ошибка при загрузке видео: ${error.message}`)
-  }
+  return null
 }
 const productToFile = async (fileNames, type) => {
   if (!props.item?.id) {
@@ -205,41 +211,63 @@ const loadGroupsAttributes = async () => {
 // Сохранение контента
 const saveContent = async () => {
   try {
-    // 1. Загружаем изображения
-    if (formData.value.images.length > 0) {
+    // 1. Загружаем только НОВЫЕ изображения
+    const newImages = formData.value.images.filter((img) => !img.isExisting)
+    if (newImages.length > 0) {
       imagesSrc.value = await useMultiUploadImages()
-      console.log('Загруженные изображения:', imagesSrc.value)
+      imagesSrc.value = await uploadMultipleFiles()
+      console.log('Загруженные новые изображения:', imagesSrc.value)
     }
-    // 2. Загружаем video
-    if (formData.value.video) {
-      videoSrc.value = await useUploadVideo()
-      console.log('Загруженные видео:', videoSrc.value)
+
+    // 2. Загружаем только НОВОЕ видео
+    if (formData.value.video && !formData.value.video.isExisting) {
+      videoSrc.value = await useUploadVideo(props.item?.id, formData.value.images)
+      console.log('Загруженное новое видео:', videoSrc.value)
     }
-    // 3. Связываем изображения с товаром
+
+    // 3. Связываем только НОВЫЕ изображения с товаром
     if (imagesSrc.value.length > 0 && props.item?.id) {
       await productToFile(imagesSrc.value, 'photo')
-      formData.value.images = formData.value.images.map((img, index) => ({
-        id: img.id,
-        url: `https://back.love-kitchen.ru/web/uploads/${imagesSrc.value[index]}`,
-        nameUrl: imagesSrc.value[index],
-        name: img.file.name,
-        isExisting: true,
-      }))
-      console.log('Изображения связаны с товаром', imagesSrc.value)
+
+      // Обновляем только новые изображения в formData
+      let newImageIndex = 0
+      formData.value.images = formData.value.images.map((img) => {
+        if (img.isExisting) {
+          return img // существующие оставляем как есть
+        }
+        // Обновляем только новые
+        const updatedImage = {
+          ...img,
+          url: `https://back.love-kitchen.ru/web/uploads/${imagesSrc.value[newImageIndex]}`,
+          nameUrl: imagesSrc.value[newImageIndex],
+          isExisting: true,
+        }
+        newImageIndex++
+        return updatedImage
+      })
+      console.log('Новые изображения связаны с товаром')
     }
-    // 4. Связываем video с товаром
-    if (videoSrc.value && props.item?.id) {
+
+    // 4. Связываем только НОВОЕ видео с товаром
+    if (videoSrc.value && props.item?.id && formData.value.video && !formData.value.video.isExisting) {
       await productToFile(videoSrc.value, 'video')
-      formData.value.video = videoSrc.value
-      console.log('Видео связано с товаром')
+      formData.value.video = {
+        ...formData.value.video,
+        url: `https://back.love-kitchen.ru/web/uploads/${videoSrc.value}`,
+        nameUrl: videoSrc.value,
+        isExisting: true,
+      }
+      console.log('Новое видео связано с товаром')
     }
+
     // 5. Связываем атрибут с товаром
     if (selectedAttributes.value.length > 0 && props.item?.id) {
       // await productToAttributes()
       console.log(selectedAttributes.value)
       formData.value.attrs = selectedAttributes.value
-      console.log('Видео связано с товаром')
+      console.log('Атрибуты связаны с товаром')
     }
+
     let newObject, link
     if (props.propsPage === 'products') {
       newObject = {
@@ -278,9 +306,7 @@ const saveContent = async () => {
     } else {
       response = await axios.post(link, newObject, headersPost)
     }
-    // const response = await axios.get(link, {
-    //   headers: headersGet,
-    // })
+
     const data = response.data
     console.log(data)
 
@@ -292,7 +318,6 @@ const saveContent = async () => {
 
   return
 }
-
 const getContent = async () => {
   console.log(formData.value)
   // const link = `https://back.love-kitchen.ru/web/index.php/product-to-files/${props.item.id}`
@@ -315,6 +340,34 @@ const initImages = (fileImages) => {
     name: img.filename,
     isExisting: true,
   }))
+}
+const initVideo = (files) => {
+  if (!files || !Array.isArray(files) || files.length === 0) return null
+
+  const videoFile = files[0] // берем первый видео файл
+  // console.log(videoFile)
+  return {
+    id: videoFile.id || Date.now() + Math.random(),
+    url: `https://back.love-kitchen.ru/web/uploads/${videoFile.filename}`,
+    nameUrl: videoFile.filename,
+    name: videoFile.filename,
+    isExisting: true,
+  }
+}
+
+// Обработчик удаления видео
+const handleVideoRemove = async (video) => {
+  try {
+    // Если видео уже загружено на сервер - удаляем его
+    if (video.isExisting && video.nameUrl) {
+      await deleteFile(video)
+    }
+
+    // Удаляем видео из формы
+    formData.value.video = null
+  } catch (error) {
+    console.error('Ошибка при удалении видео:', error)
+  }
 }
 
 const deleteFile = async (file) => {
@@ -360,9 +413,9 @@ const initializeEditorData = () => {
   formData.value.groupProduct = itemData.Group || null
   formData.value.groupAttribute = itemData.group_id || null
   formData.value.images = initImages(itemData.files?.filter((file) => file.type === 'photo'))
-  formData.value.video = itemData.files?.filter((file) => file.type === 'video')
+  formData.value.video = initVideo(itemData.files?.filter((file) => file.type === 'video'))
 
-  console.log('formData.value.images', formData.value.images)
+  // console.log('formData.value.images', formData.value.images)
 
   // if (itemData.date_publication) {
   //   timestampPublish.value = itemData.date_publication * 1000
@@ -401,16 +454,6 @@ watch(
 </script>
 
 <!-- <AdminCalendar v-if="propsPage === 'products'" v-model="timestampPublish" :disabled-dates="disabledDates" /> -->
-<!-- Images -->
-<!-- <div class="form-group">
-  <label>Изображение</label>
-  <DragDropImages v-model="formData.images" :multiple="propsPage === 'products'" />
-</div> -->
-<!-- url video -->
-<!-- <div v-if="propsPage === 'products'" class="form-group">
-  <label>Видео</label>
-  <AdminAddVideo v-model="formData.video" />
-</div> -->
 <template>
   <!-- Страница товаров -->
   <div v-if="propsPage === 'products'" class="content-editor">
@@ -538,7 +581,7 @@ watch(
       <div class="attributes-container">
         <!-- Выбор группы атрибутов -->
         <div class="form-group">
-          <AdminAddVideo v-model="formData.video" />
+          <AdminAddVideo v-model="formData.video" @remove-video="handleVideoRemove" />
         </div>
       </div>
     </div>

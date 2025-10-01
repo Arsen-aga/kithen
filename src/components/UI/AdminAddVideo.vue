@@ -8,14 +8,27 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'removeVideo'])
 const fileInput = ref(null)
 const video = ref(props.modelValue)
 const isVideoUploading = ref(false)
+const skipNextUpdate = ref(false)
 
+watch(
+  () => props.modelValue,
+  (newVideo) => {
+    if (skipNextUpdate.value) {
+      skipNextUpdate.value = false
+      return
+    }
+    video.value = newVideo
+  },
+  { immediate: true, deep: true }
+)
 watch(
   video,
   (newVideo) => {
+    skipNextUpdate.value = true
     emit('update:modelValue', newVideo)
   },
   { deep: true }
@@ -54,7 +67,7 @@ const processVideoFile = (file) => {
       file: file,
       name: file.name,
       type: file.type,
-      size: file.size,
+      isExisting: false,
     }
 
     isVideoUploading.value = false
@@ -81,6 +94,9 @@ const closeVideoModal = () => {
 
 // Удаление видео
 const removeVideo = () => {
+  if (video.value) {
+    emit('removeVideo', video.value)
+  }
   video.value = null
   // Очищаем input чтобы можно было выбрать тот же файл снова
   if (fileInput.value) {
@@ -118,7 +134,6 @@ const removeVideo = () => {
           </div>
           <div class="video-info">
             <p class="video-name">{{ video.name }}</p>
-            <p class="video-size">{{ (video.size / (1024 * 1024)).toFixed(2) }} MB</p>
           </div>
         </div>
       </div>
@@ -256,11 +271,6 @@ const removeVideo = () => {
     font-weight: 600;
     margin-bottom: 5px;
     font-size: 14px;
-  }
-
-  .video-size {
-    font-size: 12px;
-    opacity: 0.8;
   }
 }
 

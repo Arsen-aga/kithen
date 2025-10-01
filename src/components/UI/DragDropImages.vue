@@ -13,6 +13,7 @@ const props = defineProps({
 const fileInput = ref(null)
 const isDragActive = ref(false)
 const images = ref([])
+const skipNextUpdate = ref(false)
 
 const emit = defineEmits(['update:modelValue', 'removeImage'])
 
@@ -20,6 +21,10 @@ const emit = defineEmits(['update:modelValue', 'removeImage'])
 watch(
   () => props.modelValue,
   (newValue) => {
+    if (skipNextUpdate.value) {
+      skipNextUpdate.value = false
+      return
+    }
     images.value = [...newValue]
   },
   { immediate: true, deep: true }
@@ -29,6 +34,7 @@ watch(
 watch(
   images,
   (newImages) => {
+    skipNextUpdate.value = true
     emit('update:modelValue', [...newImages])
   },
   { deep: true }
