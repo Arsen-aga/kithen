@@ -54,65 +54,14 @@ const filteredAttributes = ref([]) // атрибуты отфильтрован�
 const selectedAttributes = ref([]) // выбранные атрибуты для товара
 const imagesSrc = ref([])
 const videoSrc = ref(null)
+const attributesLoaded = ref(false)
 
-// console.log('imagesSrc.value', imagesSrc.value)
 // Computed
 // const disabledDates = computed(() => {
 //   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
 //   return [{ start: null, end: yesterday }]
 // })
 // Methods
-const useMultiUploadImages = async () => {
-  const srcImages = []
-
-  for (const img of formData.value.images) {
-    // Загружаем только новые изображения
-    if (!img.isExisting) {
-      const newFormData = new FormData()
-      newFormData.append('UploadForm[file]', img.file)
-      newFormData.append('folder', `products/${props.item?.id || 'temp'}`)
-      newFormData.append('filenamePrefix', 'product_')
-
-      try {
-        const response = await axios.post(`${store.getApiDomain}/uploads/file`, newFormData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: 'Bearer ' + token,
-          },
-        })
-        srcImages.push(response.data)
-      } catch (error) {
-        console.error('Ошибка загрузки изображения:', error)
-        throw new Error(`Ошибка при загрузке фото: ${error.message}`)
-      }
-    }
-  }
-
-  return srcImages
-}
-const useUploadVideo = async () => {
-  // Загружаем только новое видео
-  if (formData.value.video && !formData.value.video.isExisting) {
-    const newFormData = new FormData()
-    newFormData.append('UploadForm[file]', formData.value.video.file)
-    newFormData.append('folder', `products/${props.item?.id || 'temp'}`)
-    newFormData.append('filenamePrefix', 'product_')
-
-    try {
-      const response = await axios.post(`${store.getApiDomain}/uploads/file`, newFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: 'Bearer ' + token,
-        },
-      })
-      return response.data
-    } catch (error) {
-      console.error('Ошибка загрузки видео:', error)
-      throw new Error(`Ошибка при загрузке видео: ${error.message}`)
-    }
-  }
-  return null
-}
 const productToFile = async (fileNames, type) => {
   if (!props.item?.id) {
     throw new Error('ID товара не найден')
@@ -150,6 +99,32 @@ const productToFile = async (fileNames, type) => {
     if (res) return res
   }
 }
+const productToAttributes = async (attributes) => {
+  if (!props.item?.id) {
+    throw new Error('ID товара не найден')
+  }
+  const createConnection = async (attribute) => {
+    console.log(attribute)
+    try {
+      const newFormData = new FormData()
+      newFormData.append('product_id', props.item.id)
+      newFormData.append('attribute_id', attribute)
+
+      const response = await axios.post(`${store.getApiDomain}/product-to-attributes`, newFormData, headersPost)
+      console.log('связь создана', response.data)
+      return response.data
+    } catch (error) {
+      console.error('Ошибка связи атрибута с товаром:', error)
+      throw new Error(`Ошибка связи атрибута с товаром: ${error.message}`)
+    }
+  }
+  const results = []
+  for (const attribute of attributes) {
+    const res = await createConnection(attribute)
+    if (res) results.push(res)
+  }
+  return results
+}
 
 // Фильтрация атрибутов по выбранной группе
 const filterAttributesByGroup = (groupId) => {
@@ -165,30 +140,46 @@ const loadAttributes = async () => {
   try {
     const response = await axios.get(`${store.getApiDomain}/product-attributes`, headersGet)
     attributes.value = response.data || []
+    attributesLoaded.value = true // устанавливаем флаг после загрузки
+    console.log('Атрибуты загружены:', attributes.value)
   } catch (error) {
     console.error('Ошибка загрузки атрибутов:', error)
+    attributesLoaded.value = true // даже при ошибке снимаем блокировку
   }
 }
-// Загрузка атрибутов товара
-// const loadProductAttributes = async () => {
-//   try {
-//     const response = await axios.get(`${store.getApiDomain}/product-attributes-values/${props.item.id}`, headersGet)
-//     // Предполагаем структуру ответа API
-//     selectedAttributes.value = response.data.map((attr) => attr.attribute_id) || []
-//     console.log('Привязанные атрибуты товара:', selectedAttributes.value)
-//   } catch (error) {
-//     console.error('Ошибка загрузки атрибутов товара:', error)
-//   }
-// }
 // Получение названия атрибута по ID
 const getAttributeName = (attributeId) => {
+  if (!attributesLoaded.value) {
+    return 'Загрузка...'
+  }
   const attribute = attributes.value.find((attr) => attr.id === attributeId)
-  return attribute?.Name || attribute?.name || 'Неизвестный атрибут'
+  return attribute?.Name || attribute?.name || `Атрибут #${attributeId}`
+}
+
+const removeAttributeToProduct = async (productId, attributeId) => {
+  let allConnections
+  try {
+    const response = await axios.get(`${store.getApiDomain}/product-to-attributes`, headersGet)
+    allConnections = response.data
+  } catch (error) {
+    console.error(error)
+  }
+  const foundConnection = allConnections?.find(
+    (item) => item.product_id === productId && item.attribute_id === attributeId
+  )
+  if (!foundConnection) return
+  try {
+    const response = await axios.delete(`${store.getApiDomain}/product-to-attributes/${foundConnection.id}`, headersGet)
+    console.log('удаленная связь', response.data)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 // Удаление атрибута из товара
-const removeAttributeFromProduct = (attributeId) => {
+const removeAttributeFromProduct = async (attributeId) => {
   selectedAttributes.value = selectedAttributes.value.filter((id) => id !== attributeId)
+  await removeAttributeToProduct(props.item.id, attributeId)
 }
 
 // Methods
@@ -214,14 +205,13 @@ const saveContent = async () => {
     // 1. Загружаем только НОВЫЕ изображения
     const newImages = formData.value.images.filter((img) => !img.isExisting)
     if (newImages.length > 0) {
-      imagesSrc.value = await useMultiUploadImages()
-      imagesSrc.value = await uploadMultipleFiles()
+      imagesSrc.value = await uploadMultipleFiles(props.item?.id, formData.value.images)
       console.log('Загруженные новые изображения:', imagesSrc.value)
     }
 
     // 2. Загружаем только НОВОЕ видео
     if (formData.value.video && !formData.value.video.isExisting) {
-      videoSrc.value = await useUploadVideo(props.item?.id, formData.value.images)
+      videoSrc.value = await uploadFile(props.item?.id, formData.value.video)
       console.log('Загруженное новое видео:', videoSrc.value)
     }
 
@@ -262,9 +252,8 @@ const saveContent = async () => {
 
     // 5. Связываем атрибут с товаром
     if (selectedAttributes.value.length > 0 && props.item?.id) {
-      // await productToAttributes()
-      console.log(selectedAttributes.value)
       formData.value.attrs = selectedAttributes.value
+      await productToAttributes(formData.value.attrs)
       console.log('Атрибуты связаны с товаром')
     }
 
@@ -273,7 +262,7 @@ const saveContent = async () => {
       newObject = {
         ...props.item,
         Name: formData.value.title,
-        description: formData.value.description,
+        description: String(formData.value.description),
         Group: formData.value.groupProduct,
         attrs: selectedAttributes.value,
       }
@@ -319,7 +308,13 @@ const saveContent = async () => {
   return
 }
 const getContent = async () => {
-  console.log(formData.value)
+  try {
+    const response = await axios.get(`${store.getApiDomain}/product-to-attributes`, headersGet)
+    console.log(response.data)
+  } catch (error) {
+    console.error(error)
+  }
+
   // const link = `https://back.love-kitchen.ru/web/index.php/product-to-files/${props.item.id}`
   // try {
   //   const response = await axios.get(link, headersGet)
@@ -415,28 +410,87 @@ const initializeEditorData = () => {
   formData.value.images = initImages(itemData.files?.filter((file) => file.type === 'photo'))
   formData.value.video = initVideo(itemData.files?.filter((file) => file.type === 'video'))
 
-  // console.log('formData.value.images', formData.value.images)
-
-  // if (itemData.date_publication) {
-  //   timestampPublish.value = itemData.date_publication * 1000
-  // }
+  // Устанавливаем существующие атрибуты из props.item.attrs
+  if (itemData.attrs && Array.isArray(itemData.attrs)) {
+    // Теперь attrs - это массив объектов, берем только id
+    selectedAttributes.value = itemData.attrs.map((attr) => attr.id)
+    console.log('Существующие атрибуты товара (IDs):', selectedAttributes.value)
+    console.log('Детали атрибутов:', itemData.attrs)
+  }
 }
 // Lifecycle
 onMounted(async () => {
-  console.log(props.item)
+  console.log('Товар:', props.item)
+  console.log('Атрибуты товара:', props.item?.attrs)
+
   formData.value.type = props.propsPage
   if (props.propsPage === 'products') {
+    // Сначала загружаем данные
     await loadGroupsProducts()
-    await loadGroupsAttributes() // Загружаем группы атрибутов
+    await loadGroupsAttributes()
     await loadAttributes() // Загружаем все атрибуты
-    // Загружаем уже привязанные атрибуты товара
-    // if (props.item?.id) {
-    //   await loadProductAttributes()
-    // }
+
+    // Затем инициализируем форму
+    initializeEditorData()
+
+    // Затем определяем группу
+    await autoDetectAttributeGroup()
+  } else if (props.propsPage === 'product-attributes') {
+    await loadGroupsAttributes()
+    initializeEditorData()
+  } else {
+    initializeEditorData()
   }
-  if (props.propsPage === 'product-attributes') await loadGroupsAttributes()
-  initializeEditorData()
 })
+
+// Функция для автоматического определения группы атрибутов
+const autoDetectAttributeGroup = () => {
+  if (selectedAttributes.value.length > 0 && attributes.value.length > 0) {
+    console.log('Автоматическое определение группы атрибутов...')
+
+    // Находим все группы выбранных атрибутов
+    const attributeGroups = new Set()
+
+    selectedAttributes.value.forEach((attrId) => {
+      const attribute = attributes.value.find((attr) => attr.id === attrId)
+      if (attribute && attribute.group_id) {
+        attributeGroups.add(attribute.group_id)
+      }
+    })
+
+    // Если все выбранные атрибуты из одной группы - устанавливаем ее
+    if (attributeGroups.size === 1) {
+      const groupId = Array.from(attributeGroups)[0]
+      formData.value.groupAttribute = groupId
+      console.log('Автоматически определена группа атрибутов:', formData.value.groupAttribute)
+    } else if (attributeGroups.size > 1) {
+      console.log('Выбранные атрибуты принадлежат разным группам:', Array.from(attributeGroups))
+      // Можно установить первую группу или оставить выбор пользователю
+      if (!formData.value.groupAttribute) {
+        formData.value.groupAttribute = Array.from(attributeGroups)[0]
+      }
+    }
+  }
+}
+
+watch(
+  attributes,
+  (newAttributes) => {
+    if (newAttributes.length > 0) {
+      console.log('Атрибуты загружены, всего:', newAttributes.length)
+
+      if (selectedAttributes.value.length > 0) {
+        console.log('Проверка выбранных атрибутов:')
+        selectedAttributes.value.forEach((attrId) => {
+          const attribute = newAttributes.find((attr) => attr.id === attrId)
+          console.log(`Атрибут ${attrId}:`, attribute ? `"${attribute.Name || attribute.name}"` : 'НЕ НАЙДЕН')
+        })
+      }
+      autoDetectAttributeGroup()
+    }
+  },
+  { deep: true }
+)
 
 watch(
   formData.value.images,

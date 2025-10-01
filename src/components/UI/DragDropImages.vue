@@ -23,6 +23,7 @@ watch(
   (newValue) => {
     if (skipNextUpdate.value) {
       skipNextUpdate.value = false
+      console.log(props.modelValue)
       return
     }
     images.value = [...newValue]
