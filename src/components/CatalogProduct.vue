@@ -3,32 +3,36 @@ import { formatNum } from '@/helpers/formatNum'
 import MainButton from '@/components/UI/MainButton.vue'
 import CatalogProductSlider from '@/components/CatalogProductSlider.vue'
 
-defineProps({
+const props = defineProps({
   product: {
     type: Object,
     required: true,
   },
 })
+
+console.log(props.product)
+console.log(props.product.Price)
+console.log(props.product.Price_0)
 </script>
 
 <template>
   <div class="catalog-product">
-    <CatalogProductSlider
+    <!-- <CatalogProductSlider
       class="catalog-product__swiper-wrapper"
       :images="product.images"
       :id="product.id"
       :video="product.video"
-    />
+    /> -->
     <div class="catalog-product__info">
-      <h4 class="catalog-product__title">{{ product.title }}</h4>
+      <h4 class="catalog-product__title">{{ product.Name }}</h4>
       <ul class="catalog-product__list">
         <li class="catalog-product__point" v-for="option in product.options" :key="option.id">
           <span>{{ option.option }}</span> {{ option.value }}
         </li>
       </ul>
       <div class="catalog-product__price">
-        <span class="catalog-product__price-new">{{ formatNum(product.price, 0) }} ₽</span>
-        <span class="catalog-product__price-old">{{ formatNum(product.oldPrice, 0) }} ₽</span>
+        <span class="catalog-product__price-new">{{ formatNum(product.Price, 0) }} ₽</span>
+        <span class="catalog-product__price-old">{{ formatNum(product.Price_0, 0) }} ₽</span>
       </div>
       <div class="catalog-product__btns">
         <MainButton>Узнать подробнее</MainButton>

@@ -1,4 +1,4 @@
-import { ref, onBeforeMount, nextTick, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useCookies } from 'vue3-cookies'
 import { useRouter, useRoute } from 'vue-router'
 import { useDefaultItems } from '@/stores/default'
@@ -36,6 +36,7 @@ export function useAuth() {
 
       cookies.set('user-id', data.id)
       cookies.set('user-bearer', data.bearer)
+      store.setUser(response.data)
 
       userId.value = data.id
       userBearer.value = data.bearer
@@ -52,10 +53,9 @@ export function useAuth() {
   }
 
   onMounted(async () => {
-
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    console.log('TOKEN:',token);
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    console.log('TOKEN:', token)
 
     if (token) {
       await loginWithToken(token)
@@ -72,14 +72,14 @@ export function useAuth() {
   })
 
   // на случай если route поменяется после загрузки
-  // watch(
-  //   () => route.query.token,
-  //   async (token) => {
-  //     if (token) {
-  //       await loginWithToken(token)
-  //     }
-  //   }
-  // )
+  watch(
+    () => route.query.token,
+    async (token) => {
+      if (token) {
+        await loginWithToken(token)
+      }
+    }
+  )
 
   return {
     userId,

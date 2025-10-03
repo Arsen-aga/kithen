@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useCatalogBlock } from '@/stores/catalogBlock'
 import MainButton from '@/components/UI/MainButton.vue'
 import IconSearch from '@/components/icons/IconSearch.vue'
@@ -20,15 +20,38 @@ const closeCatalog = () => {
 const searchQuery = ref('')
 
 // Значения минимальной и максимальной цены для фильтрации, по умолчанию с диапазоном от минимальной до максимальной цены в товарах
-const minPrice = ref(Math.min(...props.products.map((p) => p.price), 10000) || 10000)
-const maxPrice = ref(Math.max(...props.products.map((p) => p.price), 3130000) || 3130000)
+const priceRange = computed(() => {
+  if (!props.products.length) {
+    return { min: 10000, max: 3130000 }
+  }
+
+  const prices = props.products.map((p) => p.Price).filter((price) => price != null)
+
+  if (!prices.length) {
+    return { min: 10000, max: 3130000 }
+  }
+
+  return {
+    min: Math.min(...prices),
+    max: Math.max(...prices),
+  }
+})
+
+const minPrice = ref(priceRange.value.min)
+const maxPrice = ref(priceRange.value.max)
 
 const filteredProducts = computed(() => {
   return props.products.filter((product) => {
-    const matchesSearch = !searchQuery.value || product.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesPrice = product.price >= minPrice.value && product.price <= maxPrice.value
+    const matchesSearch = !searchQuery.value || product.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesPrice = product.Price >= minPrice.value && product.Price <= maxPrice.value
+    console.log(matchesPrice)
     return matchesSearch && matchesPrice
   })
+})
+
+watch(priceRange, (newRange) => {
+  minPrice.value = newRange.min
+  maxPrice.value = newRange.max
 })
 </script>
 

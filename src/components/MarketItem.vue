@@ -1,23 +1,64 @@
 <script setup>
 import { useCatalogBlock } from '@/stores/catalogBlock'
-
-const props = defineProps({
+import axios from 'axios'
+import { useCookies } from 'vue3-cookies'
+import { useDefaultItems } from '@/stores/default'
+import { toast } from 'vue3-toastify'
+const { cookies } = useCookies()
+defineProps({
   marketItem: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
 })
+
+const store = useDefaultItems()
+const bearer = cookies.get('user-bearer')
+const headersGet = {
+  headers: {
+    Authorization: 'Bearer ' + bearer,
+  },
+}
+const getProducts = async (groupId) => {
+  try {
+    const response = await axios.get(`${store.getApiDomain}/products`, headersGet)
+    const productsInGroup = response.data.filter((product) => product.Group === groupId)
+    if (productsInGroup.length === 0) {
+      toast.error('В данной категории нет товаров', { autoClose: 1000 })
+      throw new Error('В данной категории нет товаров')
+    }
+    catalogBlock.value = productsInGroup
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const { catalogBlock } = useCatalogBlock()
-const openCatalog = () => {
-  catalogBlock.value = props.marketItem.products
+const openCatalog = async (groupId) => {
+  try {
+    await getProducts(groupId)
+  } catch (error) {
+    console.log('В данной категории нет товаров', error)
+  }
 }
 </script>
 
 <template>
-  <div class="market-item" @click="openCatalog">
-    <img class="market-item__img _img" :src="marketItem.img" :alt="marketItem.title" />
-    <div v-if="marketItem.products.length" class="market-item__num">{{ marketItem.products.length }}</div>
-    <h4 class="market-item__title">{{ marketItem.title }}</h4>
+  <div class="market-item" @click="() => openCatalog(marketItem?.id)">
+    <img
+      v-if="marketItem?.img"
+      class="market-item__img _img"
+      :src="marketItem.img"
+      :alt="marketItem.Name || 'Product'"
+    />
+    <div v-else class="market-item__placeholder">No Image</div>
+    <div v-if="marketItem?.products?.length" class="market-item__num">
+      {{ marketItem.products.length }}
+    </div>
+
+    <h4 class="market-item__title">
+      {{ marketItem?.Name || 'Без названия' }}
+    </h4>
   </div>
 </template>
 
@@ -31,6 +72,16 @@ const openCatalog = () => {
 
   img {
     transition: all 0.5s ease-in-out;
+  }
+
+  &__placeholder {
+    width: 100%;
+    height: 100%;
+    background: #dba15094;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
   }
 
   &:hover {

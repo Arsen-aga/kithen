@@ -50,6 +50,7 @@ const goTo = (item) => {
 
 onMounted(() => {
   if (user.value.username === 'guest' || user.value.username !== 'potapov.roma@mail.ru') {
+    console.log(user)
     // router.push('/nelzya-tuda')
     router.push('/admin')
   }

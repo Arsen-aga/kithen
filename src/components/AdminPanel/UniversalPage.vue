@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { ref, onMounted, watch } from 'vue'
 import { useDefaultItems } from '@/stores/default'
-import { useFileUpload } from '@/helpers/useFileUpload'
+import { deleteFile, useFileUpload } from '@/helpers/useFileUpload'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
@@ -14,7 +14,7 @@ const store = useDefaultItems()
 const token = store.getBearer
 const headersPost = {
   headers: {
-    'Content-Type': 'multipart/form-data',
+    'Content-Type': 'x-www-form-urlencoded',
     Authorization: 'Bearer ' + token,
   },
 }
@@ -362,27 +362,6 @@ const handleVideoRemove = async (video) => {
     formData.value.video = null
   } catch (error) {
     console.error('Ошибка при удалении видео:', error)
-  }
-}
-
-const deleteFile = async (file) => {
-  console.log(file)
-  try {
-    if (!file.nameUrl) {
-      console.log('Файл не загружен на сервер, удаляем только локально')
-      return
-    }
-
-    const response = await axios.delete(`https://back.love-kitchen.ru/web/uploads/${file.id}`, {
-      // data: { filename: file.nameUrl },
-      headersGet,
-    })
-
-    console.log('Файл удален с сервера:', response.data)
-    toast.success('Файл удален', { autoClose: 1000 })
-  } catch (error) {
-    console.error('Ошибка удаления файла:', error)
-    toast.error(`Ошибка удаления файла: ${error.message}`, { autoClose: 1000 })
   }
 }
 

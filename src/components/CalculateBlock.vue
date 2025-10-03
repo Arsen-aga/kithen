@@ -10,9 +10,20 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
+import { useCookies } from 'vue3-cookies'
 
+import { useDefaultItems } from '@/stores/default'
 import { useResultItems } from '@/stores/result'
+import axios from 'axios'
 const { addItem } = useResultItems()
+const store = useDefaultItems()
+const { cookies } = useCookies()
+const bearer = cookies.get('user-bearer')
+const headersGet = {
+  headers: {
+    Authorization: 'Bearer ' + bearer,
+  },
+}
 
 const itemSmeta = ref('')
 const itemMarket = ref('')
@@ -22,21 +33,37 @@ const itemSelectedProducts = ref('')
 const itemTechnicallyComplexProducts = ref('')
 const itemServices = ref('')
 const itemTreaty = ref('')
-onBeforeMount(async () => {
-  itemSmeta.value = await getData('../../data/smeta.json')
-  if (itemSmeta.value) {
-    itemSmeta.value.items.forEach((item) => {
-      item.table.forEach((elem) => {
-        addItem(item.id, elem)
-      })
-    })
+
+const marketGroups = ref([])
+
+const getMarket = async () => {
+  console.log()
+  try {
+    const response = await axios.get(`${store.getApiDomain}/product-groups`, headersGet)
+    marketGroups.value = response.data || []
+    console.log('marketGroups.value', marketGroups.value)
+  } catch (error) {
+    console.error('Ошибка получения контента маркета', error)
+    marketGroups.value = []
   }
+}
+onBeforeMount(async () => {
+  // itemSmeta.value = await getData('../../data/smeta.json')
+  // if (itemSmeta.value) {
+  //   itemSmeta.value.items.forEach((item) => {
+  //     item.table.forEach((elem) => {
+  //       addItem(item.id, elem)
+  //     })
+  //   })
+  // }
+  await getMarket()
   itemMarket.value = await getData('../../data/market.json')
-  itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
-  itemSelectedProducts.value = await getData('../../data/selected-products.json')
-  itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
-  itemServices.value = await getData('../../data/services.json')
-  itemTreaty.value = await getData('../../data/treaty.json')
+
+  // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
+  // itemSelectedProducts.value = await getData('../../data/selected-products.json')
+  // itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
+  // itemServices.value = await getData('../../data/services.json')
+  // itemTreaty.value = await getData('../../data/treaty.json')
 })
 
 const isOpenCatalog = ref(false)
@@ -55,14 +82,16 @@ watch(
       <AccordionItem v-if="itemSmeta" :content="itemSmeta" :title="itemSmeta.title">
         <AccordionSmeta :items="itemSmeta.items" />
       </AccordionItem>
+
       <AccordionItem
-        v-if="itemMarket"
-        :content="itemMarket"
-        :title="isOpenCatalog ? 'Каталог товаров' : itemMarket.title"
+        v-if="marketGroups && marketGroups.length > 0"
+        :content="marketGroups"
+        :title="isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
-        <MarketBlock :items="itemMarket.items" v-show="!isOpenCatalog" />
+        <MarketBlock :items="marketGroups" v-show="!isOpenCatalog" />
         <CatalogBlock v-show="catalogBlock.value && isOpenCatalog" :products="catalogBlock.value" />
       </AccordionItem>
+
       <AccordionItem
         v-if="itemHouseholdAppliances"
         :content="itemHouseholdAppliances"
