@@ -1,14 +1,14 @@
 import axios from 'axios'
 import { useDefaultItems } from '@/stores/default'
-const store = useDefaultItems()
-const headersPost = {
-  headers: {
-    'Content-Type': 'multipart/form-data',
-    Authorization: 'Bearer ' + store.getBearer,
-  },
-}
 
 export const useFileUpload = () => {
+  const store = useDefaultItems()
+  const headersPost = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: 'Bearer ' + store.getBearer,
+    },
+  }
   const uploadFile = async (productId, fileItem, pathName = 'product') => {
     if (!fileItem || fileItem.isExisting) return null
 
@@ -39,6 +39,13 @@ export const useFileUpload = () => {
 }
 
 export const deleteFile = async (file) => {
+  const store = useDefaultItems()
+  const headersPost = {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: 'Bearer ' + store.getBearer,
+    },
+  }
   try {
     if (!file.nameUrl) {
       console.log('Файл не загружен на сервер, удаляем только локально')

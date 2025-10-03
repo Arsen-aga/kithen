@@ -1,15 +1,16 @@
 <script setup>
 import { startAnimation } from '@/helpers/logoAnimation'
 import { ref, onMounted, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
 const menuItems = ref([
   {
     name: 'Товары',
     category: '',
     subcategories: [
-      { name: 'Категории товаров', category: 'product-groups' },
-      { name: 'Товары', category: 'products' },
-      { name: 'Группы атрибутов', category: 'product-attribute-groups' },
-      { name: 'Атрибуты', category: 'product-attributes' },
+      { name: 'Категории товаров', path: 'product-groups' },
+      { name: 'Товары', path: 'products' },
+      { name: 'Группы атрибутов', path: 'product-attribute-groups' },
+      { name: 'Атрибуты', path: 'product-attributes' },
     ],
     open: false,
   },
@@ -228,18 +229,14 @@ onUnmounted(() => {
         </a>
         <!-- Подкатегории -->
         <div v-if="item.open" class="subcategories">
-          <a
+          <RouterLink
             v-for="(sub, index) in item.subcategories"
             :key="index"
-            @click="
-              handleClick($event, {
-                category: sub.category,
-              })
-            "
+            :to="{ name: 'List', params: { pathName: sub.path } }"
             class="acc__link sub-link"
+            active-class="active"
+            >{{ sub.name }}</RouterLink
           >
-            {{ sub.name }}
-          </a>
         </div>
       </div>
     </div>
