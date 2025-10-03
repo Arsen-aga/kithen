@@ -233,13 +233,13 @@ const saveContent = async () => {
     // 1. Загружаем только НОВЫЕ изображения
     const newImages = formData.value.images.filter((img) => !img.isExisting)
     if (newImages.length > 0) {
-      imagesSrc.value = await uploadMultipleFiles(id.value, formData.value.images)
+      imagesSrc.value = await uploadMultipleFiles(id.value, formData.value.images, name.value)
       console.log('Загруженные новые изображения:', imagesSrc.value)
     }
 
     // 2. Загружаем только НОВОЕ видео
     if (formData.value.video && !formData.value.video.isExisting) {
-      videoSrc.value = await uploadFile(id.value, formData.value.video)
+      videoSrc.value = await uploadFile(id.value, formData.value.video, name.value)
       console.log('Загруженное новое видео:', videoSrc.value)
     }
 

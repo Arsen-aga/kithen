@@ -1,6 +1,10 @@
 import axios from 'axios'
 import { useDefaultItems } from '@/stores/default'
 
+// связывание файлов
+// отвязывание файлов
+
+// загрузка файлов
 export const useFileUpload = () => {
   const store = useDefaultItems()
   const headersPost = {
@@ -38,6 +42,7 @@ export const useFileUpload = () => {
   }
 }
 
+// удаление файлов
 export const deleteFile = async (file) => {
   const store = useDefaultItems()
   const headersPost = {
