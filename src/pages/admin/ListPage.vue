@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDefaultItems } from '@/stores/default'
 import axios from 'axios'
@@ -17,6 +17,82 @@ const categories = ref([])
 const user = ref(store.getUser)
 const apiUrl = ref(store.getApiDomain)
 const attributeGroups = ref([])
+
+// Переменные для бесконечной ленты
+const currentPage = ref(1)
+const isLoading = ref(false)
+const hasMore = ref(true)
+const observer = ref(null)
+const lastElement = ref(null)
+
+// Методы для бесконечной ленты
+const loadMoreCategories = async () => {
+  if (isLoading.value || !hasMore.value) return
+
+  isLoading.value = true
+  currentPage.value++
+
+  const config = {
+    headers: {
+      Authorization: `Bearer ${user.value.bearer}`,
+    },
+  }
+
+  try {
+    const response = await axios.get(`${apiUrl.value}/${pathName.value}?page=${currentPage.value}`, config)
+    const newCategories = response.data
+
+    if (newCategories && newCategories.length > 0) {
+      categories.value = [...categories.value, ...newCategories]
+      // Если пришло меньше 10 элементов (или другого ожидаемого количества), значит страницы кончились
+      if (newCategories.length < 10) {
+        // Можете изменить на ожидаемое количество элементов на странице
+        hasMore.value = false
+      }
+    } else {
+      hasMore.value = false
+    }
+
+    console.log(`Загружена страница ${currentPage.value}:`, newCategories)
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error)
+    hasMore.value = false
+    toast.error('Ошибка загрузки данных', { autoClose: 1000 })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Инициализация Intersection Observer
+const initObserver = () => {
+  if (observer.value) {
+    observer.value.disconnect()
+  }
+
+  observer.value = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !isLoading.value && hasMore.value) {
+        loadMoreCategories()
+      }
+    },
+    {
+      rootMargin: '100px', // Загружать заранее, когда до конца осталось 100px
+      threshold: 0.1,
+    }
+  )
+
+  if (lastElement.value) {
+    observer.value.observe(lastElement.value)
+  }
+}
+
+// Сброс состояния при смене страницы
+const resetPagination = () => {
+  currentPage.value = 1
+  categories.value = []
+  hasMore.value = true
+  isLoading.value = false
+}
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
@@ -97,17 +173,25 @@ const deleteCategory = async (id) => {
   }
 }
 
-// Загрузка данных
+// Загрузка данных (первая страница)
 const getContent = async () => {
+  resetPagination()
+
   const config = {
     headers: {
       Authorization: `Bearer ${user.value.bearer}`,
     },
   }
   try {
-    const response = await axios.get(apiUrl.value + '/' + pathName.value, config)
-    categories.value = response.data
-    console.log('Загружены данные для:', pathName.value, response.data)
+    const response = await axios.get(`${apiUrl.value}/${pathName.value}?page=${currentPage.value}`, config)
+    categories.value = response.data || []
+    console.log('Загружены данные для:', pathName.value, categories.value)
+
+    // Проверяем, есть ли еще данные
+    if (categories.value.length < 10) {
+      // Если элементов меньше ожидаемого количества
+      hasMore.value = false
+    }
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
     toast.error('Ошибка загрузки данных', { autoClose: 1000 })
@@ -159,6 +243,18 @@ onMounted(async () => {
   if (pathName.value === 'product-attributes') {
     await loadAttributeGroups()
   }
+
+  // Инициализируем observer после загрузки DOM
+  setTimeout(() => {
+    initObserver()
+  }, 100)
+})
+
+// Обновляем observer при изменении данных
+watch(filteredCategories, () => {
+  setTimeout(() => {
+    initObserver()
+  }, 100)
 })
 
 // Отслеживание изменения pathName
@@ -166,6 +262,13 @@ watch(pathName, async (newPathName) => {
   await getContent()
   if (newPathName === 'product-attributes') {
     await loadAttributeGroups()
+  }
+})
+
+// Очистка observer при размонтировании
+onUnmounted(() => {
+  if (observer.value) {
+    observer.value.disconnect()
   }
 })
 </script>
@@ -194,10 +297,12 @@ watch(pathName, async (newPathName) => {
 
       <div class="filters-group">
         <button class="filter-btn" :class="{ active: sortBy === 'idAsc' }" @click="sortByF($event, 'idAsc')">
-          <span>ID ↑</span>
+          <!-- <span>ID ↑</span> -->
+          <span>№ ↑</span>
         </button>
         <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
-          <span>ID ↓</span>
+          <!-- <span>ID ↓</span> -->
+          <span>№ ↓</span>
         </button>
         <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
           <span>Имя A-Z</span>
@@ -229,15 +334,26 @@ watch(pathName, async (newPathName) => {
       <table class="data-table">
         <thead>
           <tr>
-            <th class="column-id">ID</th>
+            <!-- <th class="column-id">ID</th> -->
+            <th class="column-id">№</th>
             <th class="column-name">Название</th>
             <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
             <th class="column-actions">Действия</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="category in filteredCategories" :key="category.id" class="table-row">
-            <td class="cell-id">{{ category.id }}</td>
+          <tr
+            v-for="(category, index) in filteredCategories"
+            :key="category.id"
+            class="table-row"
+            :ref="
+              (el) => {
+                if (index === filteredCategories.length - 1) lastElement = el
+              }
+            "
+          >
+            <!-- <td class="cell-id">{{ category.id }}</td> -->
+            <td class="cell-id">{{ index + 1 }}</td>
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
@@ -281,8 +397,19 @@ watch(pathName, async (newPathName) => {
         </tbody>
       </table>
 
+      <!-- Индикатор загрузки -->
+      <div v-if="isLoading" class="loading-indicator">
+        <div class="spinner"></div>
+        <span>Загрузка...</span>
+      </div>
+
+      <!-- Сообщение о конце списка -->
+      <div v-if="!hasMore && filteredCategories.length > 0" class="end-of-list">
+        <span>Все элементы загружены</span>
+      </div>
+
       <!-- Состояние пустой таблицы -->
-      <div v-if="filteredCategories.length === 0" class="empty-state">
+      <div v-if="filteredCategories.length === 0 && !isLoading" class="empty-state">
         <div class="empty-icon">📭</div>
         <h3 class="empty-title">Ничего не найдено</h3>
         <p class="empty-description">Попробуйте изменить параметры поиска или фильтрации</p>
@@ -565,6 +692,44 @@ watch(pathName, async (newPathName) => {
 .delete-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Индикатор загрузки */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #dba250;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Конец списка */
+.end-of-list {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+  font-size: 14px;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* Состояние пустой таблицы */
