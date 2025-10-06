@@ -18,7 +18,7 @@ export const useFileUpload = () => {
 
     const newFormData = new FormData()
     newFormData.append('UploadForm[file]', fileItem.file)
-    newFormData.append('folder', `${pathName}s/${productId || 'temp'}`)
+    newFormData.append('folder', `${pathName}/${productId || 'temp'}`)
     newFormData.append('filenamePrefix', `${pathName}_`)
 
     try {

@@ -23,7 +23,6 @@ watch(
   (newValue) => {
     if (skipNextUpdate.value) {
       skipNextUpdate.value = false
-      console.log(props.modelValue)
       return
     }
     images.value = [...newValue]
@@ -182,6 +181,7 @@ const dragLeave = () => {
 .image-item img {
   width: 175px;
   height: 175px;
+  overflow: hidden;
   object-fit: cover;
   cursor: pointer;
 }
