@@ -278,11 +278,7 @@ onUnmounted(() => {
     <!-- Заголовок и кнопка добавления -->
     <div class="categories-header">
       <h2 class="page-title">{{ getPageTitle() }}</h2>
-      <RouterLink
-        v-if="!isProductsPage"
-        :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }"
-        class="btn-primary"
-      >
+      <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }" class="btn-primary">
         <span class="btn-icon">➕</span>
         Добавить
       </RouterLink>

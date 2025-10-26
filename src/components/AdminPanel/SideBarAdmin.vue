@@ -4,65 +4,44 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 const menuItems = ref([
   {
+    id: 0,
     name: 'Товары',
-    category: '',
+    path: '',
     subcategories: [
-      { name: 'Категории товаров', path: 'product-groups' },
-      { name: 'Товары', path: 'products' },
-      { name: 'Группы атрибутов', path: 'product-attribute-groups' },
-      { name: 'Атрибуты', path: 'product-attributes' },
+      { id: 0, name: 'Категории товаров', path: 'product-groups' },
+      { id: 1, name: 'Товары', path: 'products' },
+      { id: 2, name: 'Группы атрибутов', path: 'product-attribute-groups' },
+      { id: 3, name: 'Атрибуты', path: 'product-attributes' },
     ],
-    open: false,
   },
   {
+    id: 1,
     name: 'Пользователи',
-    category: 'users',
+    path: 'users',
     subcategories: [],
-    open: false,
   },
 ])
 
+// Анимация лого
 const pathRefs = ref([])
-
-// Функция для установки ref
 const setPathRef = (el) => {
   if (el) {
     pathRefs.value.push(el)
   }
 }
-// Обработка клика по элементу меню
-const handleClick = (event, item) => {
-  toggleActive(event)
-  goTo(item.category)
+
+// Состояние открытых категорий
+const openStates = ref({})
+
+const toggleShow = (itemId) => {
+  openStates.value[itemId] = !openStates.value[itemId]
 }
 
-// Переключение активного класса
-const toggleActive = (event) => {
-  const link = event.target
-  const items = document.querySelectorAll('.acc__link')
-  items.forEach((item) => {
-    item.classList.remove('active')
-  })
-  link.classList.add('active')
+const isOpen = (itemId) => {
+  return !!openStates.value[itemId]
 }
 
-// Эмиссия события goTo
-const goTo = (category) => {
-  emit('goTo', category)
-}
-
-// Переключение подкатегорий
-const toggleSubcategories = (item) => {
-  menuItems.value.forEach((i) => {
-    i.open = false
-  })
-  item.open = !item.open
-}
-
-// Определение emit для события goTo
-const emit = defineEmits(['goTo'])
-
-// Запуск анимации при монтировании
+// Запуск анимации при монтировании лого
 onMounted(() => {
   setTimeout(() => {
     if (pathRefs.value.length > 0) {
@@ -214,29 +193,28 @@ onUnmounted(() => {
       <div class="head-text">Административная панель</div>
     </div>
     <div class="accBody">
-      <div v-for="item in menuItems" :key="item.category">
-        <a
-          @click="[
-            toggleSubcategories(item),
-            handleClick($event, {
-              category: item.category,
-            }),
-          ]"
+      <div v-for="item in menuItems" :key="item.id">
+        <RouterLink
+          v-if="item.path"
+          :to="{ name: 'List', params: { pathName: item.path } }"
           class="acc__link"
-          :class="{ active: item.open }"
+          active-class="active"
         >
           {{ item.name }}
-        </a>
-        <!-- Подкатегории -->
-        <div v-if="item.open" class="subcategories">
+        </RouterLink>
+        <p v-else @click="toggleShow(item.id)" class="acc__link" :class="{ active: isOpen(item.id) }">
+          {{ item.name }}
+        </p>
+        <div v-if="item.subcategories && isOpen(item.id)" class="subcategories">
           <RouterLink
             v-for="(sub, index) in item.subcategories"
             :key="index"
             :to="{ name: 'List', params: { pathName: sub.path } }"
             class="acc__link sub-link"
             active-class="active"
-            >{{ sub.name }}</RouterLink
           >
+            {{ sub.name }}
+          </RouterLink>
         </div>
       </div>
     </div>
