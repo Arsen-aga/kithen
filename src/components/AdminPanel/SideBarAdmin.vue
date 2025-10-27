@@ -8,8 +8,8 @@ const menuItems = ref([
     name: 'Товары',
     path: '',
     subcategories: [
-      { id: 0, name: 'Категории товаров', path: 'product-groups' },
-      { id: 1, name: 'Товары', path: 'products' },
+      { id: 0, name: 'Категории товаров', path: 'external-categories' },
+      { id: 1, name: 'Товары', path: 'external-products' },
       { id: 2, name: 'Группы атрибутов', path: 'product-attribute-groups' },
       { id: 3, name: 'Атрибуты', path: 'product-attributes' },
     ],
@@ -218,6 +218,11 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    <div class="back-link">
+      <div class="links">
+        <router-link to="/" class="exit link">Выйти</router-link>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -228,6 +233,7 @@ onUnmounted(() => {
   gap: 64px;
   padding: 42px 51px;
   align-items: center;
+  height: 100%;
 }
 .accHead {
   display: flex;
@@ -277,5 +283,39 @@ onUnmounted(() => {
 .sub-link {
   font-weight: 400;
   color: #ddd;
+}
+
+.back-link {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.links {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 10px 30px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  max-width: 100%;
+  width: 100%;
+  transition: background 0.3s ease;
+}
+
+.link:hover {
+  background: #4b5563;
 }
 </style>

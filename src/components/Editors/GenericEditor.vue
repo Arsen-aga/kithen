@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, defineEmits } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
-// import DragDropImages from '@/components/UI/DragDropImages.vue'
+import DragDropImages from '@/components/UI/DragDropImages.vue'
 
 const props = defineProps({
   formData: Object,
@@ -9,20 +9,20 @@ const props = defineProps({
   currentId: String,
 })
 
-defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
+const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
 
 console.log(props.formData)
 console.log(props.formData.images)
 
 const config = computed(() => {
   const configs = {
-    'product-groups': {
-      title: 'Группа товаров',
-      label: 'Название группы',
-      sort: 'Порядок группы',
-      placeholder: 'Введите название группы товаров',
+    'external-categories': {
+      title: 'Категория товаров',
+      label: 'Название категории',
+      sort: 'Порядок категории',
+      placeholder: 'Введите название категории товаров',
       hint: 'Например: Электроника, Одежда, Мебель и т.д.',
-      entityType: 'группу',
+      entityType: 'категорию',
     },
     'product-attribute-groups': {
       title: 'Группа атрибутов',
@@ -45,10 +45,10 @@ const config = computed(() => {
   )
 })
 
-// const localImages = computed({
-//   get: () => props.formData.images,
-//   set: (value) => emit('update:images', value),
-// })
+const localImages = computed({
+  get: () => props.formData.images,
+  set: (value) => emit('update:images', value),
+})
 </script>
 <template>
   <div class="content-editor">
@@ -56,8 +56,8 @@ const config = computed(() => {
       <h3 class="section-title">{{ config.title }}</h3>
       <div
         :class="{
-          'form-single': props.entityType !== 'product-groups',
-          'form-grid': props.entityType === 'product-groups',
+          'form-single': props.entityType !== 'external-categories',
+          'form-grid': props.entityType === 'external-categories',
         }"
       >
         <div class="form-group">
@@ -65,25 +65,26 @@ const config = computed(() => {
           <input type="text" id="title" v-model="formData.title" :placeholder="config.placeholder" class="form-input" />
           <div class="form-hint">{{ config.hint }}</div>
         </div>
-        <div class="form-group" v-if="props.entityType === 'product-groups'">
+        <div class="form-group" v-if="props.entityType === 'external-categories'">
           <label for="sort" class="form-label">{{ config.sort }}</label>
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
         </div>
       </div>
     </div>
     <!-- Изображение -->
-    <!-- <div class="editor-section">
+    <div v-if="props.entityType === 'external-categories'" class="editor-section">
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">
           <DragDropImages
             v-model="localImages"
             :multiple="false"
+            @update:images="(event) => emit('update:images', event)"
             @remove-image="(event) => emit('remove-image', event)"
           />
         </div>
       </div>
-    </div> -->
+    </div>
 
     <ActionButtons
       :is-new="currentId === 'new'"

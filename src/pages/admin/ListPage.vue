@@ -104,7 +104,7 @@ const filteredCategories = computed(() => {
       } else if (category.username) {
         return category.username.toLowerCase().includes(searchQuery.value.toLowerCase())
       } else {
-        return category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        return category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
       }
     })
   }
@@ -119,6 +119,8 @@ const filteredCategories = computed(() => {
         return a.Name.localeCompare(b.Name)
       } else if (a.username) {
         return a.username.localeCompare(b.username)
+      } else if (a.title) {
+        return a.title.localeCompare(b.title)
       } else {
         return a.name.localeCompare(b.name)
       }
@@ -129,6 +131,8 @@ const filteredCategories = computed(() => {
         return b.Name.localeCompare(a.Name)
       } else if (b.username) {
         return b.username.localeCompare(a.username)
+      } else if (b.title) {
+        return b.title.localeCompare(a.title)
       } else {
         return b.name.localeCompare(a.name)
       }
@@ -137,6 +141,12 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => a.group_id - b.group_id)
   } else if (sortBy.value === 'groupIdDesc') {
     return filtered.sort((a, b) => b.group_id - a.group_id)
+  } else if (sortBy.value === 'uidAsc') {
+    console.log(filtered)
+    return filtered.sort((a, b) => a.uid.localeCompare(b.uid))
+  } else if (sortBy.value === 'uidDesc') {
+    console.log(filtered)
+    return filtered.sort((a, b) => b.uid.localeCompare(a.uid))
   }
   return filtered
 })
@@ -184,6 +194,7 @@ const getContent = async () => {
   }
   try {
     const response = await axios.get(`${apiUrl.value}/${pathName.value}?page=${currentPage.value}`, config)
+
     categories.value = response.data || []
     console.log('Загружены данные для:', pathName.value, categories.value)
 
@@ -235,7 +246,7 @@ const getPageTitle = () => {
 }
 
 // Проверка, является ли страница products (чтобы скрыть кнопку добавления)
-const isProductsPage = computed(() => pathName.value === 'products')
+const isProductsPage = computed(() => pathName.value === 'external-products')
 
 // Инициализация
 onMounted(async () => {
@@ -271,6 +282,8 @@ onUnmounted(() => {
     observer.value.disconnect()
   }
 })
+
+console.log(categories)
 </script>
 
 <template>
@@ -322,6 +335,22 @@ onUnmounted(() => {
         >
           <span>Группа ↓</span>
         </button>
+        <button
+          v-if="pathName === 'external-products'"
+          class="filter-btn"
+          :class="{ active: sortBy === 'uidAsc' }"
+          @click="sortByF($event, 'uidAsc')"
+        >
+          <span>ID ↑</span>
+        </button>
+        <button
+          v-if="pathName === 'external-products'"
+          class="filter-btn"
+          :class="{ active: sortBy === 'uidDesc' }"
+          @click="sortByF($event, 'uidDesc')"
+        >
+          <span>ID ↓</span>
+        </button>
       </div>
     </div>
 
@@ -334,6 +363,7 @@ onUnmounted(() => {
             <th class="column-id">№</th>
             <th class="column-name">Название</th>
             <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
+            <th v-if="pathName === 'external-products'" class="column-uid">ID</th>
             <th class="column-actions">Действия</th>
           </tr>
         </thead>
@@ -353,7 +383,9 @@ onUnmounted(() => {
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
-                  <span class="name-text">{{ category?.Name || category?.name || category?.username }}</span>
+                  <span class="name-text">{{
+                    category?.title || category?.name || category?.username || category?.Name
+                  }}</span>
                   <span v-if="category.exists === 0" class="status-badge inactive">Неактивно</span>
                 </div>
               </RouterLink>
@@ -361,6 +393,11 @@ onUnmounted(() => {
             <td v-if="pathName === 'product-attributes'" class="cell-group">
               <span class="group-badge">
                 {{ getGroupName(category.group_id || category.attribute_group_id) }}
+              </span>
+            </td>
+            <td v-if="pathName === 'external-products'" class="name-content">
+              <span class="name-text">
+                {{ category.uid }}
               </span>
             </td>
             <td class="cell-actions">

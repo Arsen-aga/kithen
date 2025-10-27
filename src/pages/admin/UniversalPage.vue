@@ -52,7 +52,8 @@ const {
   handleFileRemove,
   uploadFile,
   uploadMultipleFiles,
-  removeFileFromProduct,
+  deleteMarkedFiles,
+  clearFilesToDelete,
 } = useFileManager()
 
 // Основные методы
@@ -65,7 +66,6 @@ const loadItemData = async () => {
   try {
     const response = await get(`${name.value}/${id.value}`)
     currentItem.value = response
-    console.log(currentItem.value)
     initializeEditorData()
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
@@ -75,6 +75,7 @@ const loadItemData = async () => {
 
 const initializeEditorData = () => {
   const itemData = currentItem.value || {}
+  console.log(itemData)
 
   initializeFormData(itemData)
 
@@ -94,7 +95,7 @@ const initializeEditorData = () => {
 
 const loadGroupsProducts = async () => {
   try {
-    groupsProduct.value = (await get('product-groups')) || []
+    groupsProduct.value = (await get('external-categories')) || []
   } catch (error) {
     console.error('Ошибка загрузки групп товаров:', error)
   }
@@ -109,13 +110,15 @@ const saveContent = async () => {
     }
 
     // Загрузка и связывание файлов (только для продуктов)
-    if (name.value === 'products') {
+    if (name.value === 'external-products') {
       await handleAttributeOperations()
       await handleFileOperations()
     }
 
     // Обновление основного объекта
     await updateItem()
+
+    await deleteMarkedFiles()
 
     toast.success('Данные сохранены', { autoClose: 1000 })
   } catch (error) {
@@ -153,10 +156,7 @@ const handleAttributeOperations = async () => {
 const updateSelectAttributes = (event) => (selectedAttributes.value = event)
 const updateImages = (event) => (formData.value.images = event)
 const updatePhoto = (event) => (formData.value.photo = event)
-const updateVideo = (event) => {
-  formData.value.video = event
-  console.log(formData.value.video)
-}
+const updateVideo = (event) => (formData.value.video = event)
 
 const updateImagesWithNewUrls = () => {
   let newImageIndex = 0
@@ -191,19 +191,19 @@ const createNewItem = async () => {
 }
 
 const goBack = () => {
+  clearFilesToDelete()
   router.push({ name: 'List', params: { pathName: name.value } })
 }
 
 // Watchers
 watch([name, id], loadItemData)
 watch(() => formData.value.groupAttribute, filterAttributesByGroup)
-watch((formData) => console.log(formData))
 
 // Lifecycle
 onMounted(async () => {
   formData.value.type = name.value
 
-  if (name.value === 'products') {
+  if (name.value === 'external-products') {
     await Promise.all([loadGroupsProducts(), loadGroupsAttributes(), loadAttributes()])
   } else if (name.value === 'product-attributes') {
     await loadGroupsAttributes()
@@ -212,13 +212,9 @@ onMounted(async () => {
   await loadItemData()
 })
 
-const removeFile = async (file, productId, filesArray = null) => {
-  try {
-    await handleFileRemove(file, filesArray)
-    await removeFileFromProduct(productId, file)
-  } catch (error) {
-    console.error(error)
-  }
+const removeFile = async (file, filesArray = null) => {
+  console.log('Удаляем файл из UI:', file)
+  handleFileRemove(file, Number(id.value), filesArray)
 }
 </script>
 
@@ -227,7 +223,7 @@ const removeFile = async (file, productId, filesArray = null) => {
     <BackButton @click="goBack" />
 
     <ProductsEditor
-      v-if="name === 'products'"
+      v-if="name === 'external-products'"
       :form-data="formData"
       :groups-product="groupsProduct"
       :groups-attribute="groupsAttribute"
@@ -238,8 +234,8 @@ const removeFile = async (file, productId, filesArray = null) => {
       :get-attribute-name="getAttributeName"
       @save="saveContent"
       @update:group-attribute="filterAttributesByGroup"
-      @remove-video="(event) => removeFile(event, Number(id))"
-      @remove-image="(event) => removeFile(event, Number(id), formData.images)"
+      @remove-video="(event) => removeFile(event)"
+      @remove-image="(event) => removeFile(event, formData.images)"
       @update:images="updateImages"
       @update:video="updateVideo"
       @remove-attribute="(event) => removeAttributeFromProduct(Number(id), event)"
@@ -247,10 +243,12 @@ const removeFile = async (file, productId, filesArray = null) => {
     />
 
     <GenericEditor
-      v-else-if="['product-groups', 'product-attribute-groups'].includes(name)"
+      v-else-if="['external-categories', 'product-attribute-groups'].includes(name)"
       :form-data="formData"
       :entity-type="name"
       :current-id="id"
+      @remove-image="(event) => removeFile(event, formData.photo)"
+      @update:images="updatePhoto"
       @save="saveContent"
     />
     <!-- @remove-photo="(event) => removeFile(event, Number(id))"
@@ -271,6 +269,5 @@ const removeFile = async (file, productId, filesArray = null) => {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 </style>

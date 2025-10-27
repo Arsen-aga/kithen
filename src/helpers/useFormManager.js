@@ -1,5 +1,7 @@
-import { ref } from 'vue'
+import { ref, useId } from 'vue'
 import { useApi } from './useApi'
+
+const generateTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
 export function useFormManager(entityType, routeParams) {
   const { post, patch } = useApi()
@@ -36,18 +38,20 @@ export function useFormManager(entityType, routeParams) {
         attrs: data.attrs,
       }),
     },
-    'product-groups': {
-      fields: ['Name', 'photo', 'sort'],
-      createData: (data) => ({ Name: data.title }),
+    'external-categories': {
+      fields: ['title', 'photo', 'sort', 'uid'],
+      createData: (data) => ({
+        title: data.title,
+        uid: generateTempId(),
+        sort_order: data.sort,
+      }),
       updateData: (data, current) => {
-        console.log('data', data)
-        console.log('current', current)
         const res = {
           ...current,
-          Name: data.title,
-          sort: data.sort,
+          title: data.title,
+          sort_order: data.sort,
+          photo: data.photo[0],
         }
-        console.log(res)
         return res
       },
     },
@@ -79,7 +83,10 @@ export function useFormManager(entityType, routeParams) {
 
   const createItem = async () => {
     const config = entityConfigs[entityType]
+    console.log('config', config)
+    console.log('formData.value', formData.value)
     const newData = config.createData(formData.value)
+    console.log('newData', newData)
     return await post(entityType, newData)
   }
 
@@ -99,15 +106,16 @@ export function useFormManager(entityType, routeParams) {
       resetForm()
       return
     }
-
     const commonFields = {
-      title: itemData.Name || itemData.name || '',
+      title: itemData.Name || itemData.name || itemData.title || '',
       description: itemData.description || '',
-      groupProduct: itemData.Group || null,
+      groupProduct: itemData.Group || itemData.category || null,
       groupAttribute: itemData.group_id || null,
-      sort: itemData.sort || 0,
+      sort: itemData.sort_order || 0,
       photo: itemData.photo || null,
     }
+
+    console.log('commonFields', commonFields)
 
     formData.value = { ...formData.value, ...commonFields }
     currentItem.value = itemData

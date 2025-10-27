@@ -8,6 +8,7 @@ export function useFileManager() {
 
   const imagesSrc = ref([])
   const videoSrc = ref(null)
+  const filesToDelete = ref([]) // Новый ref для файлов, помеченных на удаление
 
   const initFiles = (files, type) => {
     if (!files || !Array.isArray(files)) return type === 'images' ? [] : null
@@ -53,27 +54,58 @@ export function useFileManager() {
     }
   }
 
-  const handleFileRemove = async (file, filesArray = null) => {
-    console.log('удаленный файл', file)
+  const handleFileRemove = (file, productId = null, filesArray = null) => {
+    console.log('Файл помечен на удаление', file)
+
+    // Добавляем файл в список для удаления (только существующие файлы)
+    if (file.isExisting && file.nameUrl) {
+      filesToDelete.value.push({
+        ...file,
+        productId, // Сохраняем productId для удаления связи
+        filesArray, // Сохраняем ссылку на массив для обновления UI
+      })
+    }
+
+    // Удаляем файл из UI сразу
+    if (filesArray) {
+      console.log(filesArray)
+      const index = filesArray.findIndex((item) => item.id === file.id)
+      if (index !== -1) {
+        filesArray.splice(index, 1)
+      }
+    }
+  }
+
+  // Новый метод для удаления помеченных файлов после сохранения
+  const deleteMarkedFiles = async () => {
+    if (filesToDelete.value.length === 0) return
+
+    console.log('Удаляем помеченные файлы:', filesToDelete.value)
+
     try {
-      if (file.isExisting && file.nameUrl) {
+      for (const file of filesToDelete.value) {
+        // Удаляем физический файл с сервера
         await deleteFile(file)
+
+        // Удаляем связь с продуктом (если есть productId)
+        if (file.productId) {
+          await removeFileFromProduct(file.productId, file)
+        }
       }
-      if (filesArray) {
-        filesArray = filesArray.filter((item) => item.id !== file.id)
-      } else {
-        return null
-      }
+
+      // Очищаем список после успешного удаления
+      filesToDelete.value = []
+      console.log('Все помеченные файлы успешно удалены')
     } catch (error) {
-      console.error('Ошибка при удалении файла:', error)
+      console.error('Ошибка удаления файлов:', error)
+      throw error // Пробрасываем ошибку дальше
     }
   }
 
   const removeFileFromProduct = async (productId, file) => {
-    console.log('удалили файл', productId, file)
+    console.log('Удаляем связь файла с продуктом', productId, file)
     try {
       const connection = await get('product-to-files')
-      console.log(connection)
       const foundConnection = connection?.find(
         (item) => item.product_id === productId && item.filename === file.nameUrl
       )
@@ -81,18 +113,27 @@ export function useFileManager() {
         await deleteApi(`product-to-files/${foundConnection.id}`)
       }
     } catch (error) {
-      console.error('Ошибка удаления связи атрибута:', error)
+      console.error('Ошибка удаления связи файла:', error)
+      throw error
     }
+  }
+
+  // Метод для очистки списка удаления (например, при отмене)
+  const clearFilesToDelete = () => {
+    filesToDelete.value = []
   }
 
   return {
     imagesSrc,
     videoSrc,
+    filesToDelete,
     initFiles,
     productToFile,
     handleFileRemove,
     uploadFile,
     uploadMultipleFiles,
     removeFileFromProduct,
+    deleteMarkedFiles, // Новый метод
+    clearFilesToDelete, // Новый метод
   }
 }

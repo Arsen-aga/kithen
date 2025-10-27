@@ -3,7 +3,7 @@ import AttributesManager from './AttributesManager.vue'
 import MediaSection from './MediaSection.vue'
 import ActionButtons from '../UI/ActionButtons.vue'
 
-defineProps({
+const props = defineProps({
   formData: Object,
   groupsProduct: Array,
   groupsAttribute: Array,
@@ -13,6 +13,8 @@ defineProps({
   currentId: String,
   getAttributeName: Function,
 })
+
+console.log('props.formData', props.formData)
 
 const emit = defineEmits([
   'save',

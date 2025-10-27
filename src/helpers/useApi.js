@@ -26,6 +26,7 @@ export function useApi() {
         ...getHeaders(contentType),
         ...(data && { data }),
       }
+      console.log(config)
 
       if (contentType === 'multipart/form-data' && data instanceof FormData) {
         config.data = data
