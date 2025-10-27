@@ -57,6 +57,20 @@ const emit = defineEmits([
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="price" class="form-label">Цена товара</label>
+          <input type="text" id="price" v-model="formData.price" placeholder="Введите цену товара" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="short_description" class="form-label">Краткое описание</label>
+          <input
+            type="text"
+            id="short_description"
+            v-model="formData.short_description"
+            placeholder="Введите цену товара"
+            class="form-input"
+          />
+        </div>
         <div class="form-group full-width">
           <label for="description" class="form-label">Описание</label>
           <textarea
@@ -180,9 +194,13 @@ const emit = defineEmits([
 }
 
 .form-textarea {
-  resize: none;
+  resize: vertical;
   min-height: 100px;
   font-family: inherit;
+}
+
+.full-width {
+  grid-column: span 2;
 }
 
 .select-wrapper {

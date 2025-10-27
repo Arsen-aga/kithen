@@ -103,6 +103,8 @@ const filteredCategories = computed(() => {
         return category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
       } else if (category.username) {
         return category.username.toLowerCase().includes(searchQuery.value.toLowerCase())
+      } else if (category.name) {
+        return category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
       } else {
         return category.title.toLowerCase().includes(searchQuery.value.toLowerCase())
       }
@@ -378,8 +380,8 @@ console.log(categories)
               }
             "
           >
-            <!-- <td class="cell-id">{{ category.id }}</td> -->
-            <td class="cell-id">{{ index + 1 }}</td>
+            <td class="cell-id">{{ category.id }}</td>
+            <!-- <td class="cell-id">{{ index + 1 }}</td> -->
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
@@ -414,7 +416,6 @@ console.log(categories)
                   </svg>
                 </RouterLink>
                 <button
-                  v-if="!isProductsPage"
                   class="action-btn delete-btn"
                   @click="deleteCategory(category.id)"
                   title="Удалить"

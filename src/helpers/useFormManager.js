@@ -1,4 +1,4 @@
-import { ref, useId } from 'vue'
+import { ref } from 'vue'
 import { useApi } from './useApi'
 
 const generateTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -23,19 +23,24 @@ export function useFormManager(entityType, routeParams) {
   const currentItem = ref(null)
 
   const entityConfigs = {
-    products: {
-      fields: ['Name', 'description', 'Group', 'attrs'],
+    'external-products': {
+      fields: ['title', 'description', 'category_id', 'attrs', 'uid', 'price'],
       createData: (data) => ({
-        Name: data.title,
+        title: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
+        short_description: String(data.description),
+        category_id: data.groupProduct,
+        uid: generateTempId(),
+        price: data.price,
       }),
       updateData: (data, current) => ({
         ...current,
-        Name: data.title,
+        title: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
+        short_description: String(data.short_description),
+        category_id: data.groupProduct,
         attrs: data.attrs,
+        price: data.price,
       }),
     },
     'external-categories': {
@@ -109,10 +114,12 @@ export function useFormManager(entityType, routeParams) {
     const commonFields = {
       title: itemData.Name || itemData.name || itemData.title || '',
       description: itemData.description || '',
-      groupProduct: itemData.Group || itemData.category || null,
+      short_description: itemData.short_description || '',
+      groupProduct: itemData.Group || itemData.category_id || null,
       groupAttribute: itemData.group_id || null,
       sort: itemData.sort_order || 0,
       photo: itemData.photo || null,
+      price: itemData.price || null,
     }
 
     console.log('commonFields', commonFields)
