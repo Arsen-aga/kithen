@@ -4,6 +4,7 @@ import ActionButtons from '../UI/ActionButtons.vue'
 defineProps({
   formData: Object,
   groupsAttribute: Array,
+  productForAttribute: Array,
   currentId: String,
 })
 
@@ -30,13 +31,25 @@ defineEmits(['save', 'cancel'])
           <label for="group" class="form-label">Группа атрибутов</label>
           <div class="select-wrapper">
             <select id="group" v-model="formData.groupAttribute" class="form-select">
-              <option :value="null">Выберите группу атрибутов</option>
+              <option :value="null || undefined || ''">Выберите группу атрибутов</option>
               <option v-for="group in groupsAttribute" :key="group.id" :value="group.id">
                 {{ group.Name || group.name }}
               </option>
             </select>
           </div>
           <div class="form-hint">Выберите к какой группе относится этот атрибут</div>
+        </div>
+        <div class="form-group">
+          <label for="group" class="form-label">Товары</label>
+          <div class="select-wrapper">
+            <select id="group" v-model="formData.product_id" class="form-select">
+              <option :value="null || undefined || ''">Выберите товар</option>
+              <option v-for="product in productForAttribute" :key="product.id" :value="product.id">
+                {{ product.Name || product.name || product.title }}
+              </option>
+            </select>
+          </div>
+          <div class="form-hint">Выберите товар к которому привязать атрибут</div>
         </div>
       </div>
     </div>
@@ -94,6 +107,11 @@ defineEmits(['save', 'cancel'])
   font-size: 14px;
   transition: all 0.3s ease;
   background: white;
+}
+
+.form-select,
+.form-select option {
+  cursor: pointer;
 }
 
 .form-input:focus,

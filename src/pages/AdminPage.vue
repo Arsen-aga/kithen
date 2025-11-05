@@ -10,7 +10,7 @@ const store = useDefaultItems()
 const user = computed(() => store.getUser)
 
 onMounted(() => {
-  if (user.value.username === 'guest' || user.value.username !== 'potapov.roma@mail.ru') {
+  if (user.value.username === 'guest' || user.value.username !== 'roma' || user.value.username !== 'admin') {
     console.log(user.value)
     // router.push('/login')
     router.push('/admin')

@@ -7,12 +7,14 @@ const props = defineProps({
   formData: Object,
   entityType: String,
   currentId: String,
+  categoriesList: {
+    // Добавляем пропс для списка категорий
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
-
-console.log(props.formData)
-console.log(props.formData.images)
 
 const config = computed(() => {
   const configs = {
@@ -24,7 +26,7 @@ const config = computed(() => {
       hint: 'Например: Электроника, Одежда, Мебель и т.д.',
       entityType: 'категорию',
     },
-    'product-attribute-groups': {
+    'external-product-attribute-groups': {
       title: 'Группа атрибутов',
       label: 'Название группы атрибутов',
       sort: '',
@@ -46,8 +48,90 @@ const config = computed(() => {
 })
 
 const localImages = computed({
-  get: () => props.formData.images,
-  set: (value) => emit('update:images', value),
+  get: () => {
+    // Если image - это строка (URL), преобразуем в массив с одним объектом
+    if (typeof props.formData.image === 'string' && props.formData.image) {
+      return [
+        {
+          id: props.currentId === 'new' ? Date.now() : props.currentId,
+          url: props.formData.image,
+          nameUrl: props.formData.image.split('/').pop(),
+          name: props.formData.image.split('/').pop(),
+          isExisting: true,
+        },
+      ]
+    }
+    // Если image - это массив, возвращаем как есть
+    else if (Array.isArray(props.formData.image)) {
+      return props.formData.image
+    }
+    // Если image null или undefined, возвращаем пустой массив
+    else {
+      return []
+    }
+  },
+  set: (value) => {
+    emit('update:images', value)
+  },
+})
+
+const availableParentCategories = computed(() => {
+  if (props.entityType !== 'external-categories') return []
+
+  const currentId = props.currentId === 'new' ? null : parseInt(props.currentId)
+
+  return props.categoriesList.filter((category) => {
+    // Исключаем текущую категорию
+    if (category.id === currentId) return false
+
+    // Исключаем дочерние категории (чтобы избежать циклических ссылок)
+    const isChild = checkIfChild(category, currentId, props.categoriesList)
+    if (isChild) return false
+
+    return true
+  })
+})
+
+// Рекурсивная функция для проверки, является ли категория дочерней
+const checkIfChild = (category, targetId, allCategories) => {
+  if (!category.children || category.children.length === 0) return false
+
+  for (const child of category.children) {
+    if (child.id === targetId) return true
+    if (checkIfChild(child, targetId, allCategories)) return true
+  }
+
+  return false
+}
+
+// Получаем отображаемое название категории с учетом вложенности
+const getCategoryDisplayName = (category, level = 0) => {
+  const prefix = '— '.repeat(level)
+  return `${prefix}${category.title || category.Name || category.name}`
+}
+
+// Рекурсивно формируем плоский список категорий с отступами
+const flattenedCategories = computed(() => {
+  const result = []
+
+  const flatten = (categories, level = 0) => {
+    categories.forEach((category) => {
+      result.push({
+        ...category,
+        displayName: getCategoryDisplayName(category, level),
+      })
+
+      if (category.children && category.children.length > 0) {
+        flatten(category.children, level + 1)
+      }
+    })
+  }
+
+  // Начинаем с корневых категорий (у которых parent_id === null)
+  const rootCategories = availableParentCategories.value.filter((cat) => cat.parent_id === null)
+  flatten(rootCategories)
+
+  return result
 })
 </script>
 <template>
@@ -70,9 +154,23 @@ const localImages = computed({
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
         </div>
       </div>
+      <!-- Поле выбора родительской категории -->
+      <div class="form-group" v-if="props.entityType === 'external-categories'">
+        <label for="parent_id" class="form-label">Родительская категория</label>
+        <select id="parent_id" v-model="formData.parent_id" class="form-input">
+          <option :value="null">Без родительской категории (корневая)</option>
+          <option v-for="category in flattenedCategories" :key="category.id" :value="category.id">
+            {{ category.displayName }}
+          </option>
+        </select>
+        <div class="form-hint">
+          Выберите родительскую категорию для создания иерархии. Текущая категория и ее дочерние категории исключены из
+          списка.
+        </div>
+      </div>
     </div>
     <!-- Изображение -->
-    <div v-if="props.entityType === 'external-categories'" class="editor-section">
+    <div v-if="props.entityType === 'external-categories' && !formData.parent_id" class="editor-section">
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">

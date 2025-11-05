@@ -1,5 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { useApi } from '@/helpers/useApi'
+import { onMounted, ref, watch } from 'vue'
+
+const { get } = useApi()
 
 const props = defineProps({
   attributes: Array,
@@ -34,12 +37,15 @@ const handleCheckboxChange = (attributeId, isChecked) => {
 }
 
 // Обработчик удаления атрибута
-const handleRemoveAttribute = (attributeId) => {
-  const index = localSelected.value.indexOf(attributeId)
+const handleRemoveAttribute = (attribute) => {
+  console.log('attribute', attribute)
+  const index = localSelected.value.indexOf(attribute)
+  console.log('localSelected.value', localSelected.value)
+  console.log(index)
   if (index > -1) {
     localSelected.value.splice(index, 1)
     emit('update:selected-attributes', [...localSelected.value])
-    emit('remove-attribute', attributeId)
+    emit('remove-attribute', attribute)
   }
 }
 
@@ -57,6 +63,8 @@ watch(
 
 // Проверяем, выбран ли атрибут
 const isAttributeSelected = (attributeId) => {
+  console.log(attributeId)
+  console.log(localSelected.value)
   return localSelected.value.includes(attributeId)
 }
 </script>
@@ -66,17 +74,17 @@ const isAttributeSelected = (attributeId) => {
   <div class="attributes-selector" v-if="attributes.length > 0">
     <label class="form-label">Доступные атрибуты</label>
     <div class="attributes-grid">
-      <div v-for="attribute in attributes" :key="attribute.id" class="attribute-card">
+      <div v-for="attribute in attributes" :key="attribute.attribute_id || attribute.id" class="attribute-card">
         <label class="attribute-checkbox">
           <input
             type="checkbox"
-            :value="attribute.id"
-            :checked="isAttributeSelected(attribute.id)"
-            @change="handleCheckboxChange(attribute.id, $event.target.checked)"
+            :value="attribute.attribute_id || attribute.id"
+            :checked="isAttributeSelected(attribute)"
+            @change="handleCheckboxChange(attribute, $event.target.checked)"
             class="checkbox-input"
           />
           <span class="checkbox-custom"></span>
-          <span class="attribute-name">{{ attribute.Name || attribute.name }}</span>
+          <span class="attribute-name">{{ attribute.Name || attribute.name || attribute.attribute_value }}</span>
         </label>
       </div>
     </div>
@@ -88,10 +96,14 @@ const isAttributeSelected = (attributeId) => {
       <span class="selected-count">{{ localSelected.length }}</span>
     </div>
     <div class="selected-attributes-grid">
-      <div v-for="attributeId in localSelected" :key="attributeId" class="selected-attribute-card">
+      <div
+        v-for="attribute in localSelected"
+        :key="attribute.attribute_id || attribute.id"
+        class="selected-attribute-card"
+      >
         <div class="attribute-badge">
-          <span class="badge-text">{{ getAttributeName(attributeId) }}</span>
-          <button @click="handleRemoveAttribute(attributeId)" class="badge-remove" title="Удалить атрибут">
+          <span class="badge-text">{{ getAttributeName(attribute.attribute_id || attribute.id) }}</span>
+          <button @click="handleRemoveAttribute(attribute)" class="badge-remove" title="Удалить атрибут">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"

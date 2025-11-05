@@ -11,6 +11,7 @@ export function useFileManager() {
   const filesToDelete = ref([]) // Новый ref для файлов, помеченных на удаление
 
   const initFiles = (files, type) => {
+    console.log('files init', files, type)
     if (!files || !Array.isArray(files)) return type === 'images' ? [] : null
 
     if (type === 'images') {
@@ -40,11 +41,11 @@ export function useFileManager() {
 
     const createConnection = async (filename) => {
       const formData = new FormData()
-      formData.append('product_id', productId)
+      formData.append('external_product_id', productId)
       formData.append('type', type)
       formData.append('filename', filename)
 
-      return await post('product-to-files', formData, 'multipart/form-data')
+      return await post('external-product-to-files', formData, 'multipart/form-data')
     }
 
     if (Array.isArray(fileNames) && fileNames.length > 0) {
@@ -68,7 +69,6 @@ export function useFileManager() {
 
     // Удаляем файл из UI сразу
     if (filesArray) {
-      console.log(filesArray)
       const index = filesArray.findIndex((item) => item.id === file.id)
       if (index !== -1) {
         filesArray.splice(index, 1)
@@ -102,15 +102,27 @@ export function useFileManager() {
     }
   }
 
-  const removeFileFromProduct = async (productId, file) => {
-    console.log('Удаляем связь файла с продуктом', productId, file)
+  const deleteCategoryImage = async (imageUrl) => {
+    if (!imageUrl) return
+
     try {
-      const connection = await get('product-to-files')
+      const fileName = imageUrl.split('/').pop()
+      await deleteFile({ nameUrl: fileName })
+      console.log('Изображение категории удалено с сервера:', fileName)
+    } catch (error) {
+      console.error('Ошибка удаления изображения категории:', error)
+      throw error
+    }
+  }
+
+  const removeFileFromProduct = async (productId, file) => {
+    try {
+      const connection = await get('external-product-to-files')
       const foundConnection = connection?.find(
-        (item) => item.product_id === productId && item.filename === file.nameUrl
+        (item) => item.external_product_id === productId && item.filename === file.nameUrl
       )
       if (foundConnection) {
-        await deleteApi(`product-to-files/${foundConnection.id}`)
+        await deleteApi(`external-product-to-files/${foundConnection.id}`)
       }
     } catch (error) {
       console.error('Ошибка удаления связи файла:', error)
@@ -135,5 +147,6 @@ export function useFileManager() {
     removeFileFromProduct,
     deleteMarkedFiles, // Новый метод
     clearFilesToDelete, // Новый метод
+    deleteCategoryImage,
   }
 }

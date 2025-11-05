@@ -26,7 +26,6 @@ export function useApi() {
         ...getHeaders(contentType),
         ...(data && { data }),
       }
-      console.log(config)
 
       if (contentType === 'multipart/form-data' && data instanceof FormData) {
         config.data = data
@@ -44,11 +43,7 @@ export function useApi() {
     apiCall,
     get: (url) => apiCall('get', url),
     post: (url, data, contentType = 'application/json') => apiCall('post', url, data, contentType),
-    patch: (url, data) => {
-      console.log('data', data)
-      console.log('url', url)
-      apiCall('patch', url, data)
-    },
+    patch: (url, data) => apiCall('patch', url, data),
     delete: (url) => apiCall('delete', url),
   }
 }
