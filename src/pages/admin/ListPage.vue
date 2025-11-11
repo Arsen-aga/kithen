@@ -181,12 +181,15 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => b.id - a.id)
   } else if (sortBy.value === 'nameAsc') {
     return filtered.sort((a, b) => {
+      console.log(a)
       if (a.Name) {
         return a.Name.localeCompare(b.Name)
       } else if (a.username) {
         return a.username.localeCompare(b.username)
       } else if (a.title) {
         return a.title.localeCompare(b.title)
+      } else if (a.attribute_value) {
+        return a.attribute_value.localeCompare(b.attribute_value)
       } else {
         return a.name.localeCompare(b.name)
       }
@@ -199,6 +202,8 @@ const filteredCategories = computed(() => {
         return b.username.localeCompare(a.username)
       } else if (b.title) {
         return b.title.localeCompare(a.title)
+      } else if (b.attribute_value) {
+        return b.attribute_value.localeCompare(a.attribute_value)
       } else {
         return b.name.localeCompare(a.name)
       }

@@ -47,22 +47,37 @@ export function useFormManager(entityType, routeParams) {
     },
     'external-categories': {
       fields: ['title', 'image', 'sort', 'uid', 'parent_id', 'level'],
-      createData: (data) => ({
-        title: data.title,
-        uid: generateTempId(),
-        sort_order: data.sort,
-        parent_id: data.parent_id,
-        level: data.level,
-        image: data.image[0]?.url || null,
-      }),
+      createData: (data) => {
+        let localImage
+        if (data.image && data.image.length) {
+          localImage = data.image[0]?.url
+        } else {
+          localImage = null
+        }
+        const res = {
+          title: data.title,
+          uid: generateTempId(),
+          sort_order: data.sort,
+          parent_id: data.parent_id,
+          level: data.level,
+          image: localImage,
+        }
+        return res
+      },
       updateData: (data, current) => {
+        let localImage
+        if (data.image && data.image.length) {
+          localImage = data.image[0]?.url
+        } else {
+          localImage = null
+        }
         const res = {
           ...current,
           title: data.title,
           sort_order: data.sort,
           parent_id: data.parent_id,
           level: data.level,
-          image: data.image[0]?.url || null,
+          image: localImage,
         }
         return res
       },

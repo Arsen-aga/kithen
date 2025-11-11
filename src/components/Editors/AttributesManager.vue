@@ -1,9 +1,8 @@
 <script setup>
-import { useApi } from '@/helpers/useApi'
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
+import { useAttributes } from '@/helpers/useAttributes'
 
-const { get } = useApi()
-
+const { getAttributeNameOne } = useAttributes()
 const props = defineProps({
   attributes: Array,
   selectedAttributes: {
@@ -17,16 +16,20 @@ const props = defineProps({
 const emit = defineEmits(['update:selected-attributes', 'remove-attribute'])
 
 // Локальная копия для реактивности
+const attributeNames = ref({})
 const localSelected = ref([...props.selectedAttributes])
+console.log('props.selectedAttributes', props.selectedAttributes)
 
 // Обработчик изменения чекбокса
-const handleCheckboxChange = (attributeId, isChecked) => {
+const handleCheckboxChange = (attribute, isChecked) => {
+  const attributeId = attribute?.attribute_id || attribute?.id || attribute
+
   if (isChecked) {
-    if (!localSelected.value.includes(attributeId)) {
-      localSelected.value.push(attributeId)
+    if (!localSelected.value.includes(Number(attributeId))) {
+      localSelected.value.push(Number(attributeId))
     }
   } else {
-    const index = localSelected.value.indexOf(attributeId)
+    const index = localSelected.value.indexOf(Number(attributeId))
     if (index > -1) {
       localSelected.value.splice(index, 1)
     }
@@ -38,24 +41,47 @@ const handleCheckboxChange = (attributeId, isChecked) => {
 
 // Обработчик удаления атрибута
 const handleRemoveAttribute = (attribute) => {
+  const attributeId = attribute?.attribute_id || attribute?.id || attribute
+  const index = localSelected.value.indexOf(Number(attributeId))
   console.log('attribute', attribute)
-  const index = localSelected.value.indexOf(attribute)
   console.log('localSelected.value', localSelected.value)
-  console.log(index)
   if (index > -1) {
     localSelected.value.splice(index, 1)
     emit('update:selected-attributes', [...localSelected.value])
-    emit('remove-attribute', attribute)
+    emit('remove-attribute', Number(attributeId))
   }
 }
+
+// Загружаем названия для выбранных атрибутов
+const loadAttributeNames = async () => {
+  for (const attributeId of localSelected.value) {
+    if (!attributeNames.value[attributeId]) {
+      try {
+        const name = await getAttributeNameOne(attributeId)
+        attributeNames.value[attributeId] = name
+      } catch (error) {
+        attributeNames.value[attributeId] = `Атрибут #${attributeId}`
+      }
+    }
+  }
+}
+// Следим за изменениями выбранных атрибутов и загружаем названия
+watch(
+  () => localSelected.value,
+  async (newVal) => {
+    await loadAttributeNames()
+  },
+  { immediate: true }
+)
 
 // Следим за изменениями извне и синхронизируем
 watch(
   () => props.selectedAttributes,
   (newVal) => {
+    const normalizedNewVal = newVal.map((id) => Number(id))
     // Проверяем, что массивы действительно отличаются
-    if (JSON.stringify(localSelected.value) !== JSON.stringify(newVal)) {
-      localSelected.value = [...newVal]
+    if (JSON.stringify(localSelected.value) !== JSON.stringify(normalizedNewVal)) {
+      localSelected.value = [...normalizedNewVal]
     }
   },
   { deep: true }
@@ -63,9 +89,8 @@ watch(
 
 // Проверяем, выбран ли атрибут
 const isAttributeSelected = (attributeId) => {
-  console.log(attributeId)
-  console.log(localSelected.value)
-  return localSelected.value.includes(attributeId)
+  const id = attributeId?.attribute_id || attributeId?.id || attributeId
+  return localSelected.value.includes(Number(id))
 }
 </script>
 
@@ -102,7 +127,9 @@ const isAttributeSelected = (attributeId) => {
         class="selected-attribute-card"
       >
         <div class="attribute-badge">
-          <span class="badge-text">{{ getAttributeName(attribute.attribute_id || attribute.id) }}</span>
+          <span class="badge-text">{{
+            attributeNames[attribute.attribute_id || attribute.id || attribute] || 'Загрузка...'
+          }}</span>
           <button @click="handleRemoveAttribute(attribute)" class="badge-remove" title="Удалить атрибут">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path

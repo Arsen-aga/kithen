@@ -30,26 +30,44 @@ export function useAttributes() {
     }
   }
 
-  const filterAttributesByGroup = (groupId) => {
-    filteredAttributes.value = groupId ? attributes.value.filter((attr) => attr.group_id === groupId) : []
+  const filterAttributesByGroup = (groupId, returnAttributes = false) => {
+    console.log('groupId', groupId)
+    console.log('attributes', attributes)
+    const filterAttrs = groupId ? attributes.value.filter((attr) => attr.group_id === groupId) : []
+    if (returnAttributes) return filterAttrs
+    else filteredAttributes.value = filterAttrs
+  }
+
+  const getAttributeNameOne = async (attributeId) => {
+    try {
+      const attribute = await get(`external-product-attributes/${attributeId}`)
+      console.log('Получаю атрибут', attribute)
+      return attribute?.attribute_value
+    } catch (error) {
+      console.error('Ошибка загрузки атрибутов:', error)
+    }
   }
 
   const getAttributeName = (attributeId) => {
     console.log('attributeId', attributeId)
     if (!attributesLoaded.value) return 'Загрузка...'
-    const attribute = attributes.value.find((attr) => attr.id === attributeId)
+    console.log('attributes.value', attributes.value)
+    const attribute = attributes.value.find((attr) => attr.id === Number(attributeId))
     return attribute?.Name || attribute?.name || attribute?.attribute_value || `Атрибут #${attributeId}`
   }
 
   const productToAttributes = async (productId, attributes) => {
+    console.log('attributes', attributes)
     if (!productId) throw new Error('ID товара не найден')
 
     const results = []
     for (const attribute of attributes) {
+      console.log('attribute', attribute)
       const formData = new FormData()
       formData.append('product_id', productId)
-      formData.append('attribute_id', attribute.id)
+      formData.append('attribute_id', Number(attribute.id))
 
+      console.log('formData', formData)
       try {
         const result = await post('external-product-to-attributes', formData, 'multipart/form-data')
         results.push(result)
@@ -80,17 +98,20 @@ export function useAttributes() {
     let idAttribute
     if (typeof attribute === 'number') {
       idAttribute = attribute
+    } else if (typeof attribute === 'object' && attribute.id) {
+      idAttribute = attribute.id
     } else {
       idAttribute = attribute.attribute_id || attribute.id
     }
+
     console.log('удалили атрибут', productId, idAttribute)
     try {
       const connection = await get('external-product-to-attributes')
-      console.log('connection', connection)
+      console.log('Все связи:', connection)
       const foundConnection = connection?.find(
-        (item) => item.product_id === productId && item.attribute_id === idAttribute
+        (item) => item.product_id === productId && item.attribute_id === Number(idAttribute)
       )
-      console.log('foundConnection', foundConnection)
+      console.log('Найденная связь для удаления', foundConnection)
       if (foundConnection) {
         console.log('удаляемый атрибут', foundConnection)
         await deleteApi(`external-product-to-attributes/${foundConnection.id}`)
@@ -110,6 +131,7 @@ export function useAttributes() {
     loadGroupsAttributes,
     filterAttributesByGroup,
     getAttributeName,
+    getAttributeNameOne,
     productToAttributes,
     productToAttribute,
     removeAttributeFromProduct,
