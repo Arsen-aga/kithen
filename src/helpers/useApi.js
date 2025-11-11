@@ -45,5 +45,6 @@ export function useApi() {
     post: (url, data, contentType = 'application/json') => apiCall('post', url, data, contentType),
     patch: (url, data) => apiCall('patch', url, data),
     delete: (url) => apiCall('delete', url),
+    del: (url) => apiCall('delete', url),
   }
 }

@@ -33,7 +33,7 @@ const FILE_TYPES = {
 // Composables
 const route = useRoute()
 const router = useRouter()
-const { get, post } = useApi()
+const { del, get, post } = useApi()
 
 // Реактивные данные
 const name = computed(() => route.params.name)
@@ -663,6 +663,26 @@ const removeFile = async (file, filesArray = null) => {
   handleFileRemove(file, Number(id.value), filesArray)
 }
 
+// Удаление элемента
+const deleteElem = async () => {
+  console.log('name.value', name.value)
+  console.log('id', id.value)
+  try {
+    await del(`${name.value}/${id.value}`)
+    toast.success('Элемент удален', { autoClose: 1000 })
+
+    router.push({
+      name: 'List',
+      params: {
+        pathName: name.value,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    toast.error('Ошибка при удалении', { autoClose: 1000 })
+  }
+}
+
 // Watchers
 watch([name, id], loadItemData)
 watch(() => formData.value.groupAttribute, filterAttributesByGroup)
@@ -738,6 +758,7 @@ onMounted(async () => {
       @update:images="updateImage"
       @update:selected-attribute-groups="updateSelectedAttributeGroups"
       @save="saveContent"
+      @cancel="deleteElem"
     />
 
     <AttributeEditor
@@ -746,6 +767,7 @@ onMounted(async () => {
       :groups-attribute="groupsAttribute"
       :current-id="id"
       @save="saveContent"
+      @cancel="(event) => deleteElem(event)"
     />
   </div>
 </template>
