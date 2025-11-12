@@ -321,7 +321,7 @@ const toggleNewGroupForm = () => {
                   {{ group.isNew ? group.name : getGroupName(group.group_id) }}
                   <span v-if="group.isNew" class="new-badge">новая</span>
                 </span>
-                <label class="checkbox-label">
+                <label class="checkbox-label" v-if="!group.inherited">
                   <input
                     type="checkbox"
                     :checked="group.require"
@@ -330,8 +330,19 @@ const toggleNewGroupForm = () => {
                   <span class="checkmark"></span>
                   Обязательная
                 </label>
+                <span v-else class="inherited-require">
+                  {{ group.require ? 'Обязательная' : 'Необязательная' }} (наследование)
+                </span>
               </div>
-              <button type="button" class="btn btn-danger btn-sm" @click="removeAttributeGroup(index)">Удалить</button>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                v-if="!group.inherited"
+                @click="removeAttributeGroup(index)"
+              >
+                Удалить
+              </button>
+              <span v-else class="inherited-note">Унаследована</span>
             </div>
           </div>
         </div>
@@ -571,5 +582,40 @@ const toggleNewGroupForm = () => {
 
 .checkbox-label input[type='checkbox'] {
   margin: 0;
+}
+
+.inherited-group {
+  background-color: #f8f9fa;
+  border-left: 4px solid #6c757d;
+}
+
+.inherited-badge {
+  background-color: #6c757d;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  margin-left: 8px;
+}
+
+.new-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  margin-left: 8px;
+}
+
+.inherited-require {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.inherited-note {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
 }
 </style>

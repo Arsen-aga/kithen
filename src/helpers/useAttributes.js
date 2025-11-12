@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useApi } from './useApi'
+import { useApi } from '@/helpers/useApi'
 
 export function useAttributes() {
   const { get, post, delete: deleteApi } = useApi()

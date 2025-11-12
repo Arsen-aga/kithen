@@ -1,11 +1,26 @@
 <script setup>
 import MarketItem from '@/components/MarketItem.vue'
+import { onMounted } from 'vue'
+import { useProducts } from '@/helpers/useProducts'
 
-defineProps({
+const { getAllConnectionsAttributesToProduct } = useProducts()
+const props = defineProps({
   items: {
     type: Array,
     default: () => [],
   },
+})
+
+const filterAllProjectToCategory = async (items) => {
+  const products = await getAllConnectionsAttributesToProduct()
+  items.forEach((item) => {
+    item.products = products.filter((product) => product.category_id === item.id) || []
+  })
+}
+
+onMounted(async () => {
+  await filterAllProjectToCategory(props.items)
+  await getAllConnectionsAttributesToProduct()
 })
 </script>
 

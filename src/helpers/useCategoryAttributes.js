@@ -25,6 +25,51 @@ export function useCategoryAttributes() {
     }
   }
 
+  // Получение групп атрибутов родительской категории (рекурсивно)
+  const getParentAttributeGroups = (categoryId) => {
+    const result = new Map()
+
+    const findParentGroups = (currentCategoryId) => {
+      const currentCategory = allCategories.value.find((cat) => cat.id === currentCategoryId)
+      if (!currentCategory) return
+
+      // Если у категории есть родитель, получаем его группы
+      if (currentCategory.parent_id) {
+        const parentGroups = getCategoryAttributeGroups(currentCategory.parent_id)
+
+        // Добавляем группы родителя (если они еще не добавлены)
+        parentGroups.forEach((group) => {
+          if (!result.has(group.external_attribute_group_id)) {
+            result.set(group.external_attribute_group_id, {
+              group_id: group.external_attribute_group_id,
+              require: group.require === 1,
+              inherited: true, // Помечаем как унаследованные
+            })
+          }
+        })
+
+        // Рекурсивно ищем группы у родителей выше
+        findParentGroups(currentCategory.parent_id)
+      }
+    }
+
+    findParentGroups(categoryId)
+    return Array.from(result.values())
+  }
+
+  // Получение всех групп атрибутов для категории (собственные + унаследованные)
+  const getAllAttributeGroupsForCategory = (categoryId) => {
+    const ownGroups = getCategoryAttributeGroups(categoryId).map((group) => ({
+      group_id: group.external_attribute_group_id,
+      require: group.require === 1,
+      inherited: false,
+    }))
+
+    const inheritedGroups = getParentAttributeGroups(categoryId)
+
+    return [...ownGroups, ...inheritedGroups]
+  }
+
   // Получение связей для конкретной категории
   const getCategoryAttributeGroups = (categoryId) => {
     return categoryAttributeGroups.value.filter((link) => link.external_category_id === categoryId)
@@ -149,5 +194,7 @@ export function useCategoryAttributes() {
     addAttributeGroupToChildren,
     removeAttributeGroupFromChildren,
     getChildCategories,
+    getParentAttributeGroups,
+    getAllAttributeGroupsForCategory,
   }
 }

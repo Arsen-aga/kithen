@@ -11,7 +11,6 @@ export function useFileManager() {
   const filesToDelete = ref([]) // Новый ref для файлов, помеченных на удаление
 
   const initFiles = (files, type) => {
-    console.log('files init', files, type)
     if (!files || !Array.isArray(files)) return type === 'images' ? [] : null
 
     if (type === 'images') {

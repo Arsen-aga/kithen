@@ -77,8 +77,6 @@ const {
   deleteCategoryImage,
 } = useFileManager()
 const {
-  categoryAttributeGroups,
-  allCategories,
   loadCategoryAttributeGroups,
   loadAllCategories,
   getCategoryAttributeGroups,
@@ -87,6 +85,8 @@ const {
   deleteCategoryAttributeLink,
   addAttributeGroupToChildren,
   removeAttributeGroupFromChildren,
+  getAllAttributeGroupsForCategory,
+  getParentAttributeGroups,
 } = useCategoryAttributes()
 
 // Computed свойства
@@ -162,10 +162,12 @@ const initializeCategoryData = async (itemData) => {
   }
 
   if (itemData.id) {
+    const allAttributeGroups = getAllAttributeGroupsForCategory(itemData.id)
     categoryAttributeLinks.value = getCategoryAttributeGroups(itemData.id)
-    selectedAttributeGroups.value = categoryAttributeLinks.value.map((link) => ({
-      group_id: link.external_attribute_group_id,
-      require: link.require === 1,
+    selectedAttributeGroups.value = allAttributeGroups.map((group) => ({
+      group_id: group.group_id,
+      require: group.require,
+      inherited: group.inherited,
     }))
   }
 }
@@ -394,6 +396,8 @@ const handleCategoryAttributeGroups = async (categoryId) => {
   if (!isCategories.value) return
 
   const currentCategoryId = categoryId || parseInt(id.value)
+
+  const ownGroups = selectedAttributeGroups.value.filter((group) => !group.inherited)
   const currentLinks = getCategoryAttributeGroups(currentCategoryId)
 
   const existingLinksMap = new Map()
@@ -402,7 +406,7 @@ const handleCategoryAttributeGroups = async (categoryId) => {
   })
 
   // Обрабатываем выбранные группы
-  for (const selectedGroup of selectedAttributeGroups.value) {
+  for (const selectedGroup of ownGroups) {
     const existingLink = existingLinksMap.get(selectedGroup.group_id)
 
     if (existingLink) {
@@ -429,9 +433,7 @@ const handleCategoryAttributeGroups = async (categoryId) => {
 
   // Удаляем старые связи
   for (const existingLink of currentLinks) {
-    const stillSelected = selectedAttributeGroups.value.some(
-      (selected) => selected.group_id === existingLink.external_attribute_group_id
-    )
+    const stillSelected = ownGroups.some((selected) => selected.group_id === existingLink.external_attribute_group_id)
 
     if (!stillSelected) {
       await deleteCategoryAttributeLink(existingLink.id)
@@ -442,6 +444,21 @@ const handleCategoryAttributeGroups = async (categoryId) => {
       }
     }
   }
+}
+
+const initializeNewCategoryWithInheritance = async (parentId) => {
+  if (!parentId) {
+    selectedAttributeGroups.value = []
+    return
+  }
+
+  // Для новой категории наследуем группы атрибутов от родителя
+  const parentGroups = getParentAttributeGroups(parentId)
+  selectedAttributeGroups.value = parentGroups.map((group) => ({
+    group_id: group.group_id,
+    require: group.require,
+    inherited: true,
+  }))
 }
 
 // Основные методы сохранения
@@ -694,7 +711,41 @@ watch(
     }
   }
 )
+// Новый метод для загрузки групп атрибутов с учетом наследования
+const loadCategoryAttributeGroupsForCurrentCategory = async () => {
+  if (!id.value || id.value === 'new') return
 
+  try {
+    const currentCategoryId = parseInt(id.value)
+    const allAttributeGroups = getAllAttributeGroupsForCategory(currentCategoryId)
+
+    selectedAttributeGroups.value = allAttributeGroups.map((group) => ({
+      group_id: group.group_id,
+      require: group.require,
+      inherited: group.inherited,
+    }))
+
+    // Также обновляем локальные связи
+    categoryAttributeLinks.value = getCategoryAttributeGroups(currentCategoryId)
+  } catch (error) {
+    console.error('Ошибка загрузки групп атрибутов:', error)
+  }
+}
+
+watch(
+  () => formData.value.parent_id,
+  async (newParentId) => {
+    if (isCategories.value) {
+      if (isNewItem.value) {
+        // Для новой категории - наследуем группы
+        await initializeNewCategoryWithInheritance(newParentId)
+      } else {
+        // Для существующей категории - перезагружаем с учетом нового родителя
+        await loadCategoryAttributeGroupsForCurrentCategory()
+      }
+    }
+  }
+)
 // Lifecycle
 onMounted(async () => {
   formData.value.type = name.value

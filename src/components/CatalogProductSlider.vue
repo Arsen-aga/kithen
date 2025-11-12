@@ -15,7 +15,7 @@ defineProps({
     required: true,
   },
   video: {
-    type: Array,
+    type: Object,
   },
   id: {
     type: Number,
@@ -51,18 +51,23 @@ const modules = [Navigation, Pagination]
         @slideChange="onSlideChange"
         class="mySwiper catalog-product-slider__swiper"
       >
-        <template v-if="images.length || video.length">
+        <template v-if="images?.length || video?.length">
           <template v-if="images.length">
             <SwiperSlide v-for="(src, index) in images" :key="src + index">
-              <a class="catalog-product-slider__img-wrapper" :href="src" :data-fancybox="`gallery-${id}`">
-                <img class="catalog-product-slider__img" :src="src" alt="" />
+              <a class="catalog-product-slider__img-wrapper" :href="src.url" :data-fancybox="`gallery-${id}`">
+                <img class="catalog-product-slider__img" :src="src.url" alt="" />
               </a>
             </SwiperSlide>
           </template>
-          <template v-if="video?.length">
-            <SwiperSlide v-for="(data, index) in video" :key="data.url + index">
-              <a class="catalog-product-slider__img-wrapper" :href="data.url" :data-fancybox="`gallery-${id}`">
-                <img class="catalog-product-slider__img" :src="data.preview" alt="" />
+          <template v-if="video">
+            123
+            <SwiperSlide>
+              <a class="catalog-product-slider__img-wrapper" :href="video.url" :data-fancybox="`gallery-${id}`">
+                <img
+                  class="catalog-product-slider__img"
+                  :src="video.preview || '../src/assets/images/no-img.png'"
+                  alt=""
+                />
                 <PlayButton />
               </a>
             </SwiperSlide>

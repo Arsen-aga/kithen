@@ -1,38 +1,63 @@
 <script setup>
 import { formatNum } from '@/helpers/formatNum'
+import { toast } from 'vue3-toastify'
 import MainButton from '@/components/UI/MainButton.vue'
 import CatalogProductSlider from '@/components/CatalogProductSlider.vue'
+import { onMounted, ref } from 'vue'
+import { useApi } from '@/helpers/useApi'
+import { useFileManager } from '@/helpers/useFileManager'
 
+const { get } = useApi()
+const { initFiles } = useFileManager()
 const props = defineProps({
   product: {
     type: Object,
     required: true,
   },
 })
+const images = ref([])
+const video = ref([])
 
-console.log(props.product)
-console.log(props.product.Price)
-console.log(props.product.Price_0)
+// Методы для работы с файлами
+const getFilesToProduct = async (productId) => {
+  try {
+    const response = await get(`external-product-to-files?external_product_id=${productId}`)
+    return response
+  } catch (error) {
+    console.error('Ошибка загрузки файлов:', error)
+    toast.error('Ошибка загрузки данных', { autoClose: 1000 })
+  }
+}
+
+const initializeFiles = async () => {
+  const files = await getFilesToProduct(props.product.id)
+  images.value = initFiles(
+    files?.filter((file) => file.type === 'photo'),
+    'images'
+  )
+
+  video.value = initFiles(
+    files?.filter((file) => file.type === 'video'),
+    'video'
+  )
+}
+
+onMounted(async () => await initializeFiles())
 </script>
 
 <template>
   <div class="catalog-product">
-    <!-- <CatalogProductSlider
-      class="catalog-product__swiper-wrapper"
-      :images="product.images"
-      :id="product.id"
-      :video="product.video"
-    /> -->
+    <CatalogProductSlider class="catalog-product__swiper-wrapper" :images="images" :id="product.id" :video="video" />
     <div class="catalog-product__info">
-      <h4 class="catalog-product__title">{{ product.Name }}</h4>
-      <ul class="catalog-product__list">
+      <h4 class="catalog-product__title">{{ product.title }}</h4>
+      <ul class="catalog-product__list" v-if="product.options">
         <li class="catalog-product__point" v-for="option in product.options" :key="option.id">
           <span>{{ option.option }}</span> {{ option.value }}
         </li>
       </ul>
       <div class="catalog-product__price">
-        <span class="catalog-product__price-new">{{ formatNum(product.Price, 0) }} ₽</span>
-        <span class="catalog-product__price-old">{{ formatNum(product.Price_0, 0) }} ₽</span>
+        <span class="catalog-product__price-new">{{ formatNum(product.price, 0) }} ₽</span>
+        <!-- <span class="catalog-product__price-old">{{ formatNum(product.Price_0, 0) }} ₽</span> -->
       </div>
       <div class="catalog-product__btns">
         <MainButton>Узнать подробнее</MainButton>

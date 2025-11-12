@@ -25,7 +25,7 @@ const priceRange = computed(() => {
     return { min: 10000, max: 3130000 }
   }
 
-  const prices = props.products.map((p) => p.Price).filter((price) => price != null)
+  const prices = props.products.map((p) => p.price).filter((price) => price != null)
 
   if (!prices.length) {
     return { min: 10000, max: 3130000 }
@@ -42,9 +42,8 @@ const maxPrice = ref(priceRange.value.max)
 
 const filteredProducts = computed(() => {
   return props.products.filter((product) => {
-    const matchesSearch = !searchQuery.value || product.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesPrice = product.Price >= minPrice.value && product.Price <= maxPrice.value
-    console.log(matchesPrice)
+    const matchesSearch = !searchQuery.value || product.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesPrice = product.price >= minPrice.value && product.price <= maxPrice.value
     return matchesSearch && matchesPrice
   })
 })
@@ -146,6 +145,7 @@ watch(priceRange, (newRange) => {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     position: relative;
+    height: fit-content;
   }
 }
 </style>
