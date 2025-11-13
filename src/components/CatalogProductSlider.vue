@@ -29,6 +29,8 @@ const onSwiper = (swiper) => {
   swiperRef.value = swiper
 }
 
+const modules = [Navigation, Pagination]
+
 const onSlideChange = () => {
   currentSlide.value = swiperRef.value.activeIndex
 }
@@ -37,7 +39,6 @@ const goToSlide = (index) => {
   swiperRef.value.slideTo(index)
   currentSlide.value = index
 }
-const modules = [Navigation, Pagination]
 </script>
 
 <template>
@@ -59,8 +60,8 @@ const modules = [Navigation, Pagination]
               </a>
             </SwiperSlide>
           </template>
+
           <template v-if="video">
-            123
             <SwiperSlide>
               <a class="catalog-product-slider__img-wrapper" :href="video.url" :data-fancybox="`gallery-${id}`">
                 <img
@@ -82,7 +83,7 @@ const modules = [Navigation, Pagination]
         </template>
       </Swiper>
     </FancyboxContainer>
-    <div v-if="images.length > 1">
+    <div v-if="images.length + (video ? 1 : 0) > 1">
       <button
         :class="{ disable: currentSlide === 0 }"
         class="catalog-product-slider__swiper-btn swiper-prev"
@@ -91,16 +92,16 @@ const modules = [Navigation, Pagination]
         <IconArrowSlide />
       </button>
       <button
-        :class="{ disable: currentSlide === images?.length + video?.length - 1 }"
+        :class="{ disable: currentSlide === images?.length + (video ? 1 : 0) - 1 }"
         class="catalog-product-slider__swiper-btn swiper-next"
         @click="() => swiperRef.slideNext()"
       >
         <IconArrowSlide />
       </button>
     </div>
-    <div class="catalog-product-slider__swiper-pagination" v-if="images.length > 1">
+    <div class="catalog-product-slider__swiper-pagination" v-if="images.length + (video ? 1 : 0) > 1">
       <span
-        v-for="(image, index) in [...images, ...video]"
+        v-for="(image, index) in [...images, video]"
         :key="index"
         @click="goToSlide(index)"
         class="catalog-product-slider__swiper-dot"

@@ -25,16 +25,19 @@ const priceRange = computed(() => {
     return { min: 10000, max: 3130000 }
   }
 
-  const prices = props.products.map((p) => p.price).filter((price) => price != null)
-
+  const prices = props.products.map((p) => Math.round(Number(p.price))).filter((price) => price != null)
+  console.log(prices)
   if (!prices.length) {
     return { min: 10000, max: 3130000 }
   }
 
-  return {
+  const returnObj = {
     min: Math.min(...prices),
     max: Math.max(...prices),
   }
+  console.log('returnObj', returnObj)
+
+  return returnObj
 })
 
 const minPrice = ref(priceRange.value.min)
@@ -43,7 +46,8 @@ const maxPrice = ref(priceRange.value.max)
 const filteredProducts = computed(() => {
   return props.products.filter((product) => {
     const matchesSearch = !searchQuery.value || product.title.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesPrice = product.price >= minPrice.value && product.price <= maxPrice.value
+    const matchesPrice =
+      Math.round(Number(product.price)) >= minPrice.value && Math.round(Number(product.price)) <= maxPrice.value
     return matchesSearch && matchesPrice
   })
 })

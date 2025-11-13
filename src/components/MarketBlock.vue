@@ -3,7 +3,7 @@ import MarketItem from '@/components/MarketItem.vue'
 import { onMounted } from 'vue'
 import { useProducts } from '@/helpers/useProducts'
 
-const { getAllConnectionsAttributesToProduct } = useProducts()
+const { getAllProducts } = useProducts()
 const props = defineProps({
   items: {
     type: Array,
@@ -12,15 +12,14 @@ const props = defineProps({
 })
 
 const filterAllProjectToCategory = async (items) => {
-  const products = await getAllConnectionsAttributesToProduct()
+  const products = await getAllProducts()
   items.forEach((item) => {
-    item.products = products.filter((product) => product.category_id === item.id) || []
+    item.products = products?.filter((product) => product.category_id === item.id) || []
   })
 }
 
 onMounted(async () => {
   await filterAllProjectToCategory(props.items)
-  await getAllConnectionsAttributesToProduct()
 })
 </script>
 

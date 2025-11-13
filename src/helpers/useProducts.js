@@ -1,16 +1,12 @@
 import { useApi } from '@/helpers/useApi'
-import { useAttributes } from '@/helpers/useAttributes'
-
-import { ref } from 'vue'
 
 export function useProducts() {
   const { get } = useApi()
-  const { loadGroupsAttributes, groupsAttribute } = useAttributes()
-  const products = ref([])
 
   const getAllProducts = async () => {
     let maxPage = 0
     let count = 1
+    const products = []
 
     try {
       const firstResponse = await get(`external-products?page=${count}`, true)
@@ -18,7 +14,7 @@ export function useProducts() {
       maxPage = parseInt(firstResponse?.headers['x-pagination-page-count']) || 0
 
       if (Array.isArray(firstResponse.data)) {
-        products.value.push(...firstResponse.data)
+        products.push(...firstResponse.data)
       }
 
       for (count = 2; count <= maxPage; count++) {
@@ -26,7 +22,7 @@ export function useProducts() {
           const response = await get(`external-products?page=${count}`)
 
           if (Array.isArray(response)) {
-            products.value.push(...response)
+            products.push(...response)
           }
           await new Promise((resolve) => setTimeout(resolve, 100))
         } catch (error) {
@@ -34,23 +30,47 @@ export function useProducts() {
           continue
         }
       }
+      return products
+    } catch (error) {
+      console.error('Ошибка при получении всех товаров:', error)
+      return products
+    }
+  }
+
+  const getAllConnectionsAttributesToProduct = async (productId) => {
+    try {
+      const connections = await get('external-product-to-attributes')
+      const attributesConnections = connections.filter((connect) => connect.product_id === productId)
+      return attributesConnections
     } catch (error) {
       console.error('Ошибка при получении всех товаров:', error)
     }
   }
 
-  const getAllConnectionsAttributesToProduct = async () => {
-    await getAllProducts()
-    const connections = await get('external-product-to-attributes')
-    products.value.forEach((product) => {
-      const productConnections = connections.filter()
-    })
-    console.log('connections', connections)
-    return products.value
+  const getAttributes = async (productId) => {
+    const connections = await getAllConnectionsAttributesToProduct(productId)
+    try {
+      const attributePromises = connections.map(async (attrConnect) => {
+        const response = await get(`external-product-attributes/${attrConnect.attribute_id}`)
+        return response
+      })
+      const resAttrs = await Promise.all(attributePromises)
+      return resAttrs
+    } catch (error) {
+      console.log(error)
+      return []
+    }
   }
 
-  const getAllGroupAttributes = async (params) => {}
-  const distributiOfAttributesToProducts = () => {}
+  const getAttributeGroup = async (attributeId) => {
+    try {
+      const attributeGroup = await get(`external-product-attribute-groups/${attributeId}`)
+      return attributeGroup.name
+    } catch (error) {
+      console.log(error)
+      return 'Не известная группа'
+    }
+  }
 
-  return { getAllProducts, products, getAllConnectionsAttributesToProduct }
+  return { getAllProducts, getAttributes, getAttributeGroup }
 }
