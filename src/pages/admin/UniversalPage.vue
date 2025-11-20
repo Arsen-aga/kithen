@@ -20,7 +20,7 @@ const route = useRoute()
 const router = useRouter()
 const { get } = useApi()
 
-// Реактивные данные
+// Реактивные данные тест
 const name = computed(() => route.params.name)
 const id = computed(() => route.params.id)
 const groupsProduct = ref([])
