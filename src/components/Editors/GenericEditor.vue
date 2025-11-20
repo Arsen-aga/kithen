@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
-// import DragDropImages from '@/components/UI/DragDropImages.vue'
+import DragDropImages from '@/components/UI/DragDropImages.vue'
 
 const props = defineProps({
   formData: Object,
@@ -9,7 +9,7 @@ const props = defineProps({
   currentId: String,
 })
 
-defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
+const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
 
 console.log(props.formData)
 console.log(props.formData.images)
@@ -45,10 +45,26 @@ const config = computed(() => {
   )
 })
 
-// const localImages = computed({
-//   get: () => props.formData.images,
-//   set: (value) => emit('update:images', value),
-// })
+const localImages = computed({
+  get: () => {
+    if (typeof props.formData.photo === 'string' && props.formData.photo) {
+      return [
+        {
+          id: props.currentId === 'new' ? Date.now() : props.currentId,
+          url: props.formData.photo,
+          nameUrl: props.formData.photo.split('/').pop(),
+          name: props.formData.photo.split('/').pop(),
+          isExisting: true,
+        },
+      ]
+    } else if (Array.isArray(props.formData.photo)) {
+      return props.formData.photo
+    } else {
+      return []
+    }
+  },
+  set: (value) => emit('update:images', value),
+})
 </script>
 <template>
   <div class="content-editor">
@@ -72,18 +88,19 @@ const config = computed(() => {
       </div>
     </div>
     <!-- Изображение -->
-    <!-- <div class="editor-section">
+    <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">
           <DragDropImages
             v-model="localImages"
             :multiple="false"
+            @update:images="(event) => emit('update:images', event)"
             @remove-image="(event) => emit('remove-image', event)"
           />
         </div>
       </div>
-    </div> -->
+    </div>
 
     <ActionButtons
       :is-new="currentId === 'new'"

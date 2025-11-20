@@ -11,10 +11,12 @@ export function useFormManager(entityType, routeParams) {
     attrs: [],
     images: [],
     description: '',
-    sort: 0,
-    photo: null,
     groupProduct: '',
     groupAttribute: '',
+    sort: 0,
+    photo: null,
+    parent_id: null,
+    level: 0,
   })
 
   const formData = ref(createFormData())
@@ -37,15 +39,38 @@ export function useFormManager(entityType, routeParams) {
       }),
     },
     'product-groups': {
-      fields: ['Name', 'photo', 'sort'],
-      createData: (data) => ({ Name: data.title }),
+      fields: ['Name', 'photo', 'sort', 'parent_id', 'level'],
+      createData: (data) => {
+        let localImage
+        if (data.photo && data.photo.length) {
+          localImage = data.photo[0]?.url
+        } else {
+          localImage = null
+        }
+        return {
+          Name: data.title,
+          photo: localImage,
+          sort: data.sort,
+          parent_id: data.parent_id,
+          level: data.level,
+        }
+      },
       updateData: (data, current) => {
         console.log('data', data)
         console.log('current', current)
+        let localImage
+        if (data.photo && data.photo.length) {
+          localImage = data.photo[0]?.url
+        } else {
+          localImage = null
+        }
         const res = {
           ...current,
           Name: data.title,
+          photo: localImage,
           sort: data.sort,
+          parent_id: data.parent_id,
+          level: data.level,
         }
         console.log(res)
         return res

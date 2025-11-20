@@ -8,6 +8,7 @@ export function useFileManager() {
 
   const imagesSrc = ref([])
   const videoSrc = ref(null)
+  const filesToDelete = ref([])
 
   const initFiles = (files, type) => {
     if (!files || !Array.isArray(files)) return type === 'images' ? [] : null
@@ -53,19 +54,62 @@ export function useFileManager() {
     }
   }
 
-  const handleFileRemove = async (file, filesArray = null) => {
-    console.log('удаленный файл', file)
+  const handleFileRemove = (file, productId = null, filesArray = null) => {
+    console.log('Файл помечен на удаление', file)
+
+    // Добавляем файл в список для удаления (только существующие файлы)
+    if (file.isExisting && file.nameUrl) {
+      filesToDelete.value.push({
+        ...file,
+        productId, // Сохраняем productId для удаления связи
+        filesArray, // Сохраняем ссылку на массив для обновления UI
+      })
+    }
+
+    // Удаляем файл из UI сразу
+    if (filesArray) {
+      const index = filesArray.findIndex((item) => item.id === file.id)
+      if (index !== -1) {
+        filesArray.splice(index, 1)
+      }
+    }
+  }
+
+  const deleteMarkedFiles = async () => {
+    if (filesToDelete.value.length === 0) return
+
+    console.log('Удаляем помеченные файлы:', filesToDelete.value)
+
     try {
-      if (file.isExisting && file.nameUrl) {
+      for (const file of filesToDelete.value) {
+        // Удаляем физический файл с сервера
         await deleteFile(file)
+
+        // Удаляем связь с продуктом (если есть productId)
+        if (file.productId) {
+          await removeFileFromProduct(file.productId, file)
+        }
       }
-      if (filesArray) {
-        filesArray = filesArray.filter((item) => item.id !== file.id)
-      } else {
-        return null
-      }
+
+      // Очищаем список после успешного удаления
+      filesToDelete.value = []
+      console.log('Все помеченные файлы успешно удалены')
     } catch (error) {
-      console.error('Ошибка при удалении файла:', error)
+      console.error('Ошибка удаления файлов:', error)
+      throw error // Пробрасываем ошибку дальше
+    }
+  }
+
+  const deleteCategoryImage = async (imageUrl) => {
+    if (!imageUrl) return
+
+    try {
+      const fileName = imageUrl.split('/').pop()
+      await deleteFile({ nameUrl: fileName })
+      console.log('Изображение категории удалено с сервера:', fileName)
+    } catch (error) {
+      console.error('Ошибка удаления изображения категории:', error)
+      throw error
     }
   }
 
@@ -85,6 +129,10 @@ export function useFileManager() {
     }
   }
 
+  const clearFilesToDelete = () => {
+    filesToDelete.value = []
+  }
+
   return {
     imagesSrc,
     videoSrc,
@@ -94,5 +142,8 @@ export function useFileManager() {
     uploadFile,
     uploadMultipleFiles,
     removeFileFromProduct,
+    clearFilesToDelete, // Новый метод
+    deleteMarkedFiles, // Новый метод
+    deleteCategoryImage,
   }
 }

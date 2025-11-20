@@ -52,7 +52,8 @@ const {
   handleFileRemove,
   uploadFile,
   uploadMultipleFiles,
-  removeFileFromProduct,
+  deleteMarkedFiles,
+  deleteCategoryImage,
 } = useFileManager()
 
 // Основные методы
@@ -108,15 +109,21 @@ const saveContent = async () => {
       return
     }
 
+    const oldImage = currentItem.value?.photo
+
+    await handleFileOperations()
     // Загрузка и связывание файлов (только для продуктов)
     if (name.value === 'products') {
       await handleAttributeOperations()
-      await handleFileOperations()
     }
 
     // Обновление основного объекта
     await updateItem()
+    if (name.value === 'product-groups' && !formData.value.photo && oldImage) {
+      await deleteCategoryImage(oldImage)
+    }
 
+    await deleteMarkedFiles()
     toast.success('Данные сохранены', { autoClose: 1000 })
   } catch (error) {
     console.error('Ошибка сохранения:', error)
@@ -125,9 +132,16 @@ const saveContent = async () => {
 }
 
 const handleFileOperations = async () => {
+  if (name.value === 'products') {
+    await handleProductFiles()
+  } else if (name.value === 'product-groups') {
+    await handleCategoryFiles()
+  }
+}
+
+const handleProductFiles = async () => {
   // Загрузка новых изображений
   const newImages = formData.value.images.filter((img) => !img.isExisting)
-  console.log('сохранение новых картинок', newImages)
   if (newImages.length > 0) {
     imagesSrc.value = await uploadMultipleFiles(id.value, formData.value.images, name.value)
     await productToFile(id.value, imagesSrc.value, 'photo')
@@ -141,6 +155,25 @@ const handleFileOperations = async () => {
     updateVideoWithNewUrl()
   }
 }
+const handleCategoryFiles = async () => {
+  if (!formData.value.photo || formData.value.photo.length === 0) {
+    formData.value.photo = null
+    console.log('нет изображение', formData.value.photo)
+    return
+  }
+
+  if (formData.value.photo.length > 0) {
+    const imageFile = formData.value.photo[0]
+
+    if (!imageFile.isExisting) {
+      const uploadedFileName = await uploadFile(id.value, imageFile, name.value)
+      const uploadedImageUrl = `https://back.love-kitchen.ru/web/uploads/${uploadedFileName}`
+      formData.value.photo = uploadedImageUrl
+    } else {
+      formData.value.photo = imageFile.url
+    }
+  }
+}
 
 const handleAttributeOperations = async () => {
   if (selectedAttributes.value.length > 0) {
@@ -152,10 +185,13 @@ const handleAttributeOperations = async () => {
 
 const updateSelectAttributes = (event) => (selectedAttributes.value = event)
 const updateImages = (event) => (formData.value.images = event)
-const updatePhoto = (event) => (formData.value.photo = event)
 const updateVideo = (event) => {
   formData.value.video = event
   console.log(formData.value.video)
+}
+const updatePhoto = (event) => {
+  console.log('event', event)
+  formData.value.photo = event
 }
 
 const updateImagesWithNewUrls = () => {
@@ -212,13 +248,8 @@ onMounted(async () => {
   await loadItemData()
 })
 
-const removeFile = async (file, productId, filesArray = null) => {
-  try {
-    await handleFileRemove(file, filesArray)
-    await removeFileFromProduct(productId, file)
-  } catch (error) {
-    console.error(error)
-  }
+const removeFile = async (file, filesArray = null) => {
+  handleFileRemove(file, Number(id.value), filesArray)
 }
 </script>
 
@@ -238,8 +269,8 @@ const removeFile = async (file, productId, filesArray = null) => {
       :get-attribute-name="getAttributeName"
       @save="saveContent"
       @update:group-attribute="filterAttributesByGroup"
-      @remove-video="(event) => removeFile(event, Number(id))"
-      @remove-image="(event) => removeFile(event, Number(id), formData.images)"
+      @remove-video="(event) => removeFile(event)"
+      @remove-image="(event) => removeFile(event, formData.images)"
       @update:images="updateImages"
       @update:video="updateVideo"
       @remove-attribute="(event) => removeAttributeFromProduct(Number(id), event)"
@@ -252,9 +283,9 @@ const removeFile = async (file, productId, filesArray = null) => {
       :entity-type="name"
       :current-id="id"
       @save="saveContent"
+      @remove-photo="(event) => removeFile(event, formData.photo)"
+      @update:images="updatePhoto"
     />
-    <!-- @remove-photo="(event) => removeFile(event, Number(id))"
-      @update:photo="updatePhoto" -->
 
     <AttributeEditor
       v-else-if="name === 'product-attributes'"

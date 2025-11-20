@@ -43,9 +43,12 @@ const loadMoreCategories = async () => {
     const newCategories = response.data
 
     if (newCategories && newCategories.length > 0) {
-      categories.value = [...categories.value, ...newCategories]
+      const uniqueNewCategories = newCategories.filter(
+        (newCat) => !categories.value.some((existingCat) => existingCat.id === newCat.id)
+      )
+      categories.value = [...categories.value, ...uniqueNewCategories]
       // Если пришло меньше 10 элементов (или другого ожидаемого количества), значит страницы кончились
-      if (newCategories.length < 10) {
+      if (newCategories.length < 10 || uniqueNewCategories.length === 0) {
         // Можете изменить на ожидаемое количество элементов на странице
         hasMore.value = false
       }
