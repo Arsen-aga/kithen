@@ -1,6 +1,7 @@
 import Home from '@/pages/AccountPage.vue'
+import ListPage from '@/pages/admin/ListPage.vue'
+import UniversalPage from '@/pages/admin/UniversalPage.vue'
 import Login from '@/pages/loginAuth.vue'
-import ErrorPage from '@/pages/404Page.vue'
 
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -19,10 +20,24 @@ const routes = [
     name: 'Admin',
     path: '/admin',
     component: () => import('@/pages/AdminPage.vue'),
+    children: [
+      {
+        name: 'List',
+        path: 'list/:pathName',
+        component: ListPage,
+        props: true,
+      },
+      {
+        name: 'Edit',
+        path: 'edit/:name/:id',
+        component: UniversalPage,
+        props: true,
+      },
+    ],
   },
   {
     path: '/:pathMatch(.*)*',
-    component: ErrorPage,
+    component: () => import('@/pages/404Page.vue'),
   },
 ]
 

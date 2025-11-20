@@ -5,20 +5,36 @@ import vuedraggable from 'vuedraggable'
 const props = defineProps({
   modelValue: {
     type: Array,
-    default: () => Array,
+    default: () => [],
   },
+  multiple: Boolean, // исправил тип на Boolean
 })
+
 const fileInput = ref(null)
 const isDragActive = ref(false)
+const images = ref([])
+const skipNextUpdate = ref(false)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'removeImage'])
 
-const images = ref([...props.modelValue])
+// Синхронизация с внешним modelValue
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (skipNextUpdate.value) {
+      skipNextUpdate.value = false
+      return
+    }
+    images.value = [...newValue]
+  },
+  { immediate: true, deep: true }
+)
 
 // Обновляем родительский компонент при изменениях
 watch(
   images,
   (newImages) => {
+    skipNextUpdate.value = true
     emit('update:modelValue', [...newImages])
   },
   { deep: true }
@@ -52,16 +68,20 @@ const processFiles = (files) => {
         id: Date.now() + Math.random(),
         url: e.target.result,
         file: file,
+        isExisting: false, // добавляем флаг для новых файлов
       })
     }
     reader.readAsDataURL(file)
   })
-  // console.log(images.value)
 }
 
 // Удаление изображения
-const removeImage = (id) => {
-  images.value = images.value.filter((img) => img.id !== id)
+const removeImage = (image) => {
+  // Отправляем событие в родительский компонент
+  emit('removeImage', image)
+
+  // Удаляем изображение из локального состояния
+  images.value = images.value.filter((img) => img.id !== image.id)
 }
 
 // Стили для области перетаскивания
@@ -83,7 +103,14 @@ const dragLeave = () => {
     <!-- Кнопка для выбора файлов -->
     <button @click="triggerFileInput" class="btn-white">Добавить изображение</button>
     <!-- Скрытый input -->
-    <input type="file" ref="fileInput" multiple accept="image/*" @change="handleFileUpload" style="display: none" />
+    <input
+      type="file"
+      ref="fileInput"
+      :multiple="multiple"
+      accept="image/*"
+      @change="handleFileUpload"
+      style="display: none"
+    />
 
     <!-- Область для перетаскивания -->
     <div
@@ -99,7 +126,7 @@ const dragLeave = () => {
         <template #item="{ element }">
           <div class="image-item">
             <img :src="element.url" :alt="element.name" />
-            <button @click="removeImage(element.id)" class="remove-btn">x</button>
+            <button @click="removeImage(element)" class="remove-btn">x</button>
           </div>
         </template>
       </vuedraggable>
@@ -137,6 +164,7 @@ const dragLeave = () => {
   padding: 10px;
   margin-top: 20px;
   min-height: 200px;
+  font-size: 14px;
 }
 
 .drag-active {
@@ -151,8 +179,9 @@ const dragLeave = () => {
 }
 
 .image-item img {
-  width: 100px;
-  height: 100px;
+  width: 175px;
+  height: 175px;
+  overflow: hidden;
   object-fit: cover;
   cursor: pointer;
 }
