@@ -23,6 +23,7 @@ export const useFileUpload = () => {
 
     try {
       const response = await axios.post(`${store.getApiDomain}/uploads/file`, newFormData, headersPost)
+      console.log(response)
       return response.data
     } catch (error) {
       console.error(`Ошибка загрузки файла ${pathName}:`, error)

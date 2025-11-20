@@ -40,11 +40,11 @@ export function useFileManager() {
 
     const createConnection = async (filename) => {
       const formData = new FormData()
-      formData.append('product_id', productId)
+      formData.append('external_product_id', productId)
       formData.append('type', type)
       formData.append('filename', filename)
 
-      return await post('product-to-files', formData, 'multipart/form-data')
+      return await post('external-product-to-files', formData, 'multipart/form-data')
     }
 
     if (Array.isArray(fileNames) && fileNames.length > 0) {
@@ -114,18 +114,17 @@ export function useFileManager() {
   }
 
   const removeFileFromProduct = async (productId, file) => {
-    console.log('удалили файл', productId, file)
     try {
-      const connection = await get('product-to-files')
-      console.log(connection)
+      const connection = await get('external-product-to-files')
       const foundConnection = connection?.find(
-        (item) => item.product_id === productId && item.filename === file.nameUrl
+        (item) => item.external_product_id === productId && item.filename === file.nameUrl
       )
       if (foundConnection) {
-        await deleteApi(`product-to-files/${foundConnection.id}`)
+        await deleteApi(`external-product-to-files/${foundConnection.id}`)
       }
     } catch (error) {
-      console.error('Ошибка удаления связи атрибута:', error)
+      console.error('Ошибка удаления связи файла:', error)
+      throw error
     }
   }
 
@@ -136,6 +135,7 @@ export function useFileManager() {
   return {
     imagesSrc,
     videoSrc,
+    filesToDelete,
     initFiles,
     productToFile,
     handleFileRemove,

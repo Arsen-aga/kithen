@@ -1,11 +1,11 @@
 export const formatNum = (num, round = 2) => {
   // Обрабатываем случай нуля
+  num = Number(num)
   if (num === 0 || Math.abs(num) < 0.0001) {
     return round === 0 ? '0' : '0.' + '0'.repeat(round)
   }
 
   let formattedNumber = num < 0 ? num * -1 : num
-  console.log(formattedNumber)
   formattedNumber = formattedNumber.toFixed(round)
 
   // Проверяем, не получился ли ноль после округления

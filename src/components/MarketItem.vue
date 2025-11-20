@@ -1,10 +1,8 @@
 <script setup>
 import { useCatalogBlock } from '@/stores/catalogBlock'
-import axios from 'axios'
-import { useCookies } from 'vue3-cookies'
-import { useDefaultItems } from '@/stores/default'
+const { catalogBlock } = useCatalogBlock()
 import { toast } from 'vue3-toastify'
-const { cookies } = useCookies()
+
 defineProps({
   marketItem: {
     type: Object,
@@ -12,44 +10,23 @@ defineProps({
   },
 })
 
-const store = useDefaultItems()
-const bearer = cookies.get('user-bearer')
-const headersGet = {
-  headers: {
-    Authorization: 'Bearer ' + bearer,
-  },
-}
-const getProducts = async (groupId) => {
-  try {
-    const response = await axios.get(`${store.getApiDomain}/products`, headersGet)
-    const productsInGroup = response.data.filter((product) => product.Group === groupId)
-    if (productsInGroup.length === 0) {
-      toast.error('В данной категории нет товаров', { autoClose: 1000 })
-      throw new Error('В данной категории нет товаров')
-    }
-    catalogBlock.value = productsInGroup
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const { catalogBlock } = useCatalogBlock()
-const openCatalog = async (groupId) => {
-  try {
-    await getProducts(groupId)
-  } catch (error) {
-    console.log('В данной категории нет товаров', error)
+const openCatalog = (category) => {
+  if (category.products.length > 0) {
+    catalogBlock.value = []
+    catalogBlock.value = category.products
+  } else {
+    toast.error(`Нет товаров в категории ${category.title}`, { autoClose: 1000 })
   }
 }
 </script>
 
 <template>
-  <div class="market-item" @click="() => openCatalog(marketItem?.id)">
+  <div class="market-item" @click="() => openCatalog(marketItem)">
     <img
-      v-if="marketItem?.img"
+      v-if="marketItem?.image"
       class="market-item__img _img"
-      :src="marketItem.img"
-      :alt="marketItem.Name || 'Product'"
+      :src="marketItem.image"
+      :alt="marketItem.title || 'Product'"
     />
     <div v-else class="market-item__placeholder">No Image</div>
     <div v-if="marketItem?.products?.length" class="market-item__num">
@@ -57,7 +34,7 @@ const openCatalog = async (groupId) => {
     </div>
 
     <h4 class="market-item__title">
-      {{ marketItem?.Name || 'Без названия' }}
+      {{ marketItem?.title || 'Без названия' }}
     </h4>
   </div>
 </template>

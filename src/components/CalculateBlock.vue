@@ -10,20 +10,9 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
-import { useCookies } from 'vue3-cookies'
-
-import { useDefaultItems } from '@/stores/default'
+import { useApi } from '@/helpers/useApi'
 import { useResultItems } from '@/stores/result'
-import axios from 'axios'
 const { addItem } = useResultItems()
-const store = useDefaultItems()
-const { cookies } = useCookies()
-const bearer = cookies.get('user-bearer')
-const headersGet = {
-  headers: {
-    Authorization: 'Bearer ' + bearer,
-  },
-}
 
 const itemSmeta = ref('')
 const itemMarket = ref('')
@@ -33,14 +22,13 @@ const itemSelectedProducts = ref('')
 const itemTechnicallyComplexProducts = ref('')
 const itemServices = ref('')
 const itemTreaty = ref('')
-
+const { get } = useApi()
 const marketGroups = ref([])
 
 const getMarket = async () => {
-  console.log()
   try {
-    const response = await axios.get(`${store.getApiDomain}/product-groups`, headersGet)
-    marketGroups.value = response.data || []
+    const categories = await get(`external-categories`)
+    marketGroups.value = categories.filter((cat) => !cat.parent_id).sort((a, b) => a.sort_order - b.sort_order) || []
     console.log('marketGroups.value', marketGroups.value)
   } catch (error) {
     console.error('Ошибка получения контента маркета', error)

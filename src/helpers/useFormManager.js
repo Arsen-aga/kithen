@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import { useApi } from './useApi'
 
+const generateTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
 export function useFormManager(entityType, routeParams) {
   const { post, patch } = useApi()
 
@@ -8,7 +10,7 @@ export function useFormManager(entityType, routeParams) {
     type: entityType,
     title: '',
     video: null,
-    attrs: [],
+    attributes: [],
     images: [],
     description: '',
     groupProduct: '',
@@ -23,19 +25,23 @@ export function useFormManager(entityType, routeParams) {
   const currentItem = ref(null)
 
   const entityConfigs = {
-    products: {
-      fields: ['Name', 'description', 'Group', 'attrs'],
+    'external-products': {
+      fields: ['title', 'description', 'category_id', 'uid', 'price'],
       createData: (data) => ({
-        Name: data.title,
+        title: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
+        short_description: String(data.description),
+        category_id: data.groupProduct,
+        uid: generateTempId(),
+        price: data.price,
       }),
       updateData: (data, current) => ({
         ...current,
-        Name: data.title,
+        title: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
-        attrs: data.attrs,
+        short_description: String(data.short_description),
+        category_id: data.groupProduct,
+        price: data.price,
       }),
     },
     'product-groups': {
@@ -72,25 +78,26 @@ export function useFormManager(entityType, routeParams) {
           parent_id: data.parent_id,
           level: data.level,
         }
-        console.log(res)
         return res
       },
     },
-    'product-attribute-groups': {
+    'external-product-attribute-groups': {
       fields: ['name'],
       createData: (data) => ({ name: data.title }),
       updateData: (data, current) => ({ ...current, name: data.title }),
     },
-    'product-attributes': {
-      fields: ['name', 'group_id'],
+    'external-product-attributes': {
+      fields: ['attribute_value', 'group_id', 'product_id'],
       createData: (data) => ({
-        name: data.title,
+        attribute_value: data.title,
         group_id: data.groupAttribute,
+        product_id: data.product_id,
       }),
       updateData: (data, current) => ({
         ...current,
-        name: data.title,
+        attribute_value: data.title,
         group_id: data.groupAttribute,
+        product_id: data.product_id,
       }),
     },
   }
@@ -105,11 +112,23 @@ export function useFormManager(entityType, routeParams) {
   const createItem = async () => {
     const config = entityConfigs[entityType]
     const newData = config.createData(formData.value)
+    console.log(entityType)
+    console.log(newData)
+    if (formData.value.parent_id) {
+      console.log('есть родительская категория')
+      formData.value.level = 1
+    }
     return await post(entityType, newData)
   }
 
   const updateItem = async () => {
     const config = entityConfigs[entityType]
+    console.log('formData.value', formData.value)
+    console.log('currentItem.value', currentItem.value)
+    if (formData.value.parent_id) {
+      console.log('есть родительская категория')
+      formData.value.level = 1
+    }
     const updateData = config.updateData(formData.value, currentItem.value)
     return await patch(getEndpoint(), updateData)
   }
@@ -124,15 +143,21 @@ export function useFormManager(entityType, routeParams) {
       resetForm()
       return
     }
-
     const commonFields = {
-      title: itemData.Name || itemData.name || '',
+      title: itemData.Name || itemData.name || itemData.title || itemData.attribute_value || '',
       description: itemData.description || '',
-      groupProduct: itemData.Group || null,
+      short_description: itemData.short_description || '',
+      groupProduct: itemData.Group || itemData.category_id || null,
       groupAttribute: itemData.group_id || null,
-      sort: itemData.sort || 0,
-      photo: itemData.photo || null,
+      sort: itemData.sort_order || 0,
+      image: itemData.image || null,
+      price: itemData.price || null,
+      id: itemData.id || null,
+      parent_id: itemData.parent_id || null,
+      level: itemData.level || null,
     }
+
+    console.log('commonFields', commonFields)
 
     formData.value = { ...formData.value, ...commonFields }
     currentItem.value = itemData
