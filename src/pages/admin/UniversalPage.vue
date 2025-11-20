@@ -233,7 +233,10 @@ const goBack = () => {
 // Watchers
 watch([name, id], loadItemData)
 watch(() => formData.value.groupAttribute, filterAttributesByGroup)
-watch((formData) => console.log(formData))
+watch(
+  () => formData.value,
+  (newFormData) => console.log('слежка за изменениями глобального объекта', newFormData)
+)
 
 // Lifecycle
 onMounted(async () => {

@@ -295,14 +295,12 @@ onUnmounted(() => {
       </div>
 
       <div class="filters-group">
-        <button class="filter-btn" :class="{ active: sortBy === 'idAsc' }" @click="sortByF($event, 'idAsc')">
-          <!-- <span>ID ↑</span> -->
+        <!-- <button class="filter-btn" :class="{ active: sortBy === 'idAsc' }" @click="sortByF($event, 'idAsc')">
           <span>№ ↑</span>
         </button>
         <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
-          <!-- <span>ID ↓</span> -->
           <span>№ ↓</span>
-        </button>
+        </button> -->
         <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
           <span>Имя A-Z</span>
         </button>
@@ -334,7 +332,7 @@ onUnmounted(() => {
         <thead>
           <tr>
             <!-- <th class="column-id">ID</th> -->
-            <th class="column-id">№</th>
+            <!-- <th class="column-id">№</th> -->
             <th class="column-name">Название</th>
             <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
             <th class="column-actions">Действия</th>
@@ -352,7 +350,7 @@ onUnmounted(() => {
             "
           >
             <!-- <td class="cell-id">{{ category.id }}</td> -->
-            <td class="cell-id">{{ index + 1 }}</td>
+            <!-- <td class="cell-id">{{ index + 1 }}</td> -->
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
@@ -550,7 +548,7 @@ onUnmounted(() => {
 
 .data-table th {
   background: #f8fafc;
-  padding: 16px 20px;
+  padding: 16px 20px 16px 30px;
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;

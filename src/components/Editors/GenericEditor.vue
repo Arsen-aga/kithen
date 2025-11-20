@@ -1,18 +1,20 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
+import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 
+const { getAllCategories } = useCategoriesLevel()
 const props = defineProps({
   formData: Object,
   entityType: String,
   currentId: String,
 })
+const allCategories = ref([])
+const isOpenList = ref(false)
+const currentCat = ref(null)
 
 const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
-
-console.log(props.formData)
-console.log(props.formData.images)
 
 const config = computed(() => {
   const configs = {
@@ -65,6 +67,12 @@ const localImages = computed({
   },
   set: (value) => emit('update:images', value),
 })
+
+const toggleList = () => (isOpenList.value = !isOpenList.value)
+const selectCat = (cat) => (currentCat.value = cat)
+onMounted(async () => {
+  allCategories.value = await getAllCategories(props.currentId)
+})
 </script>
 <template>
   <div class="content-editor">
@@ -84,6 +92,28 @@ const localImages = computed({
         <div class="form-group" v-if="props.entityType === 'product-groups'">
           <label for="sort" class="form-label">{{ config.sort }}</label>
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
+        </div>
+        <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
+          <p class="form-label">Родительская категория</p>
+          <div class="category-wrapper">
+            <input type="number" v-model="formData.parent_id" class="form-input category-input" />
+            <div class="category-title">{{ cat.title || 'Выберите категорию' }}</div>
+            <div class="category-list" v-if="allCategories?.length">
+              <p
+                class="category-item"
+                v-for="cat in allCategories"
+                :key="cat.id"
+                @click="selectCat(cat)"
+                :class="{ active: currentCat.id === cat.id }"
+              >
+                {{ cat.Name }}
+              </p>
+            </div>
+          </div>
+          <div class="form-hint">
+            Выберите родительскую категорию для создания иерархии. Текущая категория и ее дочерние категории исключены
+            из списка.
+          </div>
         </div>
       </div>
     </div>
@@ -177,5 +207,12 @@ const localImages = computed({
   color: #6b7280;
   margin-top: 6px;
   line-height: 1.4;
+}
+
+.grid-col-2 {
+  grid-column: span 2;
+}
+
+.category-wrapper {
 }
 </style>
