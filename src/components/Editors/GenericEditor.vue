@@ -1,20 +1,31 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, defineEmits, ref } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
-import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 
-const { getAllCategories } = useCategoriesLevel()
 const props = defineProps({
   formData: Object,
   entityType: String,
   currentId: String,
+  categoriesList: {
+    type: Array,
+    default: () => [],
+  },
+  groupsAttribute: {
+    type: Array,
+    default: () => [],
+  },
+  selectedAttributeGroups: {
+    type: Array,
+    default: () => [],
+  },
 })
-const allCategories = ref([])
-const isOpenList = ref(false)
-const currentCat = ref(null)
 
-const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
+const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images', 'update:selected-attribute-groups'])
+const selectedGroup = ref(null)
+const showNewGroupForm = ref(false)
+const newGroupName = ref('')
+const newGroupRequire = ref(false)
 
 const config = computed(() => {
   const configs = {
@@ -68,22 +79,94 @@ const localImages = computed({
   set: (value) => emit('update:images', value),
 })
 
-const toggleList = () => (isOpenList.value = !isOpenList.value)
-const selectCat = (cat) => (currentCat.value = cat)
-onMounted(async () => {
-  allCategories.value = await getAllCategories(props.currentId)
-})
+const getGroupName = (groupId) => {
+  const group = props.groupsAttribute.find((g) => g.id === groupId)
+  if (group) {
+    return group.Name || group.name
+  }
+
+  const selectedGroup = props.selectedAttributeGroups.find((g) => g.group_id === groupId)
+  if (selectedGroup && selectedGroup.name) {
+    return selectedGroup.name
+  }
+
+  return `Группа ${groupId}`
+}
+
+// Добавление существующей группы атрибутов
+const addAttributeGroup = () => {
+  if (!selectedGroup.value) return
+
+  // Проверяем, не добавлена ли уже эта группа
+  const isAlreadyAdded = props.selectedAttributeGroups.some((group) => group.group_id === selectedGroup.value)
+
+  if (!isAlreadyAdded) {
+    const newGroups = [
+      ...props.selectedAttributeGroups,
+      {
+        group_id: selectedGroup.value,
+        require: false,
+      },
+    ]
+    emit('update:selected-attribute-groups', newGroups)
+  }
+
+  selectedGroup.value = null
+}
+
+// Создание новой группы атрибутов
+const createNewAttributeGroup = () => {
+  if (!newGroupName.value.trim()) return
+
+  // Генерируем временный ID для новой группы (будет заменен на реальный при сохранении)
+  const tempId = `new-${Date.now()}`
+
+  const newGroups = [
+    ...props.selectedAttributeGroups,
+    {
+      group_id: tempId,
+      name: newGroupName.value.trim(),
+      require: newGroupRequire.value,
+      isNew: true, // Флаг, что это новая группа
+      tempId: tempId,
+    },
+  ]
+
+  emit('update:selected-attribute-groups', newGroups)
+
+  // Сбрасываем форму
+  newGroupName.value = ''
+  newGroupRequire.value = false
+  showNewGroupForm.value = false
+}
+
+// Удаление группы атрибутов
+const removeAttributeGroup = (index) => {
+  const newGroups = props.selectedAttributeGroups.filter((_, i) => i !== index)
+  emit('update:selected-attribute-groups', newGroups)
+}
+
+// Обновление обязательности группы
+const updateGroupRequire = (index, require) => {
+  const newGroups = props.selectedAttributeGroups.map((group, i) => (i === index ? { ...group, require } : group))
+  emit('update:selected-attribute-groups', newGroups)
+}
+
+// Переключение формы создания новой группы
+const toggleNewGroupForm = () => {
+  showNewGroupForm.value = !showNewGroupForm.value
+  newGroupName.value = ''
+  newGroupRequire.value = false
+}
 </script>
 <template>
   <div class="content-editor">
     <div class="editor-section">
       <h3 class="section-title">{{ config.title }}</h3>
-      <div
-        :class="{
-          'form-single': props.entityType !== 'product-groups',
-          'form-grid': props.entityType === 'product-groups',
-        }"
-      >
+      <div :class="{
+        'form-single': props.entityType !== 'product-groups',
+        'form-grid': props.entityType === 'product-groups',
+      }">
         <div class="form-group">
           <label for="title" class="form-label">{{ config.label }}</label>
           <input type="text" id="title" v-model="formData.title" :placeholder="config.placeholder" class="form-input" />
@@ -93,7 +176,7 @@ onMounted(async () => {
           <label for="sort" class="form-label">{{ config.sort }}</label>
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
         </div>
-        <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
+        <!-- <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
           <p class="form-label">Родительская категория</p>
           <div class="category-wrapper">
             <input type="number" v-model="formData.parent_id" class="form-input category-input" />
@@ -114,6 +197,88 @@ onMounted(async () => {
             Выберите родительскую категорию для создания иерархии. Текущая категория и ее дочерние категории исключены
             из списка.
           </div>
+        </div> -->
+      </div>
+    </div>
+    <div class="editor-section">
+      <h3 class="section-title">Группы атрибутов для категории</h3>
+      <div class="attributes-container">
+        <!-- Выбор существующей группы атрибутов -->
+        <div class="form-group">
+          <label class="form-label">Выберите существующую группу атрибутов</label>
+          <div class="select-wrapper">
+            <select v-model="selectedGroup" class="form-select">
+              <option :value="null">Выберите группу атрибутов</option>
+              <option v-for="group in groupsAttribute" :key="group.id" :value="group.id">
+                {{ group.Name || group.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Кнопки добавления групп -->
+        <div class="form-group button-group">
+          <button type="button" class="btn btn-secondary" @click="addAttributeGroup" :disabled="!selectedGroup">
+            Добавить выбранную группу
+          </button>
+          <span class="button-divider">или</span>
+          <button type="button" class="btn btn-primary" @click="toggleNewGroupForm">
+            {{ showNewGroupForm ? 'Отмена' : 'Создать новую группу' }}
+          </button>
+        </div>
+
+        <!-- Форма создания новой группы -->
+        <div v-if="showNewGroupForm" class="new-group-form">
+          <div class="form-group">
+            <label class="form-label">Название новой группы атрибутов</label>
+            <input type="text" v-model="newGroupName" placeholder="Введите название группы" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label large">
+              <input type="checkbox" v-model="newGroupRequire" />
+              <span class="checkmark"></span>
+              Обязательная группа атрибутов
+            </label>
+            <div class="form-hint">
+              Если отмечено, все товары в этой категории должны будут иметь атрибуты из этой группы
+            </div>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-success" @click="createNewAttributeGroup"
+              :disabled="!newGroupName.trim()">
+              Создать и добавить группу
+            </button>
+          </div>
+        </div>
+
+        <!-- Список выбранных групп атрибутов -->
+        <div class="selected-groups" v-if="selectedAttributeGroups.length > 0">
+          <h4 class="sub-section-title">Выбранные группы атрибутов:</h4>
+          <div class="selected-groups-list">
+            <div v-for="(group, index) in selectedAttributeGroups" :key="group.group_id" class="selected-group-item"
+              :class="{ 'new-group': group.isNew }">
+              <div class="group-info">
+                <span class="group-name">
+                  {{ group.isNew ? group.name : getGroupName(group.group_id) }}
+                  <span v-if="group.isNew" class="new-badge">новая</span>
+                </span>
+                <label class="checkbox-label" v-if="!group.inherited">
+                  <input type="checkbox" :checked="group.require"
+                    @change="updateGroupRequire(index, $event.target.checked)" />
+                  <span class="checkmark"></span>
+                  Обязательная
+                </label>
+                <span v-else class="inherited-require">
+                  {{ group.require ? 'Обязательная' : 'Необязательная' }} (наследование)
+                </span>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm" v-if="!group.inherited"
+                @click="removeAttributeGroup(index)">
+                Удалить
+              </button>
+              <span v-else class="inherited-note">Унаследована</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -122,29 +287,24 @@ onMounted(async () => {
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">
-          <DragDropImages
-            v-model="localImages"
-            :multiple="false"
+          <DragDropImages v-model="localImages" :multiple="false"
             @update:images="(event) => emit('update:images', event)"
-            @remove-image="(event) => emit('remove-image', event)"
-          />
+            @remove-image="(event) => emit('remove-image', event)" />
         </div>
       </div>
     </div>
 
-    <ActionButtons
-      :is-new="currentId === 'new'"
-      :entity-type="entityType"
-      @save="$emit('save')"
-      @cancel="$emit('cancel')"
-    />
+    <ActionButtons :is-new="currentId === 'new'" :entity-type="entityType" @save="$emit('save')"
+      @cancel="$emit('cancel')" />
   </div>
 </template>
+
 <style lang="scss" scoped>
 .content-editor {
   max-width: 100%;
   padding: 0;
 }
+
 .editor-section {
   background: white;
   border-radius: 12px;
@@ -168,12 +328,15 @@ onMounted(async () => {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
+
 .form-single {
   max-width: 500px;
 }
+
 .form-group {
   margin-bottom: 0;
 }
+
 .form-label {
   display: block;
   font-weight: 500;
@@ -209,10 +372,176 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
-.grid-col-2 {
-  grid-column: span 2;
+/* Стили для кнопок */
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
-.category-wrapper {
+.button-divider {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+/* Форма новой группы */
+.new-group-form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-top: 15px;
+}
+
+/* Список выбранных групп */
+.selected-groups {
+  margin-top: 20px;
+}
+
+.sub-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.selected-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selected-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+
+  &.new-group {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+  }
+}
+
+.group-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.group-name {
+  font-weight: 500;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-badge {
+  background: #28a745;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Чекбоксы */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  margin-top: 10px;
+
+  &.large {
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.checkbox-label input[type='checkbox'] {
+  margin: 0;
+}
+
+.inherited-group {
+  background-color: #f8f9fa;
+  border-left: 4px solid #6c757d;
+}
+
+.inherited-badge {
+  background-color: #6c757d;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  margin-left: 8px;
+}
+
+.new-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  margin-left: 8px;
+}
+
+.inherited-require {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.inherited-note {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9em;
 }
 </style>
