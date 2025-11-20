@@ -12,10 +12,10 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:min-price', 'update:max-price'])
 
-const catalogCategories = ref('')
-onBeforeMount(async () => {
-  catalogCategories.value = await getData('../../data/catalogCategories.json')
-})
+// const catalogCategories = ref('')
+// onBeforeMount(async () => {
+//   catalogCategories.value = await getData('../../data/catalogCategories.json')
+// })
 
 // Используем локальные reactive refs для min и max цены, чтобы отслеживать изменения внутренне
 const localMinPrice = ref(props.minPrice)
@@ -91,7 +91,7 @@ const colors = ref([
 
 <template>
   <form class="catalog-filter">
-    <div class="catalog-filter__item" v-if="catalogCategories.length">
+    <!-- <div class="catalog-filter__item" v-if="catalogCategories.length">
       <h4 class="catalog-filter__item-title">Выбор категории</h4>
       <ul class="catalog-filter__cat">
         <li
@@ -112,7 +112,7 @@ const colors = ref([
           </ul>
         </li>
       </ul>
-    </div>
+    </div> -->
     <div class="catalog-filter__item">
       <h4 class="catalog-filter__item-title">Цена</h4>
       <RangeInput
