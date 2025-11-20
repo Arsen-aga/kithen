@@ -89,7 +89,7 @@ const {
   getParentAttributeGroups,
 } = useCategoryAttributes()
 
-// Computed свойства
+// Computed свойства МАНДЮХ
 const isProducts = computed(() => name.value === ENTITY_TYPES.PRODUCTS)
 const isCategories = computed(() => name.value === ENTITY_TYPES.CATEGORIES)
 const isAttributes = computed(() => name.value === ENTITY_TYPES.ATTRIBUTES)
@@ -769,57 +769,27 @@ onMounted(async () => {
   <div class="page-container">
     <BackButton @click="goBack" />
 
-    <ProductsEditor
-      v-if="isProducts"
-      :form-data="formData"
-      :groups-product="groupsProduct"
-      :groups-attribute="groupsAttribute"
-      :selected-attributes="selectedAttributes"
-      :current-id="id"
-      :get-attribute-name="getAttributeName"
-      :category-attribute-groups="categoryAttributeGroupsForProduct"
-      :load-attributes-for-group="loadAttributesForGroup"
-      :create-new-attribute="createNewAttribute"
-      :loading-attributes="loadingAttributes"
-      :additional-attributes="additionalAttributes"
-      @save="saveContent"
-      @remove-video="(event) => removeFile(event)"
-      @remove-image="(event) => removeFile(event, formData.images)"
-      @update:images="updateImages"
-      @update:video="updateVideo"
-      @remove-attribute="removeSelectedAttribute"
-      @update:selected-attributes="updateSelectAttributes"
-      @add-additional-attribute="addAdditionalAttribute"
-      @remove-additional-attribute="removeAdditionalAttribute"
-      @additional-group-select="handleAdditionalGroupSelect"
+    <ProductsEditor v-if="isProducts" :form-data="formData" :groups-product="groupsProduct"
+      :groups-attribute="groupsAttribute" :selected-attributes="selectedAttributes" :current-id="id"
+      :get-attribute-name="getAttributeName" :category-attribute-groups="categoryAttributeGroupsForProduct"
+      :load-attributes-for-group="loadAttributesForGroup" :create-new-attribute="createNewAttribute"
+      :loading-attributes="loadingAttributes" :additional-attributes="additionalAttributes" @save="saveContent"
+      @remove-video="(event) => removeFile(event)" @remove-image="(event) => removeFile(event, formData.images)"
+      @update:images="updateImages" @update:video="updateVideo" @remove-attribute="removeSelectedAttribute"
+      @update:selected-attributes="updateSelectAttributes" @add-additional-attribute="addAdditionalAttribute"
+      @remove-additional-attribute="removeAdditionalAttribute" @additional-group-select="handleAdditionalGroupSelect"
       @additional-attribute-select="handleAdditionalAttributeSelect"
       @create-additional-attribute="createAdditionalAttribute"
-      @cancel-additional-attribute="cancelAdditionalAttribute"
-    />
+      @cancel-additional-attribute="cancelAdditionalAttribute" />
 
-    <GenericEditor
-      v-else-if="isCategories || isAttributeGroups"
-      :form-data="formData"
-      :entity-type="name"
-      :current-id="id"
-      :categories-list="categoriesList"
-      :groups-attribute="groupsAttribute"
-      :selected-attribute-groups="selectedAttributeGroups"
-      @remove-image="(event) => removeFile(event, formData.image)"
-      @update:images="updateImage"
-      @update:selected-attribute-groups="updateSelectedAttributeGroups"
-      @save="saveContent"
-      @cancel="deleteElem"
-    />
+    <GenericEditor v-else-if="isCategories || isAttributeGroups" :form-data="formData" :entity-type="name"
+      :current-id="id" :categories-list="categoriesList" :groups-attribute="groupsAttribute"
+      :selected-attribute-groups="selectedAttributeGroups" @remove-image="(event) => removeFile(event, formData.image)"
+      @update:images="updateImage" @update:selected-attribute-groups="updateSelectedAttributeGroups" @save="saveContent"
+      @cancel="deleteElem" />
 
-    <AttributeEditor
-      v-else-if="isAttributes"
-      :form-data="formData"
-      :groups-attribute="groupsAttribute"
-      :current-id="id"
-      @save="saveContent"
-      @cancel="(event) => deleteElem(event)"
-    />
+    <AttributeEditor v-else-if="isAttributes" :form-data="formData" :groups-attribute="groupsAttribute" :current-id="id"
+      @save="saveContent" @cancel="(event) => deleteElem(event)" />
   </div>
 </template>
 
