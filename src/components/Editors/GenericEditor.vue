@@ -28,6 +28,11 @@ const currentCat = ref(null)
 const searchTimeout = ref(null)
 const searchQuery = ref('')
 const categoryWrapperRef = ref(null)
+const defaultCategory = ref({
+  id: null,
+  level: null,
+  Name: 'Без родительской категории(корневая)',
+})
 
 const selectedGroup = ref(null)
 const showNewGroupForm = ref(false)
@@ -114,12 +119,13 @@ const toggleList = () => {
   }
 }
 const selectCat = (cat) => {
-  console.log('cat', cat)
   currentCat.value = cat
   emit('change-parent-cat', cat.id)
   isOpenList.value = false
   searchQuery.value = ''
-  if (cat.level !== 2) {
+  if (cat.level === null) {
+    emit('change-level', 0)
+  } else if (cat.level !== 2) {
     emit('change-level', cat.level + 1)
   }
 }
@@ -200,8 +206,12 @@ onUnmounted(() => {
                   @click.stop
                 />
               </div>
-              <p class="category-item" @click="selectCat(null)" :class="{ active: currentCat.id === cat.id }">
-                Без родительской категории(корневая)
+              <p
+                class="category-item"
+                @click="selectCat(defaultCategory)"
+                :class="{ active: currentCat.id === defaultCategory.id }"
+              >
+                {{ defaultCategory.Name }}
               </p>
               <p
                 class="category-item"

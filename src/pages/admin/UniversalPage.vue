@@ -146,18 +146,18 @@ const initializeProductData = async (itemData) => {
 }
 
 const initializeCategoryData = async (itemData) => {
-  if (itemData.image) {
-    formData.value.image = [
+  if (itemData.photo) {
+    formData.value.photo = [
       {
         id: itemData.id,
-        url: itemData.image,
-        nameUrl: itemData.image.split('/').pop(),
-        name: itemData.image.split('/').pop(),
+        url: itemData.photo,
+        nameUrl: itemData.photo.split('/').pop(),
+        name: itemData.photo.split('/').pop(),
         isExisting: true,
       },
     ]
   } else {
-    formData.value.image = []
+    formData.value.photo = []
   }
 
   if (itemData.id) {
