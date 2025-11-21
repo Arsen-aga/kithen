@@ -140,7 +140,7 @@ const flattenCategoryTree = (tree, level = 0, result = []) => {
 
 // Вычисляемое свойство для отображения категорий с учетом иерархии
 const displayCategories = computed(() => {
-  if (pathName.value !== 'external-categories') {
+  if (pathName.value !== 'product-groups') {
     return filteredCategories.value
   }
 
@@ -287,21 +287,21 @@ const getGroupName = computed(() => {
 // Получение заголовка страницы
 const getPageTitle = () => {
   const titles = {
-    'external-products': 'Товары',
-    'external-categories': 'Категория товаров',
-    'external-product-attribute-groups': 'Группы атрибутов',
-    'external-product-attributes': 'Атрибуты',
+    products: 'Товары',
+    'product-groups': 'Категория товаров',
+    'product-attribute-groups': 'Группы атрибутов',
+    'product-attributes': 'Атрибуты',
   }
   return titles[pathName.value] || 'Список'
 }
 
 // Проверка, является ли страница products (чтобы скрыть кнопку добавления)
-const isProductsPage = computed(() => pathName.value === 'external-products')
+const isProductsPage = computed(() => pathName.value === 'products')
 
 // Инициализация
 onMounted(async () => {
   await getContent()
-  if (pathName.value === 'external-product-attributes') {
+  if (pathName.value === 'product-attributes') {
     await loadAttributeGroups()
   }
 
@@ -325,7 +325,7 @@ watch(searchQuery, () => {
 // Отслеживание изменения pathName
 watch(pathName, async (newPathName) => {
   await getContent()
-  if (newPathName === 'external-product-attributes') {
+  if (newPathName === 'product-attributes') {
     await loadAttributeGroups()
   }
 })
@@ -373,7 +373,6 @@ console.log(categories)
         <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
           <span>№ ↓</span>
         </button> -->
-        </button> -->
         <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
           <span>Имя A-Z</span>
         </button>
@@ -381,7 +380,7 @@ console.log(categories)
           <span>Имя Z-A</span>
         </button>
         <button
-          v-if="pathName === 'external-product-attributes'"
+          v-if="pathName === 'product-attributes'"
           class="filter-btn"
           :class="{ active: sortBy === 'groupIdAsc' }"
           @click="sortByF($event, 'groupIdAsc')"
@@ -389,7 +388,7 @@ console.log(categories)
           <span>Группа ↑</span>
         </button>
         <button
-          v-if="pathName === 'external-product-attributes'"
+          v-if="pathName === 'product-attributes'"
           class="filter-btn"
           :class="{ active: sortBy === 'groupIdDesc' }"
           @click="sortByF($event, 'groupIdDesc')"
@@ -397,7 +396,7 @@ console.log(categories)
           <span>Группа ↓</span>
         </button>
         <button
-          v-if="pathName === 'external-products'"
+          v-if="pathName === 'products'"
           class="filter-btn"
           :class="{ active: sortBy === 'uidAsc' }"
           @click="sortByF($event, 'uidAsc')"
@@ -405,7 +404,7 @@ console.log(categories)
           <span>ID ↑</span>
         </button>
         <button
-          v-if="pathName === 'external-products'"
+          v-if="pathName === 'products'"
           class="filter-btn"
           :class="{ active: sortBy === 'uidDesc' }"
           @click="sortByF($event, 'uidDesc')"
@@ -423,8 +422,8 @@ console.log(categories)
             <th class="column-id">ID</th>
             <!-- <th class="column-id">№</th> -->
             <th class="column-name">Название</th>
-            <th v-if="pathName === 'external-product-attributes'" class="column-group">Группа</th>
-            <th v-if="pathName === 'external-products'" class="column-uid">ID</th>
+            <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
+            <th v-if="pathName === 'products'" class="column-uid">ID</th>
             <th class="column-actions">Действия</th>
           </tr>
         </thead>
@@ -459,12 +458,12 @@ console.log(categories)
                 </div>
               </RouterLink>
             </td>
-            <td v-if="pathName === 'external-product-attributes'" class="cell-group">
+            <td v-if="pathName === 'product-attributes'" class="cell-group">
               <span class="group-badge">
                 {{ getGroupName(category.group_id || category.attribute_group_id) }}
               </span>
             </td>
-            <td v-if="pathName === 'external-products'" class="name-content">
+            <td v-if="pathName === 'products'" class="name-content">
               <span class="name-text">
                 {{ category.uid }}
               </span>

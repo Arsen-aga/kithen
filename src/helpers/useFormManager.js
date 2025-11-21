@@ -25,7 +25,7 @@ export function useFormManager(entityType, routeParams) {
   const currentItem = ref(null)
 
   const entityConfigs = {
-    'external-products': {
+    products: {
       fields: ['title', 'description', 'category_id', 'uid', 'price'],
       createData: (data) => ({
         title: data.title,
@@ -81,12 +81,12 @@ export function useFormManager(entityType, routeParams) {
         return res
       },
     },
-    'external-product-attribute-groups': {
+    'product-attribute-groups': {
       fields: ['name'],
       createData: (data) => ({ name: data.title }),
       updateData: (data, current) => ({ ...current, name: data.title }),
     },
-    'external-product-attributes': {
+    'product-attributes': {
       fields: ['attribute_value', 'group_id', 'product_id'],
       createData: (data) => ({
         attribute_value: data.title,
@@ -151,11 +151,9 @@ export function useFormManager(entityType, routeParams) {
       groupProduct: itemData.Group || itemData.category_id || null,
       groupAttribute: itemData.group_id || null,
       sort: itemData.sort_order || 0,
-      image: itemData.image || null,
+      photo: itemData.photo || null,
       price: itemData.price || null,
       id: itemData.id || null,
-      parent_id: itemData.parent_id || null,
-      level: itemData.level || null,
       parent_id: itemData.parent_id || null,
       level: itemData.level || 0,
     }

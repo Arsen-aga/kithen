@@ -477,7 +477,7 @@ const saveContent = async () => {
     }
 
     if (isAttributes.value) {
-      await attributeEditorProductToAttribute()
+      // await attributeEditorProductToAttribute()
     }
 
     await updateItem()
@@ -569,25 +569,6 @@ const handleCategoryFiles = async () => {
   }
 }
 
-const handleCategoryFiles = async () => {
-  if (!formData.value.image || formData.value.image.length === 0) {
-    formData.value.image = null
-    return
-  }
-
-  if (formData.value.image.length > 0) {
-    const imageFile = formData.value.image[0]
-
-    if (!imageFile.isExisting) {
-      const uploadedFileName = await uploadFile(id.value, imageFile, name.value)
-      const uploadedImageUrl = `https://back.love-kitchen.ru/web/uploads/${uploadedFileName}`
-      formData.value.image = uploadedImageUrl
-    } else {
-      formData.value.image = imageFile.url
-    }
-  }
-}
-
 const handleAttributeOperations = async () => {
   const currentProductAttributes = await get(`external-product-to-attributes?product_id=${id.value}`)
 
@@ -655,41 +636,13 @@ const createNewItem = async () => {
 }
 
 const goBack = () => {
-  clearFilesToDelete()
+  // clearFilesToDelete()
   router.push({ name: 'List', params: { pathName: name.value } })
 }
 
-// Event handlers
-const updateSelectAttributes = (event) => {
-  selectedAttributes.value = event
-}
-
-const updateImages = (event) => {
-  formData.value.images = event
-}
-
-const updateImage = (event) => {
-  formData.value.image = event
-
-  if (event.length === 0 && currentItem.value?.image) {
-    const fileToDelete = {
-      id: currentItem.value.id,
-      url: currentItem.value.image,
-      nameUrl: currentItem.value.image.split('/').pop(),
-      name: currentItem.value.image.split('/').pop(),
-      isExisting: true,
-    }
-    handleFileRemove(fileToDelete, Number(id.value))
-  }
-}
-
-const updateVideo = (event) => {
-  formData.value.video = event
-}
-
-const updateSelectedAttributeGroups = (event) => {
-  selectedAttributeGroups.value = event
-}
+// const updateSelectedAttributeGroups = (event) => {
+//   selectedAttributeGroups.value = event
+// }
 
 const removeFile = async (file, filesArray = null) => {
   handleFileRemove(file, Number(id.value), filesArray)
@@ -780,10 +733,6 @@ onMounted(async () => {
   await loadItemData()
 })
 
-const removeFile = async (file, filesArray = null) => {
-  handleFileRemove(file, Number(id.value), filesArray)
-}
-
 const updateParentCat = (event) => {
   console.log('updateParentCat', event)
   formData.value.parent_id = event
@@ -828,6 +777,7 @@ const changeLevel = (event) => {
       @update:images="updatePhoto"
       @change-parent-cat="updateParentCat"
       @change-level="changeLevel"
+      @cancel="deleteElem"
     />
 
     <AttributeEditor
@@ -836,6 +786,7 @@ const changeLevel = (event) => {
       :groups-attribute="groupsAttribute"
       :current-id="id"
       @save="saveContent"
+      @cancel="deleteElem"
     />
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch, defineEmits, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
@@ -29,8 +29,6 @@ const searchTimeout = ref(null)
 const searchQuery = ref('')
 const categoryWrapperRef = ref(null)
 
-const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
-
 const selectedGroup = ref(null)
 const showNewGroupForm = ref(false)
 const newGroupName = ref('')
@@ -39,7 +37,7 @@ const newGroupRequire = ref(false)
 const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images', 'change-parent-cat', 'change-level'])
 const config = computed(() => {
   const configs = {
-    'external-categories': {
+    'product-groups': {
       title: 'Категория товаров',
       label: 'Название категории',
       sort: 'Порядок категории',
@@ -47,7 +45,7 @@ const config = computed(() => {
       hint: 'Например: Электроника, Одежда, Мебель и т.д.',
       entityType: 'категорию',
     },
-    'external-product-attribute-groups': {
+    'product-attribute-groups': {
       title: 'Группа атрибутов',
       label: 'Название группы атрибутов',
       sort: '',
@@ -168,11 +166,13 @@ onUnmounted(() => {
 <template>
   <div class="content-editor">
     <div class="editor-section">
-      <h3 class="section-title">{{ config.title }}</h3>
+      <h3 class="section-title">
+        {{ config.title }} <span>ID: {{ currentId }}</span>
+      </h3>
       <div
         :class="{
-          'form-single': props.entityType !== 'external-categories',
-          'form-grid': props.entityType === 'external-categories',
+          'form-single': props.entityType !== 'product-groups',
+          'form-grid': props.entityType === 'product-groups',
         }"
       >
         <div class="form-group">
@@ -180,7 +180,7 @@ onUnmounted(() => {
           <input type="text" id="title" v-model="formData.title" :placeholder="config.placeholder" class="form-input" />
           <div class="form-hint">{{ config.hint }}</div>
         </div>
-        <div class="form-group" v-if="props.entityType === 'external-categories'">
+        <div class="form-group" v-if="props.entityType === 'product-groups'">
           <label for="sort" class="form-label">{{ config.sort }}</label>
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
         </div>
@@ -200,6 +200,9 @@ onUnmounted(() => {
                   @click.stop
                 />
               </div>
+              <p class="category-item" @click="selectCat(null)" :class="{ active: currentCat.id === cat.id }">
+                Без родительской категории(корневая)
+              </p>
               <p
                 class="category-item"
                 v-for="cat in allCategories"
@@ -208,7 +211,7 @@ onUnmounted(() => {
                 :class="{ active: currentCat.id === cat.id }"
                 :style="{ marginLeft: cat.level === 1 ? '30px' : '' }"
               >
-                {{ cat.Name }}
+                {{ cat.level === 1 ? '--' : '' }} {{ cat.Name }}
               </p>
             </div>
           </div>
@@ -218,27 +221,12 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-
-      <div class="form-group" v-if="props.entityType === 'external-categories'">
-        <label for="parent_id" class="form-label">Родительская категория</label>
-        <select id="parent_id" v-model="formData.parent_id" class="form-input">
-          <option :value="null">Без родительской категории (корневая)</option>
-          <option v-for="category in flattenedCategories" :key="category.id" :value="category.id">
-            {{ category.displayName }}
-          </option>
-        </select>
-        <div class="form-hint">
-          Выберите родительскую категорию для создания иерархии. Текущая категория и ее дочерние категории исключены из
-          списка.
-        </div>
-      </div>
     </div>
 
     <!-- Группы атрибутов для категорий -->
-    <div v-if="entityType === 'external-categories'" class="editor-section">
+    <!-- <div v-if="entityType === 'product-groups'" class="editor-section">
       <h3 class="section-title">Группы атрибутов для категории</h3>
       <div class="attributes-container">
-        <!-- Выбор существующей группы атрибутов -->
         <div class="form-group">
           <label class="form-label">Выберите существующую группу атрибутов</label>
           <div class="select-wrapper">
@@ -251,7 +239,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Кнопки добавления групп -->
+
         <div class="form-group button-group">
           <button type="button" class="btn btn-secondary" @click="addAttributeGroup" :disabled="!selectedGroup">
             Добавить выбранную группу
@@ -262,7 +250,7 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Форма создания новой группы -->
+      
         <div v-if="showNewGroupForm" class="new-group-form">
           <div class="form-group">
             <label class="form-label">Название новой группы атрибутов</label>
@@ -290,7 +278,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Список выбранных групп атрибутов -->
+
         <div class="selected-groups" v-if="selectedAttributeGroups.length > 0">
           <h4 class="sub-section-title">Выбранные группы атрибутов:</h4>
           <div class="selected-groups-list">
@@ -331,7 +319,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Изображение -->
     <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
