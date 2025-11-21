@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { useAttributes } from '@/helpers/useAttributes'
 
+const { getAttributeNameOne } = useAttributes()
 const props = defineProps({
   attributes: Array,
   selectedAttributes: {
@@ -14,16 +16,20 @@ const props = defineProps({
 const emit = defineEmits(['update:selected-attributes', 'remove-attribute'])
 
 // Локальная копия для реактивности
+const attributeNames = ref({})
 const localSelected = ref([...props.selectedAttributes])
+console.log('props.selectedAttributes', props.selectedAttributes)
 
 // Обработчик изменения чекбокса
-const handleCheckboxChange = (attributeId, isChecked) => {
+const handleCheckboxChange = (attribute, isChecked) => {
+  const attributeId = attribute?.attribute_id || attribute?.id || attribute
+
   if (isChecked) {
-    if (!localSelected.value.includes(attributeId)) {
-      localSelected.value.push(attributeId)
+    if (!localSelected.value.includes(Number(attributeId))) {
+      localSelected.value.push(Number(attributeId))
     }
   } else {
-    const index = localSelected.value.indexOf(attributeId)
+    const index = localSelected.value.indexOf(Number(attributeId))
     if (index > -1) {
       localSelected.value.splice(index, 1)
     }
@@ -34,22 +40,48 @@ const handleCheckboxChange = (attributeId, isChecked) => {
 }
 
 // Обработчик удаления атрибута
-const handleRemoveAttribute = (attributeId) => {
-  const index = localSelected.value.indexOf(attributeId)
+const handleRemoveAttribute = (attribute) => {
+  const attributeId = attribute?.attribute_id || attribute?.id || attribute
+  const index = localSelected.value.indexOf(Number(attributeId))
+  console.log('attribute', attribute)
+  console.log('localSelected.value', localSelected.value)
   if (index > -1) {
     localSelected.value.splice(index, 1)
     emit('update:selected-attributes', [...localSelected.value])
-    emit('remove-attribute', attributeId)
+    emit('remove-attribute', Number(attributeId))
   }
 }
+
+// Загружаем названия для выбранных атрибутов
+const loadAttributeNames = async () => {
+  for (const attributeId of localSelected.value) {
+    if (!attributeNames.value[attributeId]) {
+      try {
+        const name = await getAttributeNameOne(attributeId)
+        attributeNames.value[attributeId] = name
+      } catch (error) {
+        attributeNames.value[attributeId] = `Атрибут #${attributeId}`
+      }
+    }
+  }
+}
+// Следим за изменениями выбранных атрибутов и загружаем названия
+watch(
+  () => localSelected.value,
+  async (newVal) => {
+    await loadAttributeNames()
+  },
+  { immediate: true }
+)
 
 // Следим за изменениями извне и синхронизируем
 watch(
   () => props.selectedAttributes,
   (newVal) => {
+    const normalizedNewVal = newVal.map((id) => Number(id))
     // Проверяем, что массивы действительно отличаются
-    if (JSON.stringify(localSelected.value) !== JSON.stringify(newVal)) {
-      localSelected.value = [...newVal]
+    if (JSON.stringify(localSelected.value) !== JSON.stringify(normalizedNewVal)) {
+      localSelected.value = [...normalizedNewVal]
     }
   },
   { deep: true }
@@ -57,7 +89,8 @@ watch(
 
 // Проверяем, выбран ли атрибут
 const isAttributeSelected = (attributeId) => {
-  return localSelected.value.includes(attributeId)
+  const id = attributeId?.attribute_id || attributeId?.id || attributeId
+  return localSelected.value.includes(Number(id))
 }
 </script>
 
@@ -66,17 +99,17 @@ const isAttributeSelected = (attributeId) => {
   <div class="attributes-selector" v-if="attributes.length > 0">
     <label class="form-label">Доступные атрибуты</label>
     <div class="attributes-grid">
-      <div v-for="attribute in attributes" :key="attribute.id" class="attribute-card">
+      <div v-for="attribute in attributes" :key="attribute.attribute_id || attribute.id" class="attribute-card">
         <label class="attribute-checkbox">
           <input
             type="checkbox"
-            :value="attribute.id"
-            :checked="isAttributeSelected(attribute.id)"
-            @change="handleCheckboxChange(attribute.id, $event.target.checked)"
+            :value="attribute.attribute_id || attribute.id"
+            :checked="isAttributeSelected(attribute)"
+            @change="handleCheckboxChange(attribute, $event.target.checked)"
             class="checkbox-input"
           />
           <span class="checkbox-custom"></span>
-          <span class="attribute-name">{{ attribute.Name || attribute.name }}</span>
+          <span class="attribute-name">{{ attribute.Name || attribute.name || attribute.attribute_value }}</span>
         </label>
       </div>
     </div>
@@ -88,10 +121,16 @@ const isAttributeSelected = (attributeId) => {
       <span class="selected-count">{{ localSelected.length }}</span>
     </div>
     <div class="selected-attributes-grid">
-      <div v-for="attributeId in localSelected" :key="attributeId" class="selected-attribute-card">
+      <div
+        v-for="attribute in localSelected"
+        :key="attribute.attribute_id || attribute.id"
+        class="selected-attribute-card"
+      >
         <div class="attribute-badge">
-          <span class="badge-text">{{ getAttributeName(attributeId) }}</span>
-          <button @click="handleRemoveAttribute(attributeId)" class="badge-remove" title="Удалить атрибут">
+          <span class="badge-text">{{
+            attributeNames[attribute.attribute_id || attribute.id || attribute] || 'Загрузка...'
+          }}</span>
+          <button @click="handleRemoveAttribute(attribute)" class="badge-remove" title="Удалить атрибут">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"

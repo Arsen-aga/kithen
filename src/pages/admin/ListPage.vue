@@ -97,6 +97,58 @@ const resetPagination = () => {
   isLoading.value = false
 }
 
+// Функция для построения иерархической структуры категорий
+const buildCategoryTree = (categoriesList) => {
+  const categoryMap = new Map()
+  const rootCategories = []
+
+  // Сначала создаем карту всех категорий
+  categoriesList.forEach((category) => {
+    categoryMap.set(category.id, { ...category, children: [] })
+  })
+
+  // Затем строим дерево
+  categoriesList.forEach((category) => {
+    const node = categoryMap.get(category.id)
+    if (category.parent_id && categoryMap.has(category.parent_id)) {
+      // Добавляем как дочернюю категорию
+      categoryMap.get(category.parent_id).children.push(node)
+    } else {
+      // Это корневая категория
+      rootCategories.push(node)
+    }
+  })
+
+  return rootCategories
+}
+
+// Функция для преобразования дерева в плоский список с уровнями
+const flattenCategoryTree = (tree, level = 0, result = []) => {
+  tree.forEach((category) => {
+    result.push({
+      ...category,
+      level: level,
+      hasChildren: category.children && category.children.length > 0,
+    })
+
+    if (category.children && category.children.length > 0) {
+      flattenCategoryTree(category.children, level + 1, result)
+    }
+  })
+  return result
+}
+
+// Вычисляемое свойство для отображения категорий с учетом иерархии
+const displayCategories = computed(() => {
+  if (pathName.value !== 'external-categories') {
+    return filteredCategories.value
+  }
+
+  // Для категорий строим иерархическую структуру
+  const categoryTree = buildCategoryTree(filteredCategories.value)
+  return flattenCategoryTree(categoryTree)
+})
+
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
   let filtered = categories.value || []
@@ -107,10 +159,15 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => b.id - a.id)
   } else if (sortBy.value === 'nameAsc') {
     return filtered.sort((a, b) => {
+      console.log(a)
       if (a.Name) {
         return a.Name.localeCompare(b.Name)
       } else if (a.username) {
         return a.username.localeCompare(b.username)
+      } else if (a.title) {
+        return a.title.localeCompare(b.title)
+      } else if (a.attribute_value) {
+        return a.attribute_value.localeCompare(b.attribute_value)
       } else {
         return a.name.localeCompare(b.name)
       }
@@ -121,6 +178,10 @@ const filteredCategories = computed(() => {
         return b.Name.localeCompare(a.Name)
       } else if (b.username) {
         return b.username.localeCompare(a.username)
+      } else if (b.title) {
+        return b.title.localeCompare(a.title)
+      } else if (b.attribute_value) {
+        return b.attribute_value.localeCompare(a.attribute_value)
       } else {
         return b.name.localeCompare(a.name)
       }
@@ -129,6 +190,12 @@ const filteredCategories = computed(() => {
     return filtered.sort((a, b) => a.group_id - b.group_id)
   } else if (sortBy.value === 'groupIdDesc') {
     return filtered.sort((a, b) => b.group_id - a.group_id)
+  } else if (sortBy.value === 'uidAsc') {
+    console.log(filtered)
+    return filtered.sort((a, b) => a.uid.localeCompare(b.uid))
+  } else if (sortBy.value === 'uidDesc') {
+    console.log(filtered)
+    return filtered.sort((a, b) => b.uid.localeCompare(a.uid))
   }
   return filtered
 })
@@ -220,21 +287,21 @@ const getGroupName = computed(() => {
 // Получение заголовка страницы
 const getPageTitle = () => {
   const titles = {
-    products: 'Товары',
-    'product-groups': 'Группы товаров',
-    'product-attribute-groups': 'Группы атрибутов',
-    'product-attributes': 'Атрибуты',
+    'external-products': 'Товары',
+    'external-categories': 'Категория товаров',
+    'external-product-attribute-groups': 'Группы атрибутов',
+    'external-product-attributes': 'Атрибуты',
   }
   return titles[pathName.value] || 'Список'
 }
 
 // Проверка, является ли страница products (чтобы скрыть кнопку добавления)
-const isProductsPage = computed(() => pathName.value === 'products')
+const isProductsPage = computed(() => pathName.value === 'external-products')
 
 // Инициализация
 onMounted(async () => {
   await getContent()
-  if (pathName.value === 'product-attributes') {
+  if (pathName.value === 'external-product-attributes') {
     await loadAttributeGroups()
   }
 
@@ -258,7 +325,7 @@ watch(searchQuery, () => {
 // Отслеживание изменения pathName
 watch(pathName, async (newPathName) => {
   await getContent()
-  if (newPathName === 'product-attributes') {
+  if (newPathName === 'external-product-attributes') {
     await loadAttributeGroups()
   }
 })
@@ -273,6 +340,8 @@ onUnmounted(() => {
     clearTimeout(searchTimeout.value) // ← ДОБАВЛЕНО
   }
 })
+
+console.log(categories)
 </script>
 
 <template>
@@ -280,7 +349,11 @@ onUnmounted(() => {
     <!-- Заголовок и кнопка добавления -->
     <div class="categories-header">
       <h2 class="page-title">{{ getPageTitle() }}</h2>
-      <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }" class="btn-primary">
+      <RouterLink
+        v-if="!isProductsPage"
+        :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }"
+        class="btn-primary"
+      >
         <span class="btn-icon">➕</span>
         Добавить
       </RouterLink>
@@ -300,6 +373,7 @@ onUnmounted(() => {
         <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
           <span>№ ↓</span>
         </button> -->
+        </button> -->
         <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
           <span>Имя A-Z</span>
         </button>
@@ -307,7 +381,7 @@ onUnmounted(() => {
           <span>Имя Z-A</span>
         </button>
         <button
-          v-if="pathName === 'product-attributes'"
+          v-if="pathName === 'external-product-attributes'"
           class="filter-btn"
           :class="{ active: sortBy === 'groupIdAsc' }"
           @click="sortByF($event, 'groupIdAsc')"
@@ -315,12 +389,28 @@ onUnmounted(() => {
           <span>Группа ↑</span>
         </button>
         <button
-          v-if="pathName === 'product-attributes'"
+          v-if="pathName === 'external-product-attributes'"
           class="filter-btn"
           :class="{ active: sortBy === 'groupIdDesc' }"
           @click="sortByF($event, 'groupIdDesc')"
         >
           <span>Группа ↓</span>
+        </button>
+        <button
+          v-if="pathName === 'external-products'"
+          class="filter-btn"
+          :class="{ active: sortBy === 'uidAsc' }"
+          @click="sortByF($event, 'uidAsc')"
+        >
+          <span>ID ↑</span>
+        </button>
+        <button
+          v-if="pathName === 'external-products'"
+          class="filter-btn"
+          :class="{ active: sortBy === 'uidDesc' }"
+          @click="sortByF($event, 'uidDesc')"
+        >
+          <span>ID ↓</span>
         </button>
       </div>
     </div>
@@ -333,18 +423,20 @@ onUnmounted(() => {
             <th class="column-id">ID</th>
             <!-- <th class="column-id">№</th> -->
             <th class="column-name">Название</th>
-            <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
+            <th v-if="pathName === 'external-product-attributes'" class="column-group">Группа</th>
+            <th v-if="pathName === 'external-products'" class="column-uid">ID</th>
             <th class="column-actions">Действия</th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="(category, index) in filteredCategories"
+            v-for="(category, index) in displayCategories"
             :key="category.id"
             class="table-row"
+            :style="{ paddingLeft: `${(category.level || 0) * 20}px` }"
             :ref="
               (el) => {
-                if (index === filteredCategories.length - 1) lastElement = el
+                if (index === displayCategories.length - 1) lastElement = el
               }
             "
           >
@@ -353,14 +445,28 @@ onUnmounted(() => {
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
-                  <span class="name-text">{{ category?.Name || category?.name || category?.username }}</span>
+                  <span class="name-text">
+                    {{ category.level ? '---' : null }}
+                    {{
+                      category?.title ||
+                      category?.name ||
+                      category?.username ||
+                      category?.Name ||
+                      category?.attribute_value
+                    }}</span
+                  >
                   <span v-if="category.exists === 0" class="status-badge inactive">Неактивно</span>
                 </div>
               </RouterLink>
             </td>
-            <td v-if="pathName === 'product-attributes'" class="cell-group">
+            <td v-if="pathName === 'external-product-attributes'" class="cell-group">
               <span class="group-badge">
                 {{ getGroupName(category.group_id || category.attribute_group_id) }}
+              </span>
+            </td>
+            <td v-if="pathName === 'external-products'" class="name-content">
+              <span class="name-text">
+                {{ category.uid }}
               </span>
             </td>
             <td class="cell-actions">
@@ -587,7 +693,7 @@ onUnmounted(() => {
 }
 
 .data-table td {
-  padding: 16px 20px;
+  padding: 16px 20px 16px 30px;
   font-size: 14px;
   color: #374151;
 }

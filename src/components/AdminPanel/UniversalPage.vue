@@ -9,7 +9,6 @@ import DragDropImages from '@/components/UI/DragDropImages.vue'
 // import AdminCalendar from '@/components/UI/AdminCalendar.vue'
 import AdminAddVideo from '@/components/UI/AdminAddVideo.vue'
 const { uploadFile, uploadMultipleFiles } = useFileUpload()
-
 const store = useDefaultItems()
 const token = store.getBearer
 const headersPost = {

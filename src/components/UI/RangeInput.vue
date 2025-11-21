@@ -78,16 +78,48 @@ function onSliderInput() {
     }
   }
 }
+function onKeydown(event) {
+  // Разрешаем: backspace, delete, tab, escape, enter, стрелки
+  if (
+    [8, 9, 27, 13, 46].includes(event.keyCode) ||
+    // Разрешаем: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+    (event.keyCode === 65 && event.ctrlKey === true) ||
+    (event.keyCode === 67 && event.ctrlKey === true) ||
+    (event.keyCode === 86 && event.ctrlKey === true) ||
+    (event.keyCode === 88 && event.ctrlKey === true) ||
+    // Разрешаем: домашняя, конец, лево, право
+    (event.keyCode >= 35 && event.keyCode <= 39)
+  ) {
+    return
+  }
+
+  // Запрещаем все, кроме цифр
+  if ((event.keyCode < 48 || event.keyCode > 57) && (event.keyCode < 96 || event.keyCode > 105)) {
+    event.preventDefault()
+  }
+}
 </script>
 
 <template>
   <div class="range-slider">
     <div class="range-slider__inputs">
-      <input type="text" class="range-slider__inp" :value="formattedMinPrice" @input="updateMinPrice" />
+      <input
+        type="text"
+        class="range-slider__inp"
+        :value="formattedMinPrice"
+        @input="updateMinPrice"
+        @keydown="onKeydown"
+      />
       <svg width="9" height="1" viewBox="0 0 9 1" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M0 1V0H9V1H0Z" fill="#464451" />
       </svg>
-      <input type="text" class="range-slider__inp" :value="formattedMaxPrice" @input="updateMaxPrice" />
+      <input
+        type="text"
+        class="range-slider__inp"
+        :value="formattedMaxPrice"
+        @input="updateMaxPrice"
+        @keydown="onKeydown"
+      />
     </div>
     <div class="range-slider__slider">
       <input

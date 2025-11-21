@@ -1,6 +1,5 @@
 <script setup>
 import SideBarAdmin from '@/components/AdminPanel/SideBarAdmin.vue'
-import HeaderAdmin from '@/components/AdminPanel/HeaderAdmin.vue'
 // import MetrikaBlock from '@/components/AdminPanel/MetrikaBlock.vue'
 import router from '@/router/router'
 import { onMounted, computed } from 'vue'
@@ -11,7 +10,7 @@ const store = useDefaultItems()
 const user = computed(() => store.getUser)
 
 onMounted(() => {
-  if (user.value.username === 'guest' || user.value.username !== 'potapov.roma@mail.ru') {
+  if (user.value.username === 'guest' || user.value.username !== 'roma' || user.value.username !== 'admin') {
     console.log(user.value)
     // router.push('/login')
     router.push('/admin')
@@ -26,8 +25,7 @@ onMounted(() => {
     </div>
 
     <div class="info">
-      <HeaderAdmin />
-      <RouterView />
+      <RouterView class="info__content" />
     </div>
   </div>
 </template>
@@ -49,5 +47,6 @@ onMounted(() => {
 .info {
   width: 100%;
   max-width: 954px;
+  padding-top: 50px;
 }
 </style>
