@@ -9,7 +9,7 @@ import { useFormManager } from '@/helpers/useFormManager'
 import { useAttributes } from '@/helpers/useAttributes'
 import { useFileManager } from '@/helpers/useFileManager'
 import { useApi } from '@/helpers/useApi'
-import { useCategoryAttributes } from '@/helpers/useCategoryAttributes'
+import { useProductGroupAttributes } from '@/helpers/useProductGroupAttributes'
 
 // Components
 import BackButton from '@/components/UI/BackButton.vue'
@@ -19,10 +19,10 @@ import GenericEditor from '@/components/Editors/GenericEditor.vue'
 
 // Константы
 const ENTITY_TYPES = {
-  PRODUCTS: 'external-products',
-  CATEGORIES: 'external-categories',
-  ATTRIBUTES: 'external-product-attributes',
-  ATTRIBUTE_GROUPS: 'external-product-attribute-groups',
+  PRODUCTS: 'products',
+  CATEGORIES: 'product-groups',
+  ATTRIBUTES: 'product-attributes',
+  ATTRIBUTE_GROUPS: 'product-attribute-groups',
 }
 
 const FILE_TYPES = {
@@ -36,7 +36,7 @@ const router = useRouter()
 const { del, get, post } = useApi()
 
 // Реактивные данные
-const name = computed(() => route.params.name)
+const routeParamName = computed(() => route.params.name)
 const id = computed(() => route.params.id)
 
 const files = ref([])
@@ -50,7 +50,7 @@ const categoryAttributeLinks = ref([])
 const selectedAttributeGroups = ref([])
 
 // Инициализация хелперсов
-const { formData, currentItem, createItem, updateItem, resetForm, initializeFormData } = useFormManager(name.value, {
+const { formData, currentItem, createItem, updateItem, resetForm, initializeFormData } = useFormManager(routeParamName.value, {
   id,
 })
 const {
@@ -73,6 +73,7 @@ const {
   uploadFile,
   uploadMultipleFiles,
   deleteMarkedFiles,
+  clearFilesToDelete,
   deleteCategoryImage,
 } = useFileManager()
 const {
@@ -86,13 +87,13 @@ const {
   removeAttributeGroupFromChildren,
   getAllAttributeGroupsForCategory,
   getParentAttributeGroups,
-} = useCategoryAttributes()
+} = useProductGroupAttributes()
 
-// Computed свойства МАНДЮХ
-const isProducts = computed(() => name.value === ENTITY_TYPES.PRODUCTS)
-const isCategories = computed(() => name.value === ENTITY_TYPES.CATEGORIES)
-const isAttributes = computed(() => name.value === ENTITY_TYPES.ATTRIBUTES)
-const isAttributeGroups = computed(() => name.value === ENTITY_TYPES.ATTRIBUTE_GROUPS)
+// Computed свойства
+const isProducts = computed(() => routeParamName.value === ENTITY_TYPES.PRODUCTS)
+const isCategories = computed(() => routeParamName.value === ENTITY_TYPES.CATEGORIES)
+const isAttributes = computed(() => routeParamName.value === ENTITY_TYPES.ATTRIBUTES)
+const isAttributeGroups = computed(() => routeParamName.value === ENTITY_TYPES.ATTRIBUTE_GROUPS)
 const isNewItem = computed(() => id.value === 'new')
 
 // Основные методы
@@ -104,7 +105,7 @@ const loadItemData = async () => {
   }
 
   try {
-    const response = await get(`${name.value}/${id.value}`)
+    const response = await get(`${routeParamName.value}/${id.value}`)
     currentItem.value = response
     await initializeEditorData()
   } catch (error) {
@@ -146,18 +147,18 @@ const initializeProductData = async (itemData) => {
 }
 
 const initializeCategoryData = async (itemData) => {
-  if (itemData.photo) {
-    formData.value.photo = [
+  if (itemData.image) {
+    formData.value.image = [
       {
         id: itemData.id,
-        url: itemData.photo,
-        nameUrl: itemData.photo.split('/').pop(),
-        name: itemData.photo.split('/').pop(),
+        url: itemData.image,
+        nameUrl: itemData.image.split('/').pop(),
+        name: itemData.image.split('/').pop(),
         isExisting: true,
       },
     ]
   } else {
-    formData.value.photo = []
+    formData.value.image = []
   }
 
   if (itemData.id) {
@@ -174,7 +175,7 @@ const initializeCategoryData = async (itemData) => {
 // Методы для работы с файлами
 const getFilesToProduct = async (productId) => {
   try {
-    return await get(`external-product-to-files?external_product_id=${productId}`)
+    return await get(`product-to-files?external_product_id=${productId}`)
   } catch (error) {
     console.error('Ошибка загрузки файлов:', error)
     toast.error('Ошибка загрузки данных', { autoClose: 1000 })
@@ -182,118 +183,119 @@ const getFilesToProduct = async (productId) => {
 }
 
 // Методы для работы с атрибутами
-const addAdditionalAttribute = () => {
-  additionalAttributes.value.push({
-    id: `temp-${Date.now()}`,
-    group_id: null,
-    attribute_id: null,
-    new_attribute_name: '',
-    show_new_input: false,
-  })
-}
+// const addAdditionalAttribute = () => {
+//   additionalAttributes.value.push({
+//     id: `temp-${Date.now()}`,
+//     group_id: null,
+//     attribute_id: null,
+//     new_attribute_name: '',
+//     show_new_input: false,
+//   })
+// }
 
-const removeAdditionalAttribute = (index) => {
-  additionalAttributes.value.splice(index, 1)
-}
+// const removeAdditionalAttribute = (index) => {
+//   additionalAttributes.value.splice(index, 1)
+// }
 
-const handleAdditionalGroupSelect = async (index, groupId) => {
-  const attr = additionalAttributes.value[index]
-  attr.group_id = groupId
-  attr.attribute_id = null
-  attr.show_new_input = false
+// const handleAdditionalGroupSelect = async (index, groupId) => {
+//   const attr = additionalAttributes.value[index]
+//   attr.group_id = groupId
+//   attr.attribute_id = null
+//   attr.show_new_input = false
 
-  if (groupId) {
-    await loadAttributesForGroup(groupId)
-  }
-}
+//   if (groupId) {
+//     await loadAttributesForGroup(groupId)
+//   }
+// }
 
-const handleAdditionalAttributeSelect = (index, attributeId) => {
-  const attr = additionalAttributes.value[index]
+// const handleAdditionalAttributeSelect = (index, attributeId) => {
+//   const attr = additionalAttributes.value[index]
 
-  if (attributeId === 'new') {
-    attr.show_new_input = true
-    attr.new_attribute_name = ''
-  } else {
-    attr.attribute_id = attributeId
-    attr.show_new_input = false
+//   if (attributeId === 'new') {
+//     attr.show_new_input = true
+//     attr.new_attribute_name = ''
+//   } else {
+//     attr.attribute_id = attributeId
+//     attr.show_new_input = false
 
-    if (attributeId && !selectedAttributes.value.includes(attributeId)) {
-      selectedAttributes.value = [...selectedAttributes.value, attributeId]
-    }
-  }
-}
+//     if (attributeId && !selectedAttributes.value.includes(attributeId)) {
+//       selectedAttributes.value = [...selectedAttributes.value, attributeId]
+//     }
+//   }
+// }
 
-const createAdditionalAttribute = async (index) => {
-  const attr = additionalAttributes.value[index]
-  if (!attr.new_attribute_name.trim() || !attr.group_id) return
+// const createAdditionalAttribute = async (index) => {
+//   const attr = additionalAttributes.value[index]
+//   if (!attr.new_attribute_name.trim() || !attr.group_id) return
 
-  try {
-    const newAttribute = await createNewAttribute(attr.group_id, attr.new_attribute_name.trim())
+//   try {
+//     const newAttribute = await createNewAttribute(attr.group_id, attr.new_attribute_name.trim())
 
-    if (!selectedAttributes.value.includes(newAttribute.id)) {
-      selectedAttributes.value = [...selectedAttributes.value, newAttribute.id]
-    }
+//     if (!selectedAttributes.value.includes(newAttribute.id)) {
+//       selectedAttributes.value = [...selectedAttributes.value, newAttribute.id]
+//     }
 
-    attr.attribute_id = newAttribute.id
-    attr.show_new_input = false
-    attr.new_attribute_name = ''
-  } catch (error) {
-    console.error('Ошибка создания атрибута:', error)
-  }
-}
+//     attr.attribute_id = newAttribute.id
+//     attr.show_new_input = false
+//     attr.new_attribute_name = ''
+//   } catch (error) {
+//     console.error('Ошибка создания атрибута:', error)
+//   }
+// }
 
-const cancelAdditionalAttribute = (index) => {
-  const attr = additionalAttributes.value[index]
-  attr.show_new_input = false
-  attr.new_attribute_name = ''
-  attr.attribute_id = null
-}
+// const cancelAdditionalAttribute = (index) => {
+//   const attr = additionalAttributes.value[index]
+//   attr.show_new_input = false
+//   attr.new_attribute_name = ''
+//   attr.attribute_id = null
+// }
+// const removeSelectedAttribute = (attributeId) => {
+//   selectedAttributes.value = selectedAttributes.value.filter((id) => id !== attributeId)
+// }
 
-const loadAttributesForGroup = async (groupId) => {
-  if (attributesByGroup.value[groupId]?.length > 0) {
-    return attributesByGroup.value[groupId]
-  }
+// const loadAttributesForGroup = async (groupId) => {
+//   if (attributesByGroup.value[groupId]?.length > 0) {
+//     return attributesByGroup.value[groupId]
+//   }
 
-  loadingAttributes.value[groupId] = true
-  try {
-    const attributes = filterAttributesByGroup(Number(groupId), true)
-    attributesByGroup.value[groupId] = attributes || []
-    return attributesByGroup.value[groupId]
-  } catch (error) {
-    console.error(`Ошибка загрузки атрибутов для группы ${groupId}:`, error)
-    return []
-  } finally {
-    loadingAttributes.value[groupId] = false
-  }
-}
+//   loadingAttributes.value[groupId] = true
+//   try {
+//     const attributes = filterAttributesByGroup(Number(groupId), true)
+//     attributesByGroup.value[groupId] = attributes || []
+//     return attributesByGroup.value[groupId]
+//   } catch (error) {
+//     console.error(`Ошибка загрузки атрибутов для группы ${groupId}:`, error)
+//     return []
+//   } finally {
+//     loadingAttributes.value[groupId] = false
+//   }
+// }
 
-const createNewAttribute = async (groupId, attributeName) => {
-  try {
-    const newAttribute = await post('external-product-attributes', {
-      attribute_value: attributeName,
-      group_id: groupId,
-    })
+// const createNewAttribute = async (groupId, attributeName) => {
+//   try {
+//     const newAttribute = await post('product-attributes', {
+//       attribute_value: attributeName,
+//       group_id: groupId,
+//     })
 
-    if (attributesByGroup.value[groupId]) {
-      attributesByGroup.value[groupId].push(newAttribute)
-    } else {
-      attributesByGroup.value[groupId] = [newAttribute]
-    }
+//     if (attributesByGroup.value[groupId]) {
+//       attributesByGroup.value[groupId].push(newAttribute)
+//     } else {
+//       attributesByGroup.value[groupId] = [newAttribute]
+//     }
 
-    return newAttribute
-  } catch (error) {
-    console.error('Ошибка создания атрибута:', error)
-    throw error
-  }
-}
+//     return newAttribute
+//   } catch (error) {
+//     console.error('Ошибка создания атрибута:', error)
+//     throw error
+//   }
+// }
 
-const removeSelectedAttribute = (attributeId) => {
-  selectedAttributes.value = selectedAttributes.value.filter((id) => id !== attributeId)
-}
+
 
 const loadProductAttributes = async (productId) => {
   try {
-    const connection = await get('external-product-to-attributes')
+    const connection = await get('product-to-attributes')
     const productToAttributes = connection?.filter((item) => item.product_id === productId)
 
     if (productToAttributes?.length > 0) {
@@ -309,7 +311,7 @@ const loadProductAttributes = async (productId) => {
 
 const loadCategoryAttributeGroupsForProduct = async (categoryId) => {
   try {
-    const links = await get(`external-category-to-attributes?external_category_id=${categoryId}`)
+    const links = await get(`category-to-attributes?external_category_id=${categoryId}`)
 
     const uniqueLinks = links.reduce((acc, current) => {
       const existingGroup = acc.find((item) => item.external_attribute_group_id === current.external_attribute_group_id)
@@ -327,12 +329,14 @@ const loadCategoryAttributeGroupsForProduct = async (categoryId) => {
   } catch (error) {
     console.error('Ошибка загрузки групп атрибутов категории:', error)
   }
+
+  await loadProductAttributes(itemData.id)
 }
 
 // Методы загрузки данных
 const loadGroupsProducts = async () => {
   try {
-    groupsProduct.value = (await get('external-categories')) || []
+    groupsProduct.value = (await get('categories')) || []
   } catch (error) {
     console.error('Ошибка загрузки групп товаров:', error)
   }
@@ -340,7 +344,7 @@ const loadGroupsProducts = async () => {
 
 const loadCategoriesList = async () => {
   try {
-    categoriesList.value = (await get('external-categories')) || []
+    categoriesList.value = (await get('product-groups')) || []
   } catch (error) {
     console.error('Ошибка загрузки списка категорий:', error)
   }
@@ -353,7 +357,7 @@ const createNewAttributeGroups = async () => {
 
   for (const group of newGroups) {
     try {
-      const response = await post('external-product-attribute-groups', { name: group.name })
+      const response = await post('product-attribute-groups', { name: group.name })
       createdGroups.push({
         tempId: group.tempId,
         newId: response.id,
@@ -468,20 +472,26 @@ const saveContent = async () => {
       return
     }
 
-    const oldImage = currentItem.value?.photo
+    const oldImage = currentItem.value?.image
+
+    if (isCategories.value) {
+      await saveCategoryWithAttributeGroups()
+      return
+    }
 
     await handleFileOperations()
-    // Загрузка и связывание файлов (только для продуктов)
-    if (name.value === 'products') {
+
+    if (isProducts.value) {
       await handleAttributeOperations()
     }
 
     if (isAttributes.value) {
-      // await attributeEditorProductToAttribute()
+      await attributeEditorProductToAttribute()
     }
 
     await updateItem()
-    if (name.value === 'product-groups' && !formData.value.photo && oldImage) {
+
+    if (isCategories.value && !formData.value.image && oldImage) {
       await deleteCategoryImage(oldImage)
     }
 
@@ -510,7 +520,7 @@ const saveCategoryWithAttributeGroups = async () => {
       const newCategory = await createItem()
       categoryId = newCategory.id
       currentItem.value = newCategory
-      router.replace({ name: 'Edit', params: { name: name.value, id: categoryId } })
+      router.replace({ name: 'Edit', params: { name: routeParamName.value, id: categoryId } })
     } else {
       await updateItem()
     }
@@ -527,50 +537,49 @@ const saveCategoryWithAttributeGroups = async () => {
 }
 
 const handleFileOperations = async () => {
-  if (name.value === 'products') {
+  if (isProducts.value) {
     await handleProductFiles()
-  } else if (name.value === 'product-groups') {
+  } else if (isCategories.value) {
     await handleCategoryFiles()
   }
 }
 
 const handleProductFiles = async () => {
-  // Загрузка новых изображений
   const newImages = formData.value.images.filter((img) => !img.isExisting)
   if (newImages.length > 0) {
-    imagesSrc.value = await uploadMultipleFiles(id.value, formData.value.images, name.value)
+    imagesSrc.value = await uploadMultipleFiles(id.value, formData.value.images, routeParamName.value)
     await productToFile(id.value, imagesSrc.value, FILE_TYPES.PHOTO)
     updateImagesWithNewUrls()
   }
 
   if (formData.value.video && !formData.value.video.isExisting) {
-    videoSrc.value = await uploadFile(id.value, formData.value.video, name.value)
+    videoSrc.value = await uploadFile(id.value, formData.value.video, routeParamName.value)
     await productToFile(id.value, videoSrc.value, FILE_TYPES.VIDEO)
     updateVideoWithNewUrl()
   }
 }
+
 const handleCategoryFiles = async () => {
-  if (!formData.value.photo || formData.value.photo.length === 0) {
-    formData.value.photo = null
-    console.log('нет изображение', formData.value.photo)
+  if (!formData.value.image || formData.value.image.length === 0) {
+    formData.value.image = null
     return
   }
 
-  if (formData.value.photo.length > 0) {
-    const imageFile = formData.value.photo[0]
+  if (formData.value.image.length > 0) {
+    const imageFile = formData.value.image[0]
 
     if (!imageFile.isExisting) {
-      const uploadedFileName = await uploadFile(id.value, imageFile, name.value)
+      const uploadedFileName = await uploadFile(id.value, imageFile, routeParamName.value)
       const uploadedImageUrl = `https://back.love-kitchen.ru/web/uploads/${uploadedFileName}`
-      formData.value.photo = uploadedImageUrl
+      formData.value.image = uploadedImageUrl
     } else {
-      formData.value.photo = imageFile.url
+      formData.value.image = imageFile.url
     }
   }
 }
 
 const handleAttributeOperations = async () => {
-  const currentProductAttributes = await get(`external-product-to-attributes?product_id=${id.value}`)
+  const currentProductAttributes = await get(`product-to-attributes?product_id=${id.value}`)
 
   const currentAttributeIds = currentProductAttributes.map((item) => item.attribute_id)
   const newAttributeIds = selectedAttributes.value
@@ -588,15 +597,20 @@ const handleAttributeOperations = async () => {
     const attributesToCreate = attributesToAdd.map((attrId) => ({ id: attrId }))
     await productToAttributes(id.value, attributesToCreate)
   }
-}
 
-const updateSelectAttributes = (event) => (selectedAttributes.value = event)
-const updateImages = (event) => (formData.value.images = event)
-const updateVideo = (event) => {
-  formData.value.video = event
-  console.log(formData.value.video)
+  // Добавляем новые связи
+  if (attributesToAdd.length > 0) {
+    const attributesToCreate = attributesToAdd.map((attrId) => ({ id: attrId }))
+    await productToAttributes(id.value, attributesToCreate)
+  }
 }
 const updatePhoto = (event) => (formData.value.photo = event)
+
+const attributeEditorProductToAttribute = async () => {
+  if (formData.value.product_id) {
+    await productToAttribute(formData.value.product_id, formData.value.id)
+  }
+}
 
 // Вспомогательные методы
 const updateImagesWithNewUrls = () => {
@@ -632,12 +646,68 @@ const createNewItem = async () => {
 
   const newItem = await createItem()
   currentItem.value = newItem
-  router.replace({ name: 'Edit', params: { name: name.value, id: newItem.id } })
+  router.replace({ name: 'Edit', params: { name: routeParamName.value, id: newItem.id } })
 }
 
 const goBack = () => {
-  // clearFilesToDelete()
-  router.push({ name: 'List', params: { pathName: name.value } })
+  clearFilesToDelete()
+  router.push({ name: 'List', params: { pathName: routeParamName.value } })
+}
+
+// Event handlers
+const updateSelectAttributes = (event) => {
+  selectedAttributes.value = event
+}
+
+const updateImages = (event) => {
+  formData.value.images = event
+}
+
+const updateImage = (event) => {
+  formData.value.image = event
+
+  if (event.length === 0 && currentItem.value?.image) {
+    const fileToDelete = {
+      id: currentItem.value.id,
+      url: currentItem.value.image,
+      nameUrl: currentItem.value.image.split('/').pop(),
+      name: currentItem.value.image.split('/').pop(),
+      isExisting: true,
+    }
+    handleFileRemove(fileToDelete, Number(id.value))
+  }
+}
+
+const updateVideo = (event) => {
+  formData.value.video = event
+}
+
+const updateSelectedAttributeGroups = (event) => {
+  selectedAttributeGroups.value = event
+}
+
+const removeFile = async (file, filesArray = null) => {
+  handleFileRemove(file, Number(id.value), filesArray)
+}
+
+// Удаление элемента
+const deleteElem = async () => {
+  console.log('routeParamName.value', routeParamName.value)
+  console.log('id', id.value)
+  try {
+    await del(`${routeParamName.value}/${id.value}`)
+    toast.success('Элемент удален', { autoClose: 1000 })
+
+    router.push({
+      name: 'List',
+      params: {
+        pathName: routeParamName.value,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    toast.error('Ошибка при удалении', { autoClose: 1000 })
+  }
 }
 
 // const updateSelectedAttributeGroups = (event) => {
@@ -669,7 +739,7 @@ const deleteElem = async () => {
 }
 
 // Watchers
-watch([name, id], loadItemData)
+watch([routeParamName, id], loadItemData)
 watch(() => formData.value.groupAttribute, filterAttributesByGroup)
 watch(
   () => formData.value.groupProduct,
@@ -716,8 +786,7 @@ watch(
 )
 // Lifecycle
 onMounted(async () => {
-  formData.value.type = name.value
-  console.log('formData.value', formData.value)
+  formData.value.type = routeParamName.value
 
   const loaders = []
 
@@ -748,7 +817,7 @@ const changeLevel = (event) => {
     <BackButton @click="goBack" />
 
     <ProductsEditor
-      v-if="name === 'products'"
+      v-if="routeParamName === 'products'"
       :form-data="formData"
       :groups-product="groupsProduct"
       :groups-attribute="groupsAttribute"
@@ -768,10 +837,14 @@ const changeLevel = (event) => {
     />
 
     <GenericEditor
-      v-else-if="['product-groups', 'product-attribute-groups'].includes(name)"
+      v-else-if="isCategories || isAttributeGroups"
       :form-data="formData"
-      :entity-type="name"
+      :entity-type="routeParamName"
       :current-id="id"
+      :categories-list="categoriesList"
+      :groups-attribute="groupsAttribute"
+      :selected-attribute-groups="selectedAttributeGroups"
+      @update:selected-attribute-groups="updateSelectedAttributeGroups"
       @save="saveContent"
       @remove-photo="(event) => removeFile(event, formData.photo)"
       @update:images="updatePhoto"
@@ -781,7 +854,7 @@ const changeLevel = (event) => {
     />
 
     <AttributeEditor
-      v-else-if="name === 'product-attributes'"
+      v-else-if="routeParamName === 'product-attributes'"
       :form-data="formData"
       :groups-attribute="groupsAttribute"
       :current-id="id"

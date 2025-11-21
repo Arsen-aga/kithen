@@ -2,7 +2,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
-import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 
 const { getAllCategories, getCategoryName } = useCategoriesLevel()
 const props = defineProps({
@@ -167,6 +166,85 @@ onUnmounted(() => {
     clearTimeout(searchTimeout.value)
   }
 })
+const getGroupName = (groupId) => {
+  const group = props.groupsAttribute.find((g) => g.id === groupId)
+  if (group) {
+    return group.Name || group.name
+  }
+
+  const selectedGroup = props.selectedAttributeGroups.find((g) => g.group_id === groupId)
+  if (selectedGroup && selectedGroup.name) {
+    return selectedGroup.name
+  }
+
+  return `Группа ${groupId}`
+}
+
+// Добавление существующей группы атрибутов
+const addAttributeGroup = () => {
+  if (!selectedGroup.value) return
+
+  // Проверяем, не добавлена ли уже эта группа
+  const isAlreadyAdded = props.selectedAttributeGroups.some((group) => group.group_id === selectedGroup.value)
+
+  if (!isAlreadyAdded) {
+    const newGroups = [
+      ...props.selectedAttributeGroups,
+      {
+        group_id: selectedGroup.value,
+        require: false,
+      },
+    ]
+    emit('update:selected-attribute-groups', newGroups)
+  }
+
+  selectedGroup.value = null
+}
+
+// Создание новой группы атрибутов
+const createNewAttributeGroup = () => {
+  if (!newGroupName.value.trim()) return
+
+  // Генерируем временный ID для новой группы (будет заменен на реальный при сохранении)
+  const tempId = `new-${Date.now()}`
+
+  const newGroups = [
+    ...props.selectedAttributeGroups,
+    {
+      group_id: tempId,
+      name: newGroupName.value.trim(),
+      require: newGroupRequire.value,
+      isNew: true, // Флаг, что это новая группа
+      tempId: tempId,
+    },
+  ]
+
+  emit('update:selected-attribute-groups', newGroups)
+
+  // Сбрасываем форму
+  newGroupName.value = ''
+  newGroupRequire.value = false
+  showNewGroupForm.value = false
+}
+
+// Удаление группы атрибутов
+const removeAttributeGroup = (index) => {
+  const newGroups = props.selectedAttributeGroups.filter((_, i) => i !== index)
+  emit('update:selected-attribute-groups', newGroups)
+}
+
+// Обновление обязательности группы
+const updateGroupRequire = (index, require) => {
+  const newGroups = props.selectedAttributeGroups.map((group, i) => (i === index ? { ...group, require } : group))
+  emit('update:selected-attribute-groups', newGroups)
+}
+
+// Переключение формы создания новой группы
+const toggleNewGroupForm = () => {
+  showNewGroupForm.value = !showNewGroupForm.value
+  newGroupName.value = ''
+  newGroupRequire.value = false
+}
 </script>
 
 <template>
@@ -190,7 +268,7 @@ onUnmounted(() => {
           <label for="sort" class="form-label">{{ config.sort }}</label>
           <input type="number" id="sort" min="0" v-model="formData.sort" class="form-input" />
         </div>
-        <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
+        <!-- <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
           <p class="form-label">Родительская категория</p>
           <div class="category-wrapper" ref="categoryWrapperRef">
             <div class="category-title" :class="{ active: currentCat?.Name }" @click="toggleList">
@@ -228,6 +306,88 @@ onUnmounted(() => {
           <div class="form-hint">
             Выберите родительскую категорию для создания иерархии. Текущая категория и ее дочерние категории исключены
             из списка.
+          </div>
+        </div> -->
+      </div>
+    </div>
+    <div class="editor-section">
+      <h3 class="section-title">Группы атрибутов для категории</h3>
+      <div class="attributes-container">
+        <!-- Выбор существующей группы атрибутов -->
+        <div class="form-group">
+          <label class="form-label">Выберите существующую группу атрибутов</label>
+          <div class="select-wrapper">
+            <select v-model="selectedGroup" class="form-select">
+              <option :value="null">Выберите группу атрибутов</option>
+              <option v-for="group in groupsAttribute" :key="group.id" :value="group.id">
+                {{ group.Name || group.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Кнопки добавления групп -->
+        <div class="form-group button-group">
+          <button type="button" class="btn btn-secondary" @click="addAttributeGroup" :disabled="!selectedGroup">
+            Добавить выбранную группу
+          </button>
+          <span class="button-divider">или</span>
+          <button type="button" class="btn btn-primary" @click="toggleNewGroupForm">
+            {{ showNewGroupForm ? 'Отмена' : 'Создать новую группу' }}
+          </button>
+        </div>
+
+        <!-- Форма создания новой группы -->
+        <div v-if="showNewGroupForm" class="new-group-form">
+          <div class="form-group">
+            <label class="form-label">Название новой группы атрибутов</label>
+            <input type="text" v-model="newGroupName" placeholder="Введите название группы" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label large">
+              <input type="checkbox" v-model="newGroupRequire" />
+              <span class="checkmark"></span>
+              Обязательная группа атрибутов
+            </label>
+            <div class="form-hint">
+              Если отмечено, все товары в этой категории должны будут иметь атрибуты из этой группы
+            </div>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-success" @click="createNewAttributeGroup"
+              :disabled="!newGroupName.trim()">
+              Создать и добавить группу
+            </button>
+          </div>
+        </div>
+
+        <!-- Список выбранных групп атрибутов -->
+        <div class="selected-groups" v-if="selectedAttributeGroups.length > 0">
+          <h4 class="sub-section-title">Выбранные группы атрибутов:</h4>
+          <div class="selected-groups-list">
+            <div v-for="(group, index) in selectedAttributeGroups" :key="group.group_id" class="selected-group-item"
+              :class="{ 'new-group': group.isNew }">
+              <div class="group-info">
+                <span class="group-name">
+                  {{ group.isNew ? group.name : getGroupName(group.group_id) }}
+                  <span v-if="group.isNew" class="new-badge">новая</span>
+                </span>
+                <label class="checkbox-label" v-if="!group.inherited">
+                  <input type="checkbox" :checked="group.require"
+                    @change="updateGroupRequire(index, $event.target.checked)" />
+                  <span class="checkmark"></span>
+                  Обязательная
+                </label>
+                <span v-else class="inherited-require">
+                  {{ group.require ? 'Обязательная' : 'Необязательная' }} (наследование)
+                </span>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm" v-if="!group.inherited"
+                @click="removeAttributeGroup(index)">
+                Удалить
+              </button>
+              <span v-else class="inherited-note">Унаследована</span>
+            </div>
           </div>
         </div>
       </div>
@@ -336,22 +496,15 @@ onUnmounted(() => {
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">
-          <DragDropImages
-            v-model="localImages"
-            :multiple="false"
+          <DragDropImages v-model="localImages" :multiple="false"
             @update:images="(event) => emit('update:images', event)"
-            @remove-image="(event) => emit('remove-image', event)"
-          />
+            @remove-image="(event) => emit('remove-image', event)" />
         </div>
       </div>
     </div>
 
-    <ActionButtons
-      :is-new="currentId === 'new'"
-      :entity-type="entityType"
-      @save="$emit('save')"
-      @cancel="$emit('cancel')"
-    />
+    <ActionButtons :is-new="currentId === 'new'" :entity-type="entityType" @save="$emit('save')"
+      @cancel="$emit('cancel')" />
   </div>
 </template>
 
