@@ -124,6 +124,7 @@ export function useFormManager(entityType, routeParams) {
       resetForm()
       return
     }
+    console.log('initializeFormData', itemData)
 
     const commonFields = {
       title: itemData.Name || itemData.name || '',
@@ -132,6 +133,8 @@ export function useFormManager(entityType, routeParams) {
       groupAttribute: itemData.group_id || null,
       sort: itemData.sort || 0,
       photo: itemData.photo || null,
+      parent_id: itemData.parent_id || null,
+      level: itemData.level || 0,
     }
 
     formData.value = { ...formData.value, ...commonFields }

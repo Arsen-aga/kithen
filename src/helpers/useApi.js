@@ -49,5 +49,6 @@ export function useApi() {
       apiCall('patch', url, data)
     },
     delete: (url) => apiCall('delete', url),
+    del: (url) => apiCall('delete', url),
   }
 }

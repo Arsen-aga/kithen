@@ -189,10 +189,7 @@ const updateVideo = (event) => {
   formData.value.video = event
   console.log(formData.value.video)
 }
-const updatePhoto = (event) => {
-  console.log('event', event)
-  formData.value.photo = event
-}
+const updatePhoto = (event) => (formData.value.photo = event)
 
 const updateImagesWithNewUrls = () => {
   let newImageIndex = 0
@@ -241,6 +238,7 @@ watch(
 // Lifecycle
 onMounted(async () => {
   formData.value.type = name.value
+  console.log('formData.value', formData.value)
 
   if (name.value === 'products') {
     await Promise.all([loadGroupsProducts(), loadGroupsAttributes(), loadAttributes()])
@@ -253,6 +251,15 @@ onMounted(async () => {
 
 const removeFile = async (file, filesArray = null) => {
   handleFileRemove(file, Number(id.value), filesArray)
+}
+
+const updateParentCat = (event) => {
+  console.log('updateParentCat', event)
+  formData.value.parent_id = event
+}
+const changeLevel = (event) => {
+  console.log('changeLevel', event)
+  formData.value.level = event
 }
 </script>
 
@@ -288,6 +295,8 @@ const removeFile = async (file, filesArray = null) => {
       @save="saveContent"
       @remove-photo="(event) => removeFile(event, formData.photo)"
       @update:images="updatePhoto"
+      @change-parent-cat="updateParentCat"
+      @change-level="changeLevel"
     />
 
     <AttributeEditor

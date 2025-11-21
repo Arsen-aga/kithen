@@ -2,8 +2,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDefaultItems } from '@/stores/default'
-import axios from 'axios'
 import { toast } from 'vue3-toastify'
+import { useApi } from '@/helpers/useApi'
+
+const { get, del } = useApi()
 
 const route = useRoute()
 const store = useDefaultItems()
@@ -11,11 +13,10 @@ const store = useDefaultItems()
 // Получаем pathName из параметров роута
 const pathName = computed(() => route.params.pathName)
 
+const searchTimeout = ref(null)
 const searchQuery = ref('')
 const sortBy = ref('idAsc')
 const categories = ref([])
-const user = ref(store.getUser)
-const apiUrl = ref(store.getApiDomain)
 const attributeGroups = ref([])
 
 // Переменные для бесконечной ленты
@@ -32,15 +33,14 @@ const loadMoreCategories = async () => {
   isLoading.value = true
   currentPage.value++
 
-  const config = {
-    headers: {
-      Authorization: `Bearer ${user.value.bearer}`,
-    },
-  }
-
   try {
-    const response = await axios.get(`${apiUrl.value}/${pathName.value}?page=${currentPage.value}`, config)
-    const newCategories = response.data
+    let url = `${pathName.value}?page=${currentPage.value}`
+    if (searchQuery.value) {
+      url += `&Name=${encodeURIComponent(searchQuery.value)}`
+    }
+
+    const response = await get(url)
+    const newCategories = response
 
     if (newCategories && newCategories.length > 0) {
       const uniqueNewCategories = newCategories.filter(
@@ -99,18 +99,7 @@ const resetPagination = () => {
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
-  let filtered = []
-  if (Array.isArray(categories.value)) {
-    filtered = categories.value?.filter((category) => {
-      if (category.Name) {
-        return category.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
-      } else if (category.username) {
-        return category.username.toLowerCase().includes(searchQuery.value.toLowerCase())
-      } else {
-        return category.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-      }
-    })
-  }
+  let filtered = categories.value || []
 
   if (sortBy.value === 'idAsc') {
     return filtered.sort((a, b) => a.id - b.id)
@@ -157,17 +146,12 @@ const sortByF = (event, asc) => {
 
 // Удаление элемента
 const deleteCategory = async (id) => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${user.value.bearer}`,
-    },
-  }
   const link = `${store.getApiDomain}/${pathName.value}/${id}`
   console.log(link)
   try {
-    const response = await axios.delete(link, config)
+    const response = await del(link)
     categories.value = categories.value.filter((category) => category.id !== id)
-    console.log(response.data)
+    console.log(response)
     toast.success('Элемент удален', { autoClose: 1000 })
   } catch (error) {
     console.error(error)
@@ -180,14 +164,14 @@ const deleteCategory = async (id) => {
 const getContent = async () => {
   resetPagination()
 
-  const config = {
-    headers: {
-      Authorization: `Bearer ${user.value.bearer}`,
-    },
-  }
   try {
-    const response = await axios.get(`${apiUrl.value}/${pathName.value}?page=${currentPage.value}`, config)
-    categories.value = response.data || []
+    let url = `${pathName.value}?page=${currentPage.value}`
+    if (searchQuery.value) {
+      url += `&Name=${encodeURIComponent(searchQuery.value)}`
+    }
+
+    const response = await get(url)
+    categories.value = response || []
     console.log('Загружены данные для:', pathName.value, categories.value)
 
     // Проверяем, есть ли еще данные
@@ -201,16 +185,23 @@ const getContent = async () => {
   }
 }
 
+// Обработчик поиска с debounce
+const handleSearch = () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+
+  // Устанавливаем новый таймаут
+  searchTimeout.value = setTimeout(() => {
+    getContent()
+  }, 500)
+}
+
 // Загрузка групп атрибутов (только для product-attributes)
 const loadAttributeGroups = async () => {
-  const config = {
-    headers: {
-      Authorization: `Bearer ${user.value.bearer}`,
-    },
-  }
   try {
-    const response = await axios.get(`${store.getApiDomain}/product-attribute-groups`, config)
-    attributeGroups.value = response.data || []
+    const response = await get(`product-attribute-groups`)
+    attributeGroups.value = response || []
     console.log('Загруженные группы атрибутов:', attributeGroups.value)
   } catch (error) {
     console.error('Ошибка загрузки групп атрибутов:', error)
@@ -260,6 +251,10 @@ watch(filteredCategories, () => {
   }, 100)
 })
 
+watch(searchQuery, () => {
+  handleSearch() // ← ДОБАВЛЕНО
+})
+
 // Отслеживание изменения pathName
 watch(pathName, async (newPathName) => {
   await getContent()
@@ -272,6 +267,10 @@ watch(pathName, async (newPathName) => {
 onUnmounted(() => {
   if (observer.value) {
     observer.value.disconnect()
+  }
+  if (searchTimeout.value) {
+    // ← ДОБАВЛЕНО
+    clearTimeout(searchTimeout.value) // ← ДОБАВЛЕНО
   }
 })
 </script>
@@ -291,7 +290,7 @@ onUnmounted(() => {
     <div class="filters-panel">
       <div class="search-box">
         <div class="search-icon">🔍</div>
-        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input" />
+        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input" @input="handleSearch" />
       </div>
 
       <div class="filters-group">
@@ -331,7 +330,7 @@ onUnmounted(() => {
       <table class="data-table">
         <thead>
           <tr>
-            <!-- <th class="column-id">ID</th> -->
+            <th class="column-id">ID</th>
             <!-- <th class="column-id">№</th> -->
             <th class="column-name">Название</th>
             <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
@@ -349,7 +348,7 @@ onUnmounted(() => {
               }
             "
           >
-            <!-- <td class="cell-id">{{ category.id }}</td> -->
+            <td class="cell-id">{{ category.id }}</td>
             <!-- <td class="cell-id">{{ index + 1 }}</td> -->
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">

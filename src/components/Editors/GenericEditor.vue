@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 
-const { getAllCategories } = useCategoriesLevel()
+const { getAllCategories, getCategoryName } = useCategoriesLevel()
 const props = defineProps({
   formData: Object,
   entityType: String,
@@ -13,9 +13,11 @@ const props = defineProps({
 const allCategories = ref([])
 const isOpenList = ref(false)
 const currentCat = ref(null)
+const searchTimeout = ref(null)
+const searchQuery = ref('')
+const categoryWrapperRef = ref(null)
 
-const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images'])
-
+const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images', 'change-parent-cat', 'change-level'])
 const config = computed(() => {
   const configs = {
     'product-groups': {
@@ -68,10 +70,79 @@ const localImages = computed({
   set: (value) => emit('update:images', value),
 })
 
-const toggleList = () => (isOpenList.value = !isOpenList.value)
-const selectCat = (cat) => (currentCat.value = cat)
+const handleSearch = async () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+
+  searchTimeout.value = setTimeout(async () => {
+    // Если есть поисковый запрос, автоматически открываем список
+    if (searchQuery.value) {
+      isOpenList.value = true
+    }
+    // Загружаем категории с поисковым запросом
+    allCategories.value = await getAllCategories(props.currentId, searchQuery.value)
+  }, 500)
+}
+const handleClickOutside = (event) => {
+  if (categoryWrapperRef.value && !categoryWrapperRef.value.contains(event.target)) {
+    isOpenList.value = false
+  }
+}
+
+const toggleList = () => {
+  isOpenList.value = !isOpenList.value
+  if (isOpenList.value && searchQuery.value) {
+    handleSearch()
+  }
+}
+const selectCat = (cat) => {
+  console.log('cat', cat)
+  currentCat.value = cat
+  emit('change-parent-cat', cat.id)
+  isOpenList.value = false
+  searchQuery.value = ''
+  if (cat.level !== 2) {
+    emit('change-level', cat.level + 1)
+  }
+}
+
+const updateCurrentCategory = async () => {
+  if (props.formData.parent_id) {
+    const categoryName = await getCategoryName(props.formData.parent_id)
+    currentCat.value = {
+      id: props.formData.parent_id,
+      Name: categoryName,
+    }
+  } else {
+    currentCat.value = {
+      id: props.formData.parent_id,
+      Name: 'Без родительской категории(корневая)',
+    }
+  }
+}
+watch(
+  () => props.formData.parent_id,
+  async (newParentId) => {
+    console.log('parent_id changed:', newParentId)
+    await updateCurrentCategory()
+  }
+)
+watch(searchQuery, () => {
+  handleSearch() // ← ДОБАВЛЕНО
+})
 onMounted(async () => {
+  console.log('props.formData.parent_id', props.formData.parent_id)
+  await updateCurrentCategory()
   allCategories.value = await getAllCategories(props.currentId)
+
+  document.addEventListener('click', handleClickOutside)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
 })
 </script>
 <template>
@@ -95,16 +166,27 @@ onMounted(async () => {
         </div>
         <div class="form-group grid-col-2" v-if="props.entityType === 'product-groups'">
           <p class="form-label">Родительская категория</p>
-          <div class="category-wrapper">
-            <input type="number" v-model="formData.parent_id" class="form-input category-input" />
-            <div class="category-title">{{ cat.title || 'Выберите категорию' }}</div>
-            <div class="category-list" v-if="allCategories?.length">
+          <div class="category-wrapper" ref="categoryWrapperRef">
+            <div class="category-title" :class="{ active: currentCat?.Name }" @click="toggleList">
+              {{ currentCat?.Name }}
+            </div>
+            <div class="category-list" v-if="isOpenList">
+              <div class="category-search">
+                <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Поиск категории..."
+                  class="search-input"
+                  @click.stop
+                />
+              </div>
               <p
                 class="category-item"
                 v-for="cat in allCategories"
                 :key="cat.id"
                 @click="selectCat(cat)"
                 :class="{ active: currentCat.id === cat.id }"
+                :style="{ marginLeft: cat.level === 1 ? '30px' : '' }"
               >
                 {{ cat.Name }}
               </p>
@@ -212,7 +294,65 @@ onMounted(async () => {
 .grid-col-2 {
   grid-column: span 2;
 }
-
 .category-wrapper {
+  position: relative;
+}
+.category-title {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  cursor: pointer;
+
+  &.active {
+    font-weight: 500;
+  }
+}
+.category-list {
+  position: absolute;
+  bottom: 0;
+  transform: translateY(100%);
+  max-height: 400px;
+  width: 100%;
+  overflow-y: auto;
+  display: grid;
+  background-color: #464649;
+  border-radius: 8px;
+  padding: 16px;
+  gap: 8px;
+  z-index: 2;
+}
+
+.category-item {
+  padding: 10px 15px;
+  background-color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  &.active {
+    background-color: #e2b87b;
+    color: #fff;
+  }
+}
+
+.category-search {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.category-search .search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  height: 44px;
+}
+
+.category-search .search-input:focus {
+  outline: none;
+  border-color: #007bff;
 }
 </style>
