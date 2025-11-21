@@ -43,9 +43,9 @@ const files = ref([])
 const groupsProduct = ref([])
 const categoriesList = ref([])
 const categoryAttributeGroupsForProduct = ref([])
-// const attributesByGroup = ref({})
-// const loadingAttributes = ref({})
-// const additionalAttributes = ref([])
+const attributesByGroup = ref({})
+const loadingAttributes = ref({})
+const additionalAttributes = ref([])
 const categoryAttributeLinks = ref([])
 const selectedAttributeGroups = ref([])
 
@@ -329,6 +329,8 @@ const loadCategoryAttributeGroupsForProduct = async (categoryId) => {
   } catch (error) {
     console.error('Ошибка загрузки групп атрибутов категории:', error)
   }
+
+  await loadProductAttributes(itemData.id)
 }
 
 // Методы загрузки данных
@@ -342,7 +344,7 @@ const loadGroupsProducts = async () => {
 
 const loadCategoriesList = async () => {
   try {
-    categoriesList.value = (await get('categories')) || []
+    categoriesList.value = (await get('product-groups')) || []
   } catch (error) {
     console.error('Ошибка загрузки списка категорий:', error)
   }
@@ -595,7 +597,14 @@ const handleAttributeOperations = async () => {
     const attributesToCreate = attributesToAdd.map((attrId) => ({ id: attrId }))
     await productToAttributes(id.value, attributesToCreate)
   }
+
+  // Добавляем новые связи
+  if (attributesToAdd.length > 0) {
+    const attributesToCreate = attributesToAdd.map((attrId) => ({ id: attrId }))
+    await productToAttributes(id.value, attributesToCreate)
+  }
 }
+const updatePhoto = (event) => (formData.value.photo = event)
 
 const attributeEditorProductToAttribute = async () => {
   if (formData.value.product_id) {
@@ -701,6 +710,34 @@ const deleteElem = async () => {
   }
 }
 
+// const updateSelectedAttributeGroups = (event) => {
+//   selectedAttributeGroups.value = event
+// }
+
+const removeFile = async (file, filesArray = null) => {
+  handleFileRemove(file, Number(id.value), filesArray)
+}
+
+// Удаление элемента
+const deleteElem = async () => {
+  console.log('name.value', name.value)
+  console.log('id', id.value)
+  try {
+    await del(`${name.value}/${id.value}`)
+    toast.success('Элемент удален', { autoClose: 1000 })
+
+    router.push({
+      name: 'List',
+      params: {
+        pathName: name.value,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    toast.error('Ошибка при удалении', { autoClose: 1000 })
+  }
+}
+
 // Watchers
 watch([routeParamName, id], loadItemData)
 watch(() => formData.value.groupAttribute, filterAttributesByGroup)
@@ -764,6 +801,15 @@ onMounted(async () => {
   await Promise.all(loaders)
   await loadItemData()
 })
+
+const updateParentCat = (event) => {
+  console.log('updateParentCat', event)
+  formData.value.parent_id = event
+}
+const changeLevel = (event) => {
+  console.log('changeLevel', event)
+  formData.value.level = event
+}
 </script>
 
 <template>
@@ -798,10 +844,12 @@ onMounted(async () => {
       :categories-list="categoriesList"
       :groups-attribute="groupsAttribute"
       :selected-attribute-groups="selectedAttributeGroups"
-      @remove-image="(event) => removeFile(event, formData.image)"
-      @update:images="updateImage"
       @update:selected-attribute-groups="updateSelectedAttributeGroups"
       @save="saveContent"
+      @remove-photo="(event) => removeFile(event, formData.photo)"
+      @update:images="updatePhoto"
+      @change-parent-cat="updateParentCat"
+      @change-level="changeLevel"
       @cancel="deleteElem"
     />
 
@@ -811,6 +859,7 @@ onMounted(async () => {
       :groups-attribute="groupsAttribute"
       :current-id="id"
       @save="saveContent"
+      @cancel="deleteElem"
     />
   </div>
 </template>
@@ -820,6 +869,5 @@ onMounted(async () => {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
 }
 </style>
