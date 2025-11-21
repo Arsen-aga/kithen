@@ -353,7 +353,10 @@ onUnmounted(() => {
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
-                  <span class="name-text">{{ category?.Name || category?.name || category?.username }}</span>
+                  <span class="name-text"
+                    >{{ category.level == 1 ? '---' : category.level == 2 ? '-----' : '' }}
+                    {{ category?.Name || category?.name || category?.username }}</span
+                  >
                   <span v-if="category.exists === 0" class="status-badge inactive">Неактивно</span>
                 </div>
               </RouterLink>

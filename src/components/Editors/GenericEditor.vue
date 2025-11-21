@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
@@ -16,6 +16,17 @@ const currentCat = ref(null)
 const searchTimeout = ref(null)
 const searchQuery = ref('')
 const categoryWrapperRef = ref(null)
+
+const categoryListRef = ref(null)
+const currentPage = ref(1)
+const isLoading = ref(false)
+const hasMore = ref(true)
+
+const defaultCat = ref({
+  id: null,
+  Name: 'Без родительской категории(корневая)',
+  level: null,
+})
 
 const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images', 'change-parent-cat', 'change-level'])
 const config = computed(() => {
@@ -77,23 +88,79 @@ const handleSearch = async () => {
 
   searchTimeout.value = setTimeout(async () => {
     // Если есть поисковый запрос, автоматически открываем список
+    currentPage.value = 1
+    hasMore.value = true
+    isLoading.value = true
+
     if (searchQuery.value) {
       isOpenList.value = true
     }
     // Загружаем категории с поисковым запросом
     allCategories.value = await getAllCategories(props.currentId, searchQuery.value)
+    isLoading.value = false
   }, 500)
 }
+
+const handleScroll = () => {
+  if (!categoryListRef.value || isLoading.value || !hasMore.value) return
+
+  const { scrollTop, scrollHeight, clientHeight } = categoryListRef.value
+  // Проверяем, достигли ли мы низа (с небольшим запасом в 10px)
+  if (scrollHeight - scrollTop <= clientHeight + 10) {
+    loadMoreCategories()
+    console.log('first', 'test')
+  }
+}
+
 const handleClickOutside = (event) => {
   if (categoryWrapperRef.value && !categoryWrapperRef.value.contains(event.target)) {
     isOpenList.value = false
   }
 }
 
+const loadMoreCategories = async () => {
+  if (isLoading.value || !hasMore.value) return
+
+  isLoading.value = true
+  currentPage.value++
+
+  try {
+    const moreCategories = await getAllCategories(props.currentId, searchQuery.value, currentPage.value)
+
+    if (moreCategories && moreCategories.length > 0) {
+      allCategories.value = [...allCategories.value, ...moreCategories]
+      if (moreCategories.length < 10 || moreCategories.length === 0) {
+        // Можете изменить на ожидаемое количество элементов на странице
+        hasMore.value = false
+      }
+    } else {
+      hasMore.value = false // Больше нет данных для загрузки
+    }
+  } catch (error) {
+    console.error('Ошибка при загрузке категорий:', error)
+    currentPage.value-- // Откатываем страницу при ошибке
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const toggleList = () => {
   isOpenList.value = !isOpenList.value
-  if (isOpenList.value && searchQuery.value) {
-    handleSearch()
+  if (isOpenList.value) {
+    if (searchQuery.value) {
+      currentPage.value = 1
+      hasMore.value = true
+      handleSearch()
+    }
+    nextTick(() => {
+      if (categoryListRef.value) {
+        categoryListRef.value.addEventListener('scroll', handleScroll)
+      }
+    })
+  } else {
+    if (categoryListRef.value) {
+      categoryListRef.value.removeEventListener('scroll', handleScroll)
+    }
   }
 }
 const selectCat = (cat) => {
@@ -104,6 +171,10 @@ const selectCat = (cat) => {
   searchQuery.value = ''
   if (cat.level !== 2) {
     emit('change-level', cat.level + 1)
+  }
+
+  if (categoryListRef.value) {
+    categoryListRef.value.removeEventListener('scroll', handleScroll)
   }
 }
 
@@ -140,6 +211,9 @@ onMounted(async () => {
 })
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (categoryListRef.value) {
+    categoryListRef.value.removeEventListener('scroll', handleScroll)
+  }
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)
   }
@@ -148,7 +222,9 @@ onUnmounted(() => {
 <template>
   <div class="content-editor">
     <div class="editor-section">
-      <h3 class="section-title">{{ config.title }}</h3>
+      <h3 class="section-title">
+        {{ config.title }} <span>ID: {{ currentId }}</span>
+      </h3>
       <div
         :class="{
           'form-single': props.entityType !== 'product-groups',
@@ -170,7 +246,7 @@ onUnmounted(() => {
             <div class="category-title" :class="{ active: currentCat?.Name }" @click="toggleList">
               {{ currentCat?.Name }}
             </div>
-            <div class="category-list" v-if="isOpenList">
+            <div class="category-list" v-if="isOpenList" ref="categoryListRef">
               <div class="category-search">
                 <input
                   type="text"
@@ -182,14 +258,23 @@ onUnmounted(() => {
               </div>
               <p
                 class="category-item"
+                @click="selectCat(defaultCat)"
+                :class="{ active: currentCat.id === defaultCat.id }"
+              >
+                {{ defaultCat.Name }}
+              </p>
+              <p
+                class="category-item"
                 v-for="cat in allCategories"
                 :key="cat.id"
                 @click="selectCat(cat)"
                 :class="{ active: currentCat.id === cat.id }"
-                :style="{ marginLeft: cat.level === 1 ? '30px' : '' }"
+                :style="{ paddingLeft: cat.level === 1 ? '30px' : '' }"
               >
-                {{ cat.Name }}
+                {{ cat.level === 1 ? '---' : '' }} {{ cat.Name }}
               </p>
+              <div v-if="isLoading" class="loading-indicator">Загрузка...</div>
+              <div v-if="!hasMore && allCategories.length > 0" class="end-of-list">Все категории загружены</div>
             </div>
           </div>
           <div class="form-hint">
@@ -354,5 +439,20 @@ onUnmounted(() => {
 .category-search .search-input:focus {
   outline: none;
   border-color: #007bff;
+}
+
+.loading-indicator {
+  padding: 10px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.end-of-list {
+  padding: 10px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9em;
+  border-top: 1px solid #eee;
 }
 </style>
