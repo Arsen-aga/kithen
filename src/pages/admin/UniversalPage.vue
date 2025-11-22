@@ -185,10 +185,7 @@ const handleAttributeOperations = async () => {
 
 const updateSelectAttributes = (event) => (selectedAttributes.value = event)
 const updateImages = (event) => (formData.value.images = event)
-const updateVideo = (event) => {
-  formData.value.video = event
-  console.log(formData.value.video)
-}
+const updateVideo = (event) => (formData.value.video = event)
 const updatePhoto = (event) => (formData.value.photo = event)
 
 const updateImagesWithNewUrls = () => {

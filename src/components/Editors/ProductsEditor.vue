@@ -1,9 +1,12 @@
 <script setup>
-import AttributesManager from './AttributesManager.vue'
-import MediaSection from './MediaSection.vue'
-import ActionButtons from '../UI/ActionButtons.vue'
+import AttributesManager from '@/components/Editors/AttributesManager.vue'
+import MediaSection from '@/components/Editors/MediaSection.vue'
+import ActionButtons from '@/components/UI/ActionButtons.vue'
+import SearchList from '@/components/UI/SearchList.vue'
+import { useAttributes } from '@/helpers/useAttributes'
+import { ref, computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   formData: Object,
   groupsProduct: Array,
   groupsAttribute: Array,
@@ -13,7 +16,6 @@ defineProps({
   currentId: String,
   getAttributeName: Function,
 })
-
 const emit = defineEmits([
   'save',
   'update:group-attribute',
@@ -24,6 +26,27 @@ const emit = defineEmits([
   'update:images',
   'update:video',
 ])
+const { getAllGroupsAttribute } = useAttributes()
+
+const currentGroup = computed(() => {
+  const selectedGroup = props.groupsAttribute.value?.find((group) => group.id === props.formData.groupAttribute)
+  return (
+    selectedGroup || {
+      id: 0,
+      name: 'Выберите группу атрибутов',
+    }
+  )
+})
+
+const defaultGroup = ref({
+  id: 0,
+  name: 'Выберите группу атрибутов',
+})
+
+const handleGroupSelect = (group) => {
+  props.formData.groupAttribute = group.id
+  emit('update:group-attribute', group.id)
+}
 </script>
 
 <template>
@@ -74,6 +97,12 @@ const emit = defineEmits([
         <!-- Выбор группы атрибутов -->
         <div class="form-group">
           <label class="form-label">Группа атрибутов</label>
+          <SearchList
+            :get-more-items="getAllGroupsAttribute"
+            :current-item="currentGroup"
+            :default-item="defaultGroup"
+            @change-item="handleGroupSelect"
+          />
           <div class="select-wrapper">
             <select
               v-model="formData.groupAttribute"

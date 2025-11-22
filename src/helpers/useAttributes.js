@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useApi } from './useApi'
+import { toast } from 'vue3-toastify'
 
 export function useAttributes() {
   const { get, post, delete: deleteApi } = useApi()
@@ -25,6 +26,28 @@ export function useAttributes() {
       groupsAttribute.value = (await get('product-attribute-groups')) || []
     } catch (error) {
       console.error('Ошибка загрузки групп атрибутов:', error)
+    }
+  }
+
+  const getAllGroupsAttribute = async (_, searchQuery, page = 1) => {
+    let url = `product-attribute-groups?page=${page}`
+    if (searchQuery) {
+      url += `&Name=${encodeURIComponent(searchQuery)}`
+    }
+
+    try {
+      const newGroupsAttribute = await get(url)
+
+      if (newGroupsAttribute && newGroupsAttribute.length > 0) {
+        console.log('newGroupsAttribute', newGroupsAttribute)
+        return newGroupsAttribute
+      } else {
+        return []
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Ошибка загрузки категорий', { autoClose: 1000 })
+      return []
     }
   }
 
@@ -88,5 +111,6 @@ export function useAttributes() {
     getAttributeName,
     productToAttributes,
     removeAttributeFromProduct,
+    getAllGroupsAttribute,
   }
 }
