@@ -19,6 +19,8 @@ export function useApi() {
   })
 
   const apiCall = async (method, url, data = null, contentType = 'application/json') => {
+   
+
     try {
       const config = {
         method,
@@ -44,8 +46,7 @@ export function useApi() {
     get: (url) => apiCall('get', url),
     post: (url, data, contentType = 'application/json') => apiCall('post', url, data, contentType),
     patch: (url, data) => {
-      console.log('data', data)
-      console.log('url', url)
+
       apiCall('patch', url, data)
     },
     delete: (url) => apiCall('delete', url),

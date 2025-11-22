@@ -22,7 +22,9 @@ export function useAttributes() {
 
   const loadGroupsAttributes = async () => {
     try {
-      groupsAttribute.value = (await get('product-attribute-groups')) || []
+      console.log('sdjfnsd');
+
+      groupsAttribute.value = (await get('product-attribute-groups'))
     } catch (error) {
       console.error('Ошибка загрузки групп атрибутов:', error)
     }

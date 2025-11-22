@@ -66,7 +66,7 @@ const loadItemData = async () => {
   try {
     const response = await get(`${name.value}/${id.value}`)
     currentItem.value = response
-    console.log(currentItem.value)
+    console.log('currentItem.value', currentItem.value)
     initializeEditorData()
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
@@ -244,6 +244,8 @@ onMounted(async () => {
     await Promise.all([loadGroupsProducts(), loadGroupsAttributes(), loadAttributes()])
   } else if (name.value === 'product-attributes') {
     await loadGroupsAttributes()
+  } else {
+    await loadGroupsAttributes()
   }
 
   await loadItemData()
@@ -292,6 +294,7 @@ const changeLevel = (event) => {
       :form-data="formData"
       :entity-type="name"
       :current-id="id"
+      :groupsAttribute="groupsAttribute"
       @save="saveContent"
       @remove-photo="(event) => removeFile(event, formData.photo)"
       @update:images="updatePhoto"

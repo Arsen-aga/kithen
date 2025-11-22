@@ -3,12 +3,17 @@ import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
+import AttrGroupToCat from './AttrGroupToCat/AttrGroupToCat.vue'
 
 const { getAllCategories, getCategoryName } = useCategoriesLevel()
 const props = defineProps({
   formData: Object,
   entityType: String,
   currentId: String,
+  groupsAttribute: {
+    type: Array,
+    default: () => [],
+  },
 })
 const allCategories = ref([])
 const isOpenList = ref(false)
@@ -284,6 +289,8 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <AttrGroupToCat :entityType="entityType" :id="currentId" :groupsAttribute="groupsAttribute" />
     <!-- Изображение -->
     <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
       <h3 class="section-title">Изображение</h3>
