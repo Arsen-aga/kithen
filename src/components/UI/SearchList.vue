@@ -1,7 +1,23 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 
+const props = defineProps({
+  getMoreItems: {
+    type: Function,
+    required: true,
+  },
+  currentItem: {
+    type: Object,
+    required: true,
+  },
+  defaultItem: {
+    type: Object,
+    required: true,
+  },
+})
+
 const emit = defineEmits(['changeItem'])
+
 const isOpenList = ref(false)
 const searchQuery = ref('')
 const currentPage = ref(1)
@@ -9,7 +25,8 @@ const hasMore = ref(true)
 const categoryListRef = ref(null)
 const isLoading = ref(false)
 const searchTimeout = ref(null)
-const allCategories = ref([])
+const categoryWrapperRef = ref(null)
+const allItems = ref([])
 
 const toggleList = () => {
   isOpenList.value = !isOpenList.value
@@ -30,8 +47,10 @@ const toggleList = () => {
     }
   }
 }
-const selectCat = (cat) => {
+const selectItem = (item) => {
+  console.log('item', item)
   emit('changeItem', item)
+  isOpenList.value = false
 }
 const handleScroll = () => {
   if (!categoryListRef.value || isLoading.value || !hasMore.value) return
@@ -58,7 +77,7 @@ const handleSearch = async () => {
       isOpenList.value = true
     }
     // Загружаем категории с поисковым запросом
-    allCategories.value = await getAllCategories(props.currentId, searchQuery.value)
+    allItems.value = await props.getMoreItems(props.currentItem.id, searchQuery.value)
     isLoading.value = false
   }, 500)
 }
@@ -76,10 +95,10 @@ const loadMoreCategories = async () => {
   currentPage.value++
 
   try {
-    const moreCategories = await getAllCategories(props.currentId, searchQuery.value, currentPage.value)
+    const moreCategories = await props.getMoreItems(props.currentId, searchQuery.value, currentPage.value)
 
     if (moreCategories && moreCategories.length > 0) {
-      allCategories.value = [...allCategories.value, ...moreCategories]
+      allItems.value = [...allItems.value, ...moreCategories]
       if (moreCategories.length < 10 || moreCategories.length === 0) {
         // Можете изменить на ожидаемое количество элементов на странице
         hasMore.value = false
@@ -100,7 +119,7 @@ watch(searchQuery, () => {
 })
 
 onMounted(async () => {
-  allCategories.value = await getAllCategories(props.currentId)
+  allItems.value = await props.getMoreItems(props.currentId)
 
   document.addEventListener('click', handleClickOutside)
 })
@@ -113,12 +132,14 @@ onUnmounted(() => {
     clearTimeout(searchTimeout.value)
   }
 })
+console.log('defaultItem', props.defaultItem)
+console.log('currentItem', props.currentItem)
 </script>
 
 <template>
   <div class="search-list-wrapper" ref="categoryWrapperRef">
-    <div class="search-list-title" :class="{ active: currentCat?.Name }" @click="toggleList">
-      {{ currentCat?.Name }}
+    <div class="search-list-title" :class="{ active: currentItem?.Name || currentItem?.name }" @click="toggleList">
+      {{ currentItem?.Name || currentItem?.name }}
     </div>
     <div class="search-list-list" v-if="isOpenList" ref="searchListRef">
       <div class="search-list-search">
@@ -130,21 +151,25 @@ onUnmounted(() => {
           @click.stop
         />
       </div>
-      <p class="search-list-item" @click="selectCat(defaultCat)" :class="{ active: currentCat.id === defaultCat.id }">
-        {{ defaultCat.Name }}
+      <p
+        class="search-list-item"
+        @click="selectItem(defaultItem)"
+        :class="{ active: currentItem.id === defaultItem.id }"
+      >
+        {{ defaultItem.Name || defaultItem.name }}
       </p>
       <p
         class="search-list-item"
-        v-for="cat in allCategories"
-        :key="cat.id"
-        @click="selectCat(cat)"
-        :class="{ active: currentCat.id === cat.id }"
-        :style="{ paddingLeft: cat.level === 1 ? '30px' : '' }"
+        v-for="item in allItems"
+        :key="item.id"
+        @click="selectItem(item)"
+        :class="{ active: currentItem.id === item.id }"
+        :style="{ paddingLeft: item.level === 1 ? '30px' : '' }"
       >
-        {{ cat.level === 1 ? '---' : '' }} {{ cat.Name }}
+        {{ item?.level === 1 ? '---' : '' }} {{ item?.Name || item?.name }}
       </p>
       <div v-if="isLoading" class="search-list-loading">Загрузка...</div>
-      <div v-if="!hasMore && allCategories.length > 0" class="search-list-end-list">Все категории загружены</div>
+      <div v-if="!hasMore && allItems.length > 0" class="search-list-end-list">Все категории загружены</div>
     </div>
   </div>
 </template>
