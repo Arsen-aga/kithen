@@ -105,9 +105,8 @@ const createNewAttributeGroup = async () => {
 ------------------------------*/
 const updateGroupRequire = async (index, value) => {
   const relation = selectedAttributeGroups.value[index]
-
   const updated = await patch('category-to-attributes/' + relation.id, {
-    require: value,
+    require: value === true ? 1 : 0,
   })
 
   selectedAttributeGroups.value[index] = updated

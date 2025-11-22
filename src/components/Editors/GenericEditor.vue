@@ -288,11 +288,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-    </div>
-
-    <AttrGroupToCat :entityType="entityType" :id="currentId" :groupsAttribute="groupsAttribute" />
-    <!-- Изображение -->
-    <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
+      <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
       <h3 class="section-title">Изображение</h3>
       <div class="attributes-container">
         <div class="form-group">
@@ -305,13 +301,19 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <ActionButtons
+      <ActionButtons
       :is-new="currentId === 'new'"
       :entity-type="entityType"
       @save="$emit('save')"
       @cancel="$emit('cancel')"
     />
+    </div>
+
+    <AttrGroupToCat :entityType="entityType" :id="currentId" :groupsAttribute="groupsAttribute" />
+    <!-- Изображение -->
+
+
+
   </div>
 </template>
 <style lang="scss" scoped>
