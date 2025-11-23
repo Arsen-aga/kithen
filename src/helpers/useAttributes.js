@@ -23,15 +23,15 @@ export function useAttributes() {
 
   const loadGroupsAttributes = async () => {
     try {
-      console.log('sdjfnsd');
+      console.log('sdjfnsd')
 
-      groupsAttribute.value = (await get('product-attribute-groups'))
+      groupsAttribute.value = await get('product-attribute-groups')
     } catch (error) {
       console.error('Ошибка загрузки групп атрибутов:', error)
     }
   }
 
-  const getAllGroupsAttribute = async (_, searchQuery, page = 1) => {
+  const getAllGroupsAttribute = async (searchQuery, page = 1) => {
     let url = `product-attribute-groups?page=${page}`
     if (searchQuery) {
       url += `&Name=${encodeURIComponent(searchQuery)}`

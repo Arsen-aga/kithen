@@ -29,10 +29,17 @@ const emit = defineEmits([
 const { getAllGroupsAttribute } = useAttributes()
 
 const currentGroup = computed(() => {
-  const selectedGroup = props.groupsAttribute.value?.find((group) => group.id === props.formData.groupAttribute)
+  if (!props.formData.groupAttribute) {
+    return {
+      id: null,
+      name: 'Выберите группу атрибутов',
+    }
+  }
+
+  const selectedGroup = props.groupsAttribute?.find((group) => group.id === props.formData.groupAttribute)
   return (
     selectedGroup || {
-      id: 0,
+      id: null,
       name: 'Выберите группу атрибутов',
     }
   )
@@ -43,8 +50,26 @@ const defaultGroup = ref({
   name: 'Выберите группу атрибутов',
 })
 
+const getGroupsForSearchList = async (params = {}) => {
+  try {
+    const { search = '', page = 1 } = params
+
+    // Вызываем вашу существующую функцию
+    const groups = await getAllGroupsAttribute(search, page)
+
+    // Возвращаем в формате, ожидаемом SearchList
+    return Array.isArray(groups) ? groups : []
+  } catch (error) {
+    console.error('Ошибка загрузки групп атрибутов:', error)
+    return []
+  }
+}
+
 const handleGroupSelect = (group) => {
+  // Обновляем formData
   props.formData.groupAttribute = group.id
+
+  // Эмитим событие для родителя
   emit('update:group-attribute', group.id)
 }
 </script>
@@ -95,25 +120,30 @@ const handleGroupSelect = (group) => {
       <h3 class="section-title">Атрибуты товара</h3>
       <div class="attributes-container">
         <!-- Выбор группы атрибутов -->
-        <div class="form-group">
-          <label class="form-label">Группа атрибутов</label>
-          <SearchList
-            :get-more-items="getAllGroupsAttribute"
-            :current-item="currentGroup"
-            :default-item="defaultGroup"
-            @change-item="handleGroupSelect"
-          />
-          <div class="select-wrapper">
-            <select
-              v-model="formData.groupAttribute"
-              @change="$emit('update:group-attribute', formData.groupAttribute)"
-              class="form-select"
-            >
-              <option :value="null">Выберите группу атрибутов</option>
-              <option v-for="group in groupsAttribute" :key="group.id" :value="group.id">
-                {{ group.Name || group.name }}
-              </option>
-            </select>
+        <div class="form-group form-group__elems">
+          <div class="form-group__elem">
+            <label class="form-label">Группа атрибутов</label>
+            <SearchList
+              :get-more-items="getGroupsForSearchList"
+              :current-item="currentGroup"
+              :default-item="defaultGroup"
+              :search-placeholder="'Поиск группы атрибутов...'"
+              :title-placeholder="'Выберите группу атрибутов'"
+              :display-fields="['Name', 'name', 'title']"
+              @change-item="handleGroupSelect"
+            />
+          </div>
+          <div class="form-group__elem">
+            <label class="form-label">Группа атрибутов</label>
+            <SearchList
+              :get-more-items="getGroupsForSearchList"
+              :current-item="currentGroup"
+              :default-item="defaultGroup"
+              :search-placeholder="'Поиск группы атрибутов...'"
+              :title-placeholder="'Выберите группу атрибутов'"
+              :display-fields="['Name', 'name', 'title']"
+              @change-item="handleGroupSelect"
+            />
           </div>
         </div>
 
@@ -176,6 +206,12 @@ const handleGroupSelect = (group) => {
 
 .form-group {
   margin-bottom: 0;
+}
+
+.form-group__elems {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
 .form-label {
