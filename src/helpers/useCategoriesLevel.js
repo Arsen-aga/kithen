@@ -34,8 +34,18 @@ export const useCategoriesLevel = () => {
       return 'Без родительской категории(корневая)'
     }
   }
+  const getCategoryInId = async (currentId) => {
+    try {
+      const category = await get(`product-groups/${currentId}`)
+      return category || null
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  }
   return {
     getAllCategories,
     getCategoryName,
+    getCategoryInId,
   }
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import IconArrow from '@/components/icons/IconArrow.vue'
 
 const props = defineProps({
   // Функция загрузки данных
@@ -253,6 +254,7 @@ onUnmounted(() => {
   <div class="search-list-wrapper" ref="wrapperRef">
     <div class="search-list-title" :class="{ active: currentItem && currentItem[itemKey] }" @click="toggleList">
       {{ getItemDisplay(currentItem) || titlePlaceholder }}
+      <IconArrow class="arrow" :class="{ 'rotate-arrow': isOpenList }" />
     </div>
 
     <div class="search-list-list" v-if="isOpenList" ref="listRef">
@@ -311,6 +313,7 @@ onUnmounted(() => {
   min-height: 44px;
   display: flex;
   align-items: center;
+  position: relative;
 
   &:hover {
     border-color: #d1d5db;
@@ -318,7 +321,19 @@ onUnmounted(() => {
 
   &.active {
     font-weight: 500;
-    border-color: #e2b87b;
+  }
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  right: 10px;
+  rotate: 0deg;
+  transition: all 0.3s ease-in-out;
+
+  &.rotate-arrow {
+    transform: translateY(-50%) rotate(-90deg);
   }
 }
 

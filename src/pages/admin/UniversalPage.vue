@@ -93,14 +93,6 @@ const initializeEditorData = () => {
   }
 }
 
-const loadGroupsProducts = async () => {
-  try {
-    groupsProduct.value = (await get('product-groups')) || []
-  } catch (error) {
-    console.error('Ошибка загрузки групп товаров:', error)
-  }
-}
-
 const saveContent = async () => {
   try {
     // Для нового товара сначала создаем его
@@ -238,7 +230,7 @@ onMounted(async () => {
   console.log('formData.value', formData.value)
 
   if (name.value === 'products') {
-    await Promise.all([loadGroupsProducts(), loadGroupsAttributes(), loadAttributes()])
+    await Promise.all([loadGroupsAttributes(), loadAttributes()])
   } else if (name.value === 'product-attributes') {
     await loadGroupsAttributes()
   } else {
@@ -269,7 +261,6 @@ const changeLevel = (event) => {
     <ProductsEditor
       v-if="name === 'products'"
       :form-data="formData"
-      :groups-product="groupsProduct"
       :groups-attribute="groupsAttribute"
       :filtered-attributes="filteredAttributes"
       :selected-attributes="selectedAttributes"

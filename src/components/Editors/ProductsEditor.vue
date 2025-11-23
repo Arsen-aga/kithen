@@ -4,11 +4,11 @@ import MediaSection from '@/components/Editors/MediaSection.vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import SearchList from '@/components/UI/SearchList.vue'
 import { useAttributes } from '@/helpers/useAttributes'
-import { ref, computed } from 'vue'
+import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   formData: Object,
-  groupsProduct: Array,
   groupsAttribute: Array,
   filteredAttributes: Array,
   selectedAttributes: Array,
@@ -16,6 +16,7 @@ const props = defineProps({
   currentId: String,
   getAttributeName: Function,
 })
+
 const emit = defineEmits([
   'save',
   'update:group-attribute',
@@ -27,30 +28,22 @@ const emit = defineEmits([
   'update:video',
 ])
 const { getAllGroupsAttribute } = useAttributes()
+const { getAllCategories, getCategoryInId } = useCategoriesLevel()
 
+const defaultGroup = ref({
+  id: null,
+  name: 'Выберите группу атрибутов',
+})
 const currentGroup = computed(() => {
   if (!props.formData.groupAttribute) {
-    return {
-      id: null,
-      name: 'Выберите группу атрибутов',
-    }
+    return defaultGroup.value
   }
 
   const selectedGroup = props.groupsAttribute?.find((group) => group.id === props.formData.groupAttribute)
-  return (
-    selectedGroup || {
-      id: null,
-      name: 'Выберите группу атрибутов',
-    }
-  )
+  return selectedGroup || defaultGroup.value
 })
 
-const defaultGroup = ref({
-  id: 0,
-  name: 'Выберите группу атрибутов',
-})
-
-const getGroupsForSearchList = async (params = {}) => {
+const getGroupsAttributeForSearchList = async (params = {}) => {
   try {
     const { search = '', page = 1 } = params
 
@@ -64,14 +57,62 @@ const getGroupsForSearchList = async (params = {}) => {
     return []
   }
 }
-
-const handleGroupSelect = (group) => {
+const handleGroupAttributeSelect = (group) => {
   // Обновляем formData
   props.formData.groupAttribute = group.id
 
   // Эмитим событие для родителя
   emit('update:group-attribute', group.id)
 }
+
+const defaultCat = ref({
+  id: null,
+  Name: 'Без категории',
+  level: null,
+})
+const currentCat = ref(defaultCat.value)
+const getCategoriesForSearchList = async (params = {}) => {
+  try {
+    const { search = '', page = 1 } = params
+
+    // Вызываем вашу существующую функцию
+    const categories = await getAllCategories(search, page)
+
+    // Возвращаем в формате, ожидаемом SearchList
+    return Array.isArray(categories) ? categories : []
+  } catch (error) {
+    console.error('Ошибка загрузки групп атрибутов:', error)
+    return []
+  }
+}
+const updateCurrentCategory = async () => {
+  console.log('updateCurrentCategory', props.formData.Group)
+  if (!props.formData.Group) {
+    currentCat.value = defaultCat.value
+    return
+  }
+
+  try {
+    const selectedCat = await getCategoryInId(props.formData.Group)
+    console.log('updateCurrentCategory', selectedCat)
+    currentCat.value = selectedCat || defaultCat.value
+  } catch (error) {
+    console.error('Ошибка загрузки категории:', error)
+    currentCat.value = defaultCat.value
+  }
+}
+const handleCategorySelect = (category) => {
+  props.formData.Group = category.id
+  currentCat.value = category
+}
+
+watch(async () => {
+  console.log('props.formData', props.formData)
+  if (props.formData) {
+    await updateCurrentCategory()
+    console.log('props.formData.Group', props.formData)
+  }
+})
 </script>
 
 <template>
@@ -93,14 +134,17 @@ const handleGroupSelect = (group) => {
 
         <div class="form-group">
           <label for="group" class="form-label">Категория товара</label>
-          <div class="select-wrapper">
-            <select id="group" v-model="formData.groupProduct" class="form-select">
-              <option :value="null">Выберите категорию товара</option>
-              <option v-for="group in groupsProduct" :key="group.id" :value="group.id">
-                {{ group.Name || group.title }}
-              </option>
-            </select>
-          </div>
+          <SearchList
+            :get-more-items="getCategoriesForSearchList"
+            :current-item="currentCat"
+            :default-item="defaultCat"
+            :search-placeholder="'Поиск категории...'"
+            :title-placeholder="'Выберите категорию'"
+            :display-fields="['Name']"
+            :item-style-fn="(item) => ({ paddingLeft: item?.level === 1 ? '30px' : item?.level === 2 ? '50px' : '' })"
+            :display-fn="(item) => (item?.level !== 0 ? '--- ' : '') + (item?.Name || '')"
+            @change-item="handleCategorySelect"
+          />
         </div>
 
         <div class="form-group full-width">
@@ -124,25 +168,25 @@ const handleGroupSelect = (group) => {
           <div class="form-group__elem">
             <label class="form-label">Группа атрибутов</label>
             <SearchList
-              :get-more-items="getGroupsForSearchList"
+              :get-more-items="getGroupsAttributeForSearchList"
               :current-item="currentGroup"
               :default-item="defaultGroup"
               :search-placeholder="'Поиск группы атрибутов...'"
               :title-placeholder="'Выберите группу атрибутов'"
               :display-fields="['Name', 'name', 'title']"
-              @change-item="handleGroupSelect"
+              @change-item="handleGroupAttributeSelect"
             />
           </div>
           <div class="form-group__elem">
-            <label class="form-label">Группа атрибутов</label>
+            <label class="form-label">Атрибуты</label>
             <SearchList
-              :get-more-items="getGroupsForSearchList"
+              :get-more-items="getGroupsAttributeForSearchList"
               :current-item="currentGroup"
               :default-item="defaultGroup"
               :search-placeholder="'Поиск группы атрибутов...'"
               :title-placeholder="'Выберите группу атрибутов'"
               :display-fields="['Name', 'name', 'title']"
-              @change-item="handleGroupSelect"
+              @change-item="handleGroupAttributeSelect"
             />
           </div>
         </div>

@@ -11,7 +11,7 @@ export function useFormManager(entityType, routeParams) {
     attrs: [],
     images: [],
     description: '',
-    groupProduct: '',
+    Group: null,
     groupAttribute: '',
     sort: 0,
     photo: null,
@@ -28,13 +28,13 @@ export function useFormManager(entityType, routeParams) {
       createData: (data) => ({
         Name: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
+        Group: data.Group,
       }),
       updateData: (data, current) => ({
         ...current,
         Name: data.title,
         description: String(data.description),
-        Group: data.groupProduct,
+        Group: data.Group,
         attrs: data.attrs,
       }),
     },
@@ -129,7 +129,7 @@ export function useFormManager(entityType, routeParams) {
     const commonFields = {
       title: itemData.Name || itemData.name || '',
       description: itemData.description || '',
-      groupProduct: itemData.Group || null,
+      Group: itemData.Group || null,
       groupAttribute: itemData.group_id || null,
       sort: itemData.sort || 0,
       photo: itemData.photo || null,

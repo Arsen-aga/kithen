@@ -24,22 +24,21 @@ const newGroupRequire = ref(false)
 
 const loadGroups = async () => {
   groups.value = await get('product-attribute-groups')
-  console.log('groups',groups.value);
-
+  console.log('groups', groups.value)
 }
 
 const loadCategoryGroups = async () => {
-   if (!props.id) return
+  if (!props.id) return
 
   // связи
   const relations = await get('category-to-attributes?category_id=' + props.id)
 
   // связываем каждую связь с настоящей группой
-  selectedAttributeGroups.value = relations.map(r => {
-    const groupObj = groups.value.find(g => g.id == r.attribute_group_id)
+  selectedAttributeGroups.value = relations.map((r) => {
+    const groupObj = groups.value.find((g) => g.id == r.attribute_group_id)
     return {
       ...r,
-      group: groupObj || null
+      group: groupObj || null,
     }
   })
 }
@@ -51,7 +50,7 @@ const addAttributeGroup = async () => {
   if (!selectedGroup.value) return
 
   // проверка, нет ли уже
-  const exists = selectedAttributeGroups.value.some(g => g.attribute_group_id == selectedGroup.value)
+  const exists = selectedAttributeGroups.value.some((g) => g.attribute_group_id == selectedGroup.value)
   if (exists) return
 
   const createdRelation = await post('category-to-attributes', {
@@ -60,11 +59,11 @@ const addAttributeGroup = async () => {
     require: false,
   })
 
-  const groupObj = groups.value.find(g => g.id == selectedGroup.value)
+  const groupObj = groups.value.find((g) => g.id == selectedGroup.value)
 
   selectedAttributeGroups.value.push({
     ...createdRelation,
-    group: groupObj
+    group: groupObj,
   })
 
   selectedGroup.value = null
@@ -83,7 +82,7 @@ const createNewAttributeGroup = async () => {
 
   groups.value.push(newGroup)
 
- // 2) связываем с категорией
+  // 2) связываем с категорией
   const relation = await post('category-to-attributes', {
     category_id: props.id,
     attribute_group_id: newGroup.id,
@@ -92,7 +91,7 @@ const createNewAttributeGroup = async () => {
 
   selectedAttributeGroups.value.push({
     ...relation,
-    group: newGroup
+    group: newGroup,
   })
 
   // сброс формы
@@ -128,7 +127,7 @@ const removeAttributeGroup = async (index) => {
 ------------------------------*/
 
 const getGroupName = (id) => {
-  const g = groups.value.find(g => g.id == id)
+  const g = groups.value.find((g) => g.id == id)
   return g ? g.name : 'Без названия'
 }
 
@@ -138,10 +137,9 @@ onMounted(async () => {
 })
 </script>
 
-
 <template>
   <div v-if="entityType === 'product-groups'" class="editor-section">
-    <h3 class="section-title">Группы атрибутов для категории </h3>
+    <h3 class="section-title">Группы атрибутов для категории</h3>
     <div class="attributes-container">
       <!-- Выбор существующей группы атрибутов -->
       <div class="form-group">
@@ -184,8 +182,12 @@ onMounted(async () => {
           </div>
         </div>
         <div class="form-group">
-          <button type="button" class="btn btn-success" @click="createNewAttributeGroup"
-            :disabled="!newGroupName.trim()">
+          <button
+            type="button"
+            class="btn btn-success"
+            @click="createNewAttributeGroup"
+            :disabled="!newGroupName.trim()"
+          >
             Создать и добавить группу
           </button>
         </div>
@@ -194,16 +196,23 @@ onMounted(async () => {
       <div class="selected-groups" v-if="selectedAttributeGroups && selectedAttributeGroups?.length > 0">
         <h4 class="sub-section-title">Выбранные группы атрибутов:</h4>
         <div class="selected-groups-list">
-          <div v-for="(group, index) in selectedAttributeGroups" :key="group.group_id" class="selected-group-item"
-            :class="{ 'new-group': group.isNew }">
+          <div
+            v-for="(group, index) in selectedAttributeGroups"
+            :key="group.id"
+            class="selected-group-item"
+            :class="{ 'new-group': group.isNew }"
+          >
             <div class="group-info">
               <span class="group-name">
                 {{ group.group.name }}
                 <span v-if="group.isNew" class="new-badge">новая</span>
               </span>
               <label class="checkbox-label" v-if="!group.inherited">
-                <input type="checkbox" :checked="group.require"
-                  @change="updateGroupRequire(index, $event.target.checked)" />
+                <input
+                  type="checkbox"
+                  :checked="group.require"
+                  @change="updateGroupRequire(index, $event.target.checked)"
+                />
                 <span class="checkmark"></span>
                 Обязательная
               </label>
@@ -211,8 +220,12 @@ onMounted(async () => {
                 {{ group.require ? 'Обязательная' : 'Необязательная' }} (наследование)
               </span>
             </div>
-            <button type="button" class="btn btn-danger btn-sm" v-if="!group.inherited"
-              @click="removeAttributeGroup(index)">
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              v-if="!group.inherited"
+              @click="removeAttributeGroup(index)"
+            >
               Удалить
             </button>
             <span v-else class="inherited-note">Унаследована</span>
