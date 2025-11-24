@@ -16,6 +16,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  availableGroups: {
+    type: Array,
+    default: () => [],
+  },
   isInherited: {
     type: Boolean,
     default: false,
@@ -25,8 +29,14 @@ const props = defineProps({
     default: false,
   },
 })
-console.log('selectedAttribute', props.selectedAttribute)
-const emit = defineEmits(['update:selected-attribute', 'create:group', 'create:attribute', 'remove:group'])
+
+const emit = defineEmits([
+  'update:selected-attribute',
+  'create:group',
+  'create:attribute',
+  'remove:group',
+  'select:existing-group',
+])
 
 const defaultGroup = ref({
   id: null,
@@ -41,6 +51,7 @@ const currentAttribute = ref(defaultAttribute.value)
 const currentGroup = ref(defaultGroup.value)
 const isCreatingGroup = ref(false)
 const isCreatingAttribute = ref(false)
+const isSelectingExistingGroup = ref(false)
 const newGroupName = ref('')
 const newAttributeName = ref('')
 
@@ -48,14 +59,12 @@ const getAttributesForSearchList = async (params = {}) => {
   try {
     const { search = '', page = 1 } = params
 
-    // Вызываем вашу существующую функцию
     let attributes = await getAllAttributes(search, page)
 
     if (props.groupData.id) {
       attributes = attributes.filter((attr) => attr.group_id === props.groupData.id)
     }
 
-    // Возвращаем в формате, ожидаемом SearchList
     return Array.isArray(attributes) ? attributes : []
   } catch (error) {
     console.error('Ошибка загрузки атрибутов:', error)
@@ -70,6 +79,31 @@ const getGroupsForSearchList = async (params = {}) => {
     return Array.isArray(groups) ? groups : []
   } catch (error) {
     console.error('Ошибка загрузки групп атрибутов:', error)
+    return []
+  }
+}
+
+const getAvailableGroupsForSearchList = async (params = {}) => {
+  try {
+    const { search = '', page = 1 } = params
+    // Используем доступные группы, переданные из родителя
+    let groups = props.availableGroups
+    console.log('groups', groups)
+
+    // Фильтруем по поисковому запросу
+    if (search) {
+      const searchLower = search.toLowerCase()
+      groups = groups.filter((group) => group.name.toLowerCase().includes(searchLower))
+    }
+
+    // Пагинация
+    const pageSize = 10
+    const startIndex = (page - 1) * pageSize
+    const paginatedGroups = groups.slice(startIndex, startIndex + pageSize)
+
+    return paginatedGroups
+  } catch (error) {
+    console.error('Ошибка загрузки доступных групп атрибутов:', error)
     return []
   }
 }
@@ -92,13 +126,28 @@ const handleGroupSelect = (group) => {
   }
 }
 
+// Выбор существующей группы
+const handleExistingGroupSelect = (group) => {
+  if (group && group.id) {
+    emit('select:existing-group', group.id)
+    isSelectingExistingGroup.value = false
+  }
+}
+
 const startCreateGroup = () => {
   isCreatingGroup.value = true
+  isSelectingExistingGroup.value = false
   newGroupName.value = ''
+}
+
+const startSelectExistingGroup = () => {
+  isSelectingExistingGroup.value = true
+  isCreatingGroup.value = false
 }
 
 const cancelCreateGroup = () => {
   isCreatingGroup.value = false
+  isSelectingExistingGroup.value = false
   newGroupName.value = ''
 }
 
@@ -167,6 +216,7 @@ watch(() => props.groupData, initializeValues, { deep: true })
 
 initializeValues()
 </script>
+
 <template>
   <div
     class="attribute-selector-product"
@@ -193,21 +243,15 @@ initializeValues()
     </div>
 
     <!-- Выбор группы (только для кастомных групп без выбранной группы) -->
-    <div v-if="isCustom && (!groupData.id || isCreatingGroup)" class="group-selection">
+    <div v-if="isCustom && (!groupData.id || groupData.isNew)" class="group-selection">
       <div class="form-group">
         <label class="form-label">Группа атрибутов</label>
 
-        <div v-if="!isCreatingGroup" class="selection-options">
-          <SearchList
-            :get-more-items="getGroupsForSearchList"
-            :current-item="currentGroup"
-            :default-item="defaultGroup"
-            :search-placeholder="'Поиск группы атрибутов...'"
-            :title-placeholder="'Выберите группу атрибутов'"
-            :display-fields="['name']"
-            @change-item="handleGroupSelect"
-          />
-          <div class="create-option">
+        <div v-if="!isCreatingGroup && !isSelectingExistingGroup" class="selection-options">
+          <div class="create-options">
+            <button type="button" class="btn btn-primary btn-sm" @click="startSelectExistingGroup">
+              Выбрать из существующих групп
+            </button>
             <span class="option-divider">или</span>
             <button type="button" class="btn btn-secondary btn-sm" @click="startCreateGroup">
               Создать новую группу
@@ -215,7 +259,26 @@ initializeValues()
           </div>
         </div>
 
-        <div v-else class="create-group-form">
+        <!-- Выбор существующей группы -->
+        <div v-if="isSelectingExistingGroup" class="select-existing-group-form">
+          <label class="form-label">Выберите группу из доступных</label>
+          <SearchList
+            :get-more-items="getAvailableGroupsForSearchList"
+            :current-item="currentGroup"
+            :default-item="defaultGroup"
+            :search-placeholder="'Поиск доступных групп...'"
+            :title-placeholder="'Выберите группу атрибутов'"
+            :display-fields="['name']"
+            @change-item="handleExistingGroupSelect"
+          />
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary btn-sm" @click="cancelCreateGroup">Отмена</button>
+          </div>
+        </div>
+
+        <!-- Создание новой группы -->
+        <div v-if="isCreatingGroup" class="create-group-form">
+          <label class="form-label">Создание новой группы</label>
           <input type="text" v-model="newGroupName" placeholder="Введите название группы" class="form-input" />
           <div class="form-actions">
             <button
@@ -273,6 +336,7 @@ initializeValues()
         </div>
       </div>
     </div>
+
     <!-- Сообщение об обязательности -->
     <div v-if="groupData.require && !currentAttribute.id" class="required-message">
       <span class="required-text">Это обязательный атрибут</span>
@@ -484,5 +548,28 @@ initializeValues()
   color: #374151;
   margin-bottom: 8px;
   font-size: 14px;
+}
+
+.create-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.option-divider {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.select-existing-group-form,
+.create-group-form {
+  margin-top: 10px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
 </style>

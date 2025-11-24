@@ -35,6 +35,7 @@ const parentGroupsAttrs = ref([])
 const allAttributes = ref([])
 const allGroups = ref([])
 const customGroups = ref([])
+const existingProductGroups = ref([])
 
 const defaultCat = ref({
   id: null,
@@ -43,8 +44,29 @@ const defaultCat = ref({
 })
 const currentCat = ref(defaultCat.value)
 
+const availableGroups = computed(() => {
+  const usedGroupIds = new Set()
+
+  // Добавляем ID наследуемых групп
+  parentGroupsAttrs.value.forEach((group) => {
+    if (group.id) usedGroupIds.add(group.id)
+  })
+
+  // Добавляем ID кастомных групп
+  customGroups.value.forEach((group) => {
+    if (group.id && !group.isNew) usedGroupIds.add(group.id)
+  })
+
+  existingProductGroups.value.forEach((group) => {
+    if (group.id) usedGroupIds.add(group.id)
+  })
+
+  // Фильтруем все группы, исключая использованные
+  return allGroups.value.filter((group) => !usedGroupIds.has(group.id))
+})
+
 const allGroupsForDisplay = computed(() => {
-  return [...parentGroupsAttrs.value, ...customGroups.value]
+  return [...parentGroupsAttrs.value, ...existingProductGroups.value, ...customGroups.value]
 })
 
 const handleAttributesUpdate = (updatedAttributes) => {
@@ -106,6 +128,41 @@ const loadAllData = async () => {
   }
 }
 
+const loadExistingProductGroups = async () => {
+  if (!props.formData.attrs || !Array.isArray(props.formData.attrs) || props.formData.attrs.length === 0) {
+    existingProductGroups.value = []
+    return
+  }
+
+  try {
+    const groupsMap = new Map()
+
+    // Проходим по всем атрибутам товара
+    for (const attr of props.formData.attrs) {
+      if (attr.group_id && !groupsMap.has(attr.group_id)) {
+        // Получаем информацию о группе
+        const group = await getGroupAttribute(attr.group_id)
+        if (group) {
+          groupsMap.set(attr.group_id, {
+            ...group,
+            isInherited: false,
+            isCustom: false,
+            require: false,
+            isExistingProductGroup: true, // Помечаем как группу из существующих атрибутов
+          })
+        }
+      }
+    }
+
+    // Фильтруем группы, которые уже есть в наследуемых
+    const inheritedGroupIds = new Set(parentGroupsAttrs.value.map((g) => g.id))
+    existingProductGroups.value = Array.from(groupsMap.values()).filter((group) => !inheritedGroupIds.has(group.id))
+  } catch (error) {
+    console.error('Ошибка загрузки групп из существующих атрибутов:', error)
+    existingProductGroups.value = []
+  }
+}
+
 const getAttributeForGroup = (groupId) => {
   if (!props.formData.attrs || !Array.isArray(props.formData.attrs)) {
     return null
@@ -133,14 +190,25 @@ const handleRemoveAttribute = (attributeId) => {
   handleAttributesUpdate(filteredAttrs)
 }
 
+const handleRemoveExistingProductGroup = (groupId) => {
+  // Удаляем группу из списка
+  existingProductGroups.value = existingProductGroups.value.filter((group) => group.id !== groupId)
+
+  // Удаляем все атрибуты этой группы из товара
+  const currentAttrs = [...(props.formData.attrs || [])]
+  const filteredAttrs = currentAttrs.filter((attr) => attr.group_id !== groupId)
+  handleAttributesUpdate(filteredAttrs)
+}
+
 const addCustomGroup = async () => {
   const newGroup = {
-    id: `custom-${Date.now()}`,
+    id: `${Date.now() + Math.random() * 100}`,
     name: 'Новая группа',
     isInherited: false,
     isCustom: true,
     isNew: true,
     require: false,
+    availableGroups: availableGroups.value,
   }
 
   customGroups.value.push(newGroup)
@@ -150,7 +218,7 @@ const handleCreateGroup = async (groupName) => {
   try {
     const newGroup = await createAttributeGroup(groupName)
 
-    const groupIndex = customGroups.value.findIndex((g) => g.isNew)
+    const groupIndex = customGroups.value.findIndex((g) => g.isNew && !g.id)
     if (groupIndex !== -1) {
       customGroups.value[groupIndex] = {
         ...newGroup,
@@ -191,6 +259,39 @@ const handleRemoveCustomGroup = (groupId) => {
   handleAttributesUpdate(filteredAttrs)
 }
 
+// Обработчик выбора существующей группы
+const handleExistingGroupSelect = (groupId, customGroupId) => {
+  const selectedGroup = allGroups.value.find((group) => group.id === groupId)
+  if (!selectedGroup) return
+
+  // Обновляем кастомную группу данными выбранной группы
+  const groupIndex = customGroups.value.findIndex((group) => group.id === customGroupId)
+  if (groupIndex !== -1) {
+    customGroups.value[groupIndex] = {
+      ...selectedGroup,
+      isInherited: false,
+      isCustom: true,
+      require: false,
+    }
+  }
+}
+
+const initializeData = async () => {
+  if (props.formData) {
+    await updateCurrentCategory()
+    await loadAllData()
+
+    if (currentCat.value && currentCat.value.id) {
+      parentGroupsAttrConnections.value = await searchAllRequiredGroupsInCategoryLevel(currentCat.value)
+      await getCurrentGroupsAttrs(parentGroupsAttrConnections.value)
+    }
+
+    // После загрузки наследуемых групп загружаем группы из существующих атрибутов
+    await loadExistingProductGroups()
+  }
+}
+
+watch(() => props.formData, initializeData, { immediate: true, deep: true })
 watch(
   async () => {
     if (props.formData) {
@@ -208,8 +309,19 @@ watch(
 
 watch(
   () => props.formData.attrs,
-  () => {
-    // Обновляем при изменении атрибутов
+  async (newAttrs, oldAttrs) => {
+    // Если изменились атрибуты, перезагружаем группы из существующих атрибутов
+    if (JSON.stringify(newAttrs) !== JSON.stringify(oldAttrs)) {
+      await loadExistingProductGroups()
+    }
+  },
+  { deep: true }
+)
+
+watch(
+  () => parentGroupsAttrs.value,
+  async () => {
+    await loadExistingProductGroups()
   },
   { deep: true }
 )
@@ -263,7 +375,14 @@ watch(
     <div class="editor-section">
       <div class="section-header">
         <h3 class="section-title">Атрибуты товара</h3>
-        <button type="button" class="btn btn-primary" @click="addCustomGroup">+ Добавить атрибут</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="addCustomGroup"
+          :disabled="availableGroups.length === 0 && customGroups.some((g) => g.isNew)"
+        >
+          + Добавить атрибут
+        </button>
       </div>
 
       <div class="attributes-container">
@@ -282,6 +401,22 @@ watch(
           />
         </div>
 
+        <!-- Группы из существующих атрибутов товара -->
+        <div v-if="existingProductGroups.length > 0" class="existing-product-groups">
+          <h4 class="groups-subtitle">Атрибуты товара</h4>
+          <AttributeSelectorForProduct
+            v-for="group in existingProductGroups"
+            :key="group.id"
+            :group-data="group"
+            :selected-attribute="getAttributeForGroup(group.id)"
+            :all-groups="allGroups"
+            :all-attributes="allAttributes"
+            :is-existing-product-group="true"
+            @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
+            @remove:group="handleRemoveExistingProductGroup"
+          />
+        </div>
+
         <!-- Пользовательские группы атрибутов -->
         <div v-if="customGroups.length > 0" class="custom-groups">
           <h4 class="groups-subtitle">Дополнительные атрибуты</h4>
@@ -292,17 +427,24 @@ watch(
             :selected-attribute="getAttributeForGroup(group.id)"
             :all-groups="allGroups"
             :all-attributes="allAttributes"
+            :available-groups="availableGroups"
             :is-custom="true"
             @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
             @create:group="handleCreateGroup"
             @create:attribute="handleCreateAttribute"
             @remove:group="handleRemoveCustomGroup"
+            @select:existing-group="handleExistingGroupSelect($event, group.id)"
           />
         </div>
 
         <!-- Сообщение если нет групп -->
         <div v-if="allGroupsForDisplay.length === 0" class="no-groups-message">
           <p>Нет доступных групп атрибутов. Добавьте атрибуты с помощью кнопки выше.</p>
+        </div>
+
+        <!-- Сообщение если все группы уже использованы -->
+        <div v-if="availableGroups.length === 0 && customGroups.length > 0" class="no-available-groups-message">
+          <p>Все доступные группы атрибутов уже добавлены к товару.</p>
         </div>
       </div>
     </div>
@@ -321,13 +463,20 @@ watch(
     <ActionButtons :is-new="currentId === 'new'" entity-type="товар" @save="$emit('save')" @cancel="$emit('cancel')" />
   </div>
 </template>
-
 <style lang="scss" scoped>
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.existing-product-groups {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
 
 .groups-subtitle {

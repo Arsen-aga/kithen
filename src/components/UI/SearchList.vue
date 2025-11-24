@@ -80,9 +80,9 @@ const allItems = ref([])
 // Утилиты
 const getItemDisplay = (item) => {
   if (props.displayFn) return props.displayFn(item)
-
+  console.log('item', item)
   for (const field of props.displayFields) {
-    if (item[field] !== undefined) return item[field]
+    if (item && item[field] !== undefined) return item[field]
   }
   return String(item)
 }

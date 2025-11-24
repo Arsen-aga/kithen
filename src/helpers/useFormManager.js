@@ -1,10 +1,8 @@
 import { ref } from 'vue'
 import { useApi } from './useApi'
-import { useAttributes } from './useAttributes'
 
 export function useFormManager(entityType, routeParams) {
   const { post, patch } = useApi()
-  const { productToAttributes } = useAttributes()
 
   const createFormData = () => ({
     type: entityType,
