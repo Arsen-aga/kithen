@@ -22,19 +22,22 @@ const searchQuery = ref('')
 // Значения минимальной и максимальной цены для фильтрации, по умолчанию с диапазоном от минимальной до максимальной цены в товарах
 const priceRange = computed(() => {
   if (!props.products.length) {
-    return { min: 10000, max: 3130000 }
+    return { min: 0, max: 3130000 }
   }
 
-  const prices = props.products.map((p) => p.Price).filter((price) => price != null)
+  const prices = props.products.map((p) => Math.round(Number(p.Price))).filter((price) => price != null)
 
   if (!prices.length) {
-    return { min: 10000, max: 3130000 }
+    return { min: 0, max: 3130000 }
   }
 
-  return {
+  const returnObj = {
     min: Math.min(...prices),
     max: Math.max(...prices),
   }
+  console.log('returnObj', returnObj)
+
+  return returnObj
 })
 
 const minPrice = ref(priceRange.value.min)
@@ -44,7 +47,6 @@ const filteredProducts = computed(() => {
   return props.products.filter((product) => {
     const matchesSearch = !searchQuery.value || product.Name.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesPrice = product.Price >= minPrice.value && product.Price <= maxPrice.value
-    console.log(matchesPrice)
     return matchesSearch && matchesPrice
   })
 })
@@ -85,7 +87,6 @@ watch(priceRange, (newRange) => {
     </div>
   </div>
 </template>
-
 <style lang="scss" scoped>
 .catalog-block {
   padding: 15px 0;
@@ -146,6 +147,7 @@ watch(priceRange, (newRange) => {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     position: relative;
+    height: fit-content;
   }
 }
 </style>

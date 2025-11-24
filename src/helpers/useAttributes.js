@@ -21,6 +21,7 @@ export function useAttributes() {
     try {
       const newAttributes = await get(url)
       attributes.value = newAttributes || []
+      console.log('newAttributes', newAttributes)
       attributesLoaded.value = true
       return newAttributes && newAttributes.length > 0 ? newAttributes : []
     } catch (error) {

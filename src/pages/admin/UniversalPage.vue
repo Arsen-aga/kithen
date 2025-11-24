@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
@@ -18,7 +18,7 @@ import GenericEditor from '@/components/Editors/GenericEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { get } = useApi()
+const { get, del } = useApi()
 
 // Реактивные данные
 const name = computed(() => route.params.name)
@@ -30,15 +30,9 @@ const { formData, currentItem, createItem, updateItem, resetForm, initializeForm
 })
 
 const {
-  attributes,
   groupsAttribute,
-  filteredAttributes,
-  attributesLoaded,
-  selectedAttributes,
-  getAllAttributes,
   loadGroupsAttributes,
   filterAttributesByGroup,
-  getAttributeName,
   productToAttributes,
   removeAttributeFromProduct,
 } = useAttributes()
@@ -282,6 +276,25 @@ const changeLevel = (event) => {
   console.log('changeLevel', event)
   formData.value.level = event
 }
+
+const deleteElem = async () => {
+  console.log('name.value', name.value)
+  console.log('id', id.value)
+  try {
+    await del(`${name.value}/${id.value}`)
+    toast.success('Элемент удален', { autoClose: 1000 })
+
+    router.push({
+      name: 'List',
+      params: {
+        pathName: name.value,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    toast.error('Ошибка при удалении', { autoClose: 1000 })
+  }
+}
 </script>
 
 <template>
@@ -312,6 +325,7 @@ const changeLevel = (event) => {
       @update:images="updatePhoto"
       @change-parent-cat="updateParentCat"
       @change-level="changeLevel"
+      @cancel="deleteElem"
     />
 
     <AttributeEditor
@@ -320,6 +334,7 @@ const changeLevel = (event) => {
       :groups-attribute="groupsAttribute"
       :current-id="id"
       @save="saveContent"
+      @cancel="deleteElem"
     />
   </div>
 </template>

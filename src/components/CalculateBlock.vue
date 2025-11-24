@@ -10,20 +10,11 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
-import { useCookies } from 'vue3-cookies'
+import { useApi } from '@/helpers/useApi'
+const { get } = useApi()
 
-import { useDefaultItems } from '@/stores/default'
 import { useResultItems } from '@/stores/result'
-import axios from 'axios'
 const { addItem } = useResultItems()
-const store = useDefaultItems()
-const { cookies } = useCookies()
-const bearer = cookies.get('user-bearer')
-const headersGet = {
-  headers: {
-    Authorization: 'Bearer ' + bearer,
-  },
-}
 
 const itemSmeta = ref('')
 const itemMarket = ref('')
@@ -36,15 +27,22 @@ const itemTreaty = ref('')
 
 const marketGroups = ref([])
 
-const getMarket = async () => {
-  console.log()
+const getMarket = async (groupId = null) => {
   try {
-    const response = await axios.get(`${store.getApiDomain}/product-groups`, headersGet)
-    marketGroups.value = response.data || []
+    // Если не указан ID группы, можно выбрать поведение по умолчанию
+    const endpoint = groupId ? `product-groups/${groupId}` : 'product-groups'
+    const response = await get(endpoint)
+
+    // Преобразуем ответ в массив (даже если это один объект)
+    const data = Array.isArray(response) ? response : [response].filter(Boolean)
+
+    marketGroups.value = data
     console.log('marketGroups.value', marketGroups.value)
+    return data // Возвращаем массив для внешнего использования
   } catch (error) {
-    console.error('Ошибка получения контента маркета', error)
+    console.error('Ошибка получения данных маркета', error)
     marketGroups.value = []
+    return []
   }
 }
 onBeforeMount(async () => {
@@ -56,7 +54,7 @@ onBeforeMount(async () => {
   //     })
   //   })
   // }
-  await getMarket()
+  await getMarket(1)
   itemMarket.value = await getData('../../data/market.json')
 
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')

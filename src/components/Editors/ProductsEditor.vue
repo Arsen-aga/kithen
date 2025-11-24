@@ -167,7 +167,7 @@ const getAttributeForGroup = (groupId) => {
   if (!props.formData.attrs || !Array.isArray(props.formData.attrs)) {
     return null
   }
-  console.log('props.formData.attrs', props.formData.attrs)
+
   return props.formData.attrs.find((attr) => attr.group_id === groupId) || null
 }
 

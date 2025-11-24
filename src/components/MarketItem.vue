@@ -1,10 +1,8 @@
 <script setup>
 import { useCatalogBlock } from '@/stores/catalogBlock'
-import axios from 'axios'
-import { useCookies } from 'vue3-cookies'
-import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
-const { cookies } = useCookies()
+import { useApi } from '@/helpers/useApi'
+const { get } = useApi()
 defineProps({
   marketItem: {
     type: Object,
@@ -12,17 +10,11 @@ defineProps({
   },
 })
 
-const store = useDefaultItems()
-const bearer = cookies.get('user-bearer')
-const headersGet = {
-  headers: {
-    Authorization: 'Bearer ' + bearer,
-  },
-}
 const getProducts = async (groupId) => {
   try {
-    const response = await axios.get(`${store.getApiDomain}/products`, headersGet)
-    const productsInGroup = response.data.filter((product) => product.Group === groupId)
+    const response = await get(`products?Group=${groupId}`)
+    console.log('response', response)
+    const productsInGroup = response.filter((product) => product.Group === groupId)
     if (productsInGroup.length === 0) {
       toast.error('В данной категории нет товаров', { autoClose: 1000 })
       throw new Error('В данной категории нет товаров')
@@ -46,9 +38,9 @@ const openCatalog = async (groupId) => {
 <template>
   <div class="market-item" @click="() => openCatalog(marketItem?.id)">
     <img
-      v-if="marketItem?.img"
+      v-if="marketItem?.photo"
       class="market-item__img _img"
-      :src="marketItem.img"
+      :src="marketItem?.photo"
       :alt="marketItem.Name || 'Product'"
     />
     <div v-else class="market-item__placeholder">No Image</div>
