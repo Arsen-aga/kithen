@@ -23,7 +23,6 @@ const { get } = useApi()
 // Реактивные данные
 const name = computed(() => route.params.name)
 const id = computed(() => route.params.id)
-const groupsProduct = ref([])
 
 // Инициализация хелперсов
 const { formData, currentItem, createItem, updateItem, resetForm, initializeFormData } = useFormManager(name.value, {
@@ -36,7 +35,7 @@ const {
   filteredAttributes,
   attributesLoaded,
   selectedAttributes,
-  loadAttributes,
+  getAllAttributes,
   loadGroupsAttributes,
   filterAttributesByGroup,
   getAttributeName,
@@ -60,6 +59,9 @@ const {
 const loadItemData = async () => {
   if (id.value === 'new') {
     resetForm()
+    if (name.value === 'products') {
+      formData.value.attrs = []
+    }
     return
   }
 
@@ -79,6 +81,11 @@ const initializeEditorData = () => {
 
   initializeFormData(itemData)
 
+  if (name.value === 'products') {
+    formData.value.attrs = itemData.attrs || []
+    console.log('Инициализированные attrs:', formData.value.attrs)
+  }
+
   formData.value.images = initFiles(
     itemData.files?.filter((file) => file.type === 'photo'),
     'images'
@@ -87,10 +94,6 @@ const initializeEditorData = () => {
     itemData.files?.filter((file) => file.type === 'video'),
     'video'
   )
-
-  if (itemData.attrs && Array.isArray(itemData.attrs)) {
-    selectedAttributes.value = itemData.attrs.map((attr) => attr.id)
-  }
 }
 
 const saveContent = async () => {
@@ -168,14 +171,41 @@ const handleCategoryFiles = async () => {
 }
 
 const handleAttributeOperations = async () => {
-  if (selectedAttributes.value.length > 0) {
-    console.log('сохранение атрибутов', attributes)
-    formData.value.attrs = selectedAttributes.value
-    await productToAttributes(id.value, formData.value.attrs)
+  if (name.value === 'products' && formData.value.attrs) {
+    console.log('Сохранение атрибутов:', formData.value.attrs)
+
+    // Получаем текущие связи товара с атрибутами
+    const currentConnections = await get(`product-to-attributes?product_id=${id.value}`)
+    console.log('Текущие связи:', currentConnections)
+
+    // Определяем, какие атрибуты нужно добавить, а какие удалить
+    const currentAttributeIds = currentConnections.map((conn) => conn.attribute_id)
+    const newAttributeIds = formData.value.attrs.map((attr) => attr.id)
+
+    // Атрибуты для добавления
+    const attributesToAdd = formData.value.attrs.filter((attr) => !currentAttributeIds.includes(attr.id))
+
+    // Атрибуты для удаления
+    const attributesToRemove = currentConnections.filter((conn) => !newAttributeIds.includes(conn.attribute_id))
+
+    console.log('Атрибуты для добавления:', attributesToAdd)
+    console.log('Атрибуты для удаления:', attributesToRemove)
+
+    // Удаляем старые связи
+    for (const connection of attributesToRemove) {
+      await removeAttributeFromProduct(id.value, connection.attribute_id)
+    }
+
+    // Добавляем новые связи
+    if (attributesToAdd.length > 0) {
+      await productToAttributes(id.value, attributesToAdd)
+    }
   }
 }
 
-const updateSelectAttributes = (event) => (selectedAttributes.value = event)
+const updateSelectedAttributes = (attributes) => {
+  formData.value.attrs = attributes
+}
 const updateImages = (event) => (formData.value.images = event)
 const updateVideo = (event) => (formData.value.video = event)
 const updatePhoto = (event) => (formData.value.photo = event)
@@ -209,6 +239,11 @@ const createNewItem = async () => {
   const newItem = await createItem()
   currentItem.value = newItem
   const newId = newItem.id
+
+  if (name.value === 'products' && formData.value.attrs && formData.value.attrs.length > 0) {
+    await productToAttributes(newId, formData.value.attrs)
+  }
+
   router.replace({ name: 'Edit', params: { name: name.value, id: newId } })
 }
 
@@ -218,7 +253,6 @@ const goBack = () => {
 
 // Watchers
 watch([name, id], loadItemData)
-watch(() => formData.value.groupAttribute, filterAttributesByGroup)
 watch(
   () => formData.value,
   (newFormData) => console.log('слежка за изменениями глобального объекта', newFormData)
@@ -229,11 +263,7 @@ onMounted(async () => {
   formData.value.type = name.value
   console.log('formData.value', formData.value)
 
-  if (name.value === 'products') {
-    await Promise.all([loadGroupsAttributes(), loadAttributes()])
-  } else if (name.value === 'product-attributes') {
-    await loadGroupsAttributes()
-  } else {
+  if (name.value === 'product-attributes') {
     await loadGroupsAttributes()
   }
 
@@ -261,20 +291,15 @@ const changeLevel = (event) => {
     <ProductsEditor
       v-if="name === 'products'"
       :form-data="formData"
-      :groups-attribute="groupsAttribute"
-      :filtered-attributes="filteredAttributes"
-      :selected-attributes="selectedAttributes"
-      :attributes-loaded="attributesLoaded"
       :current-id="id"
-      :get-attribute-name="getAttributeName"
       @save="saveContent"
       @update:group-attribute="filterAttributesByGroup"
       @remove-video="(event) => removeFile(event)"
       @remove-image="(event) => removeFile(event, formData.images)"
       @update:images="updateImages"
       @update:video="updateVideo"
-      @remove-attribute="(event) => removeAttributeFromProduct(Number(id), event)"
-      @update:selected-attributes="updateSelectAttributes"
+      @remove-attribute="(event) => handleRemoveAttribute(event)"
+      @update:selected-attributes="updateSelectedAttributes"
     />
 
     <GenericEditor
@@ -282,7 +307,6 @@ const changeLevel = (event) => {
       :form-data="formData"
       :entity-type="name"
       :current-id="id"
-      :groupsAttribute="groupsAttribute"
       @save="saveContent"
       @remove-photo="(event) => removeFile(event, formData.photo)"
       @update:images="updatePhoto"

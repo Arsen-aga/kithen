@@ -1,69 +1,40 @@
 <script setup>
-import AttributesManager from '@/components/Editors/AttributesManager.vue'
 import MediaSection from '@/components/Editors/MediaSection.vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import SearchList from '@/components/UI/SearchList.vue'
-import { useAttributes } from '@/helpers/useAttributes'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
+import { useAttributes } from '@/helpers/useAttributes'
 import { ref, computed, watch } from 'vue'
+import AttributeSelectorForProduct from './AttributeSelectorForProduct/AttributeSelectorForProduct.vue'
 
 const props = defineProps({
   formData: Object,
-  groupsAttribute: Array,
-  filteredAttributes: Array,
-  selectedAttributes: Array,
-  attributesLoaded: Boolean,
   currentId: String,
-  getAttributeName: Function,
 })
 
 const emit = defineEmits([
   'save',
-  'update:group-attribute',
   'remove-image',
   'remove-video',
   'update:selected-attributes',
-  'remove-attribute',
   'update:images',
   'update:video',
 ])
-const { getAllGroupsAttribute } = useAttributes()
+const {
+  searchAllRequiredGroupsInCategoryLevel,
+  getGroupAttribute,
+  getAllAttributes,
+  getAllGroupsAttribute,
+  createAttributeGroup,
+  createAttribute,
+} = useAttributes()
 const { getAllCategories, getCategoryInId } = useCategoriesLevel()
 
-const defaultGroup = ref({
-  id: null,
-  name: 'Выберите группу атрибутов',
-})
-const currentGroup = computed(() => {
-  if (!props.formData.groupAttribute) {
-    return defaultGroup.value
-  }
-
-  const selectedGroup = props.groupsAttribute?.find((group) => group.id === props.formData.groupAttribute)
-  return selectedGroup || defaultGroup.value
-})
-
-const getGroupsAttributeForSearchList = async (params = {}) => {
-  try {
-    const { search = '', page = 1 } = params
-
-    // Вызываем вашу существующую функцию
-    const groups = await getAllGroupsAttribute(search, page)
-
-    // Возвращаем в формате, ожидаемом SearchList
-    return Array.isArray(groups) ? groups : []
-  } catch (error) {
-    console.error('Ошибка загрузки групп атрибутов:', error)
-    return []
-  }
-}
-const handleGroupAttributeSelect = (group) => {
-  // Обновляем formData
-  props.formData.groupAttribute = group.id
-
-  // Эмитим событие для родителя
-  emit('update:group-attribute', group.id)
-}
+const parentGroupsAttrConnections = ref([])
+const parentGroupsAttrs = ref([])
+const allAttributes = ref([])
+const allGroups = ref([])
+const customGroups = ref([])
 
 const defaultCat = ref({
   id: null,
@@ -71,14 +42,18 @@ const defaultCat = ref({
   level: null,
 })
 const currentCat = ref(defaultCat.value)
+
+const allGroupsForDisplay = computed(() => {
+  return [...parentGroupsAttrs.value, ...customGroups.value]
+})
+
+const handleAttributesUpdate = (updatedAttributes) => {
+  emit('update:selected-attributes', updatedAttributes)
+}
 const getCategoriesForSearchList = async (params = {}) => {
   try {
     const { search = '', page = 1 } = params
-
-    // Вызываем вашу существующую функцию
     const categories = await getAllCategories(search, page)
-
-    // Возвращаем в формате, ожидаемом SearchList
     return Array.isArray(categories) ? categories : []
   } catch (error) {
     console.error('Ошибка загрузки групп атрибутов:', error)
@@ -86,7 +61,6 @@ const getCategoriesForSearchList = async (params = {}) => {
   }
 }
 const updateCurrentCategory = async () => {
-  console.log('updateCurrentCategory', props.formData.Group)
   if (!props.formData.Group) {
     currentCat.value = defaultCat.value
     return
@@ -94,7 +68,6 @@ const updateCurrentCategory = async () => {
 
   try {
     const selectedCat = await getCategoryInId(props.formData.Group)
-    console.log('updateCurrentCategory', selectedCat)
     currentCat.value = selectedCat || defaultCat.value
   } catch (error) {
     console.error('Ошибка загрузки категории:', error)
@@ -106,13 +79,140 @@ const handleCategorySelect = (category) => {
   currentCat.value = category
 }
 
-watch(async () => {
-  console.log('props.formData', props.formData)
-  if (props.formData) {
-    await updateCurrentCategory()
-    console.log('props.formData.Group', props.formData)
+const getCurrentGroupsAttrs = async (connections) => {
+  const groupAttrs = []
+  try {
+    for (const connection of connections) {
+      const res = await getGroupAttribute(connection.attribute_group_id)
+      groupAttrs.push({
+        ...res,
+        require: connection.require,
+        isInherited: connection.parent_group || false,
+        connectionData: connection,
+      })
+    }
+    parentGroupsAttrs.value = groupAttrs
+  } catch (error) {
+    console.log(error)
   }
-})
+}
+
+const loadAllData = async () => {
+  try {
+    allAttributes.value = await getAllAttributes()
+    allGroups.value = await getAllGroupsAttribute()
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error)
+  }
+}
+
+const getAttributeForGroup = (groupId) => {
+  if (!props.formData.attrs || !Array.isArray(props.formData.attrs)) {
+    return null
+  }
+  console.log('props.formData.attrs', props.formData.attrs)
+  return props.formData.attrs.find((attr) => attr.group_id === groupId) || null
+}
+
+const handleAttributeUpdate = (groupId, attribute) => {
+  const currentAttrs = [...(props.formData.attrs || [])]
+
+  const filteredAttrs = currentAttrs.filter((attr) => attr.group_id !== groupId)
+
+  if (attribute && attribute.id) {
+    filteredAttrs.push(attribute)
+  }
+
+  handleAttributesUpdate(filteredAttrs)
+}
+const handleRemoveAttribute = (attributeId) => {
+  const currentAttrs = [...(props.formData.attrs || [])]
+  const filteredAttrs = currentAttrs.filter((attr) => attr.id !== attributeId)
+
+  console.log('ProductsEditor: Удаление атрибута', attributeId)
+  handleAttributesUpdate(filteredAttrs)
+}
+
+const addCustomGroup = async () => {
+  const newGroup = {
+    id: `custom-${Date.now()}`,
+    name: 'Новая группа',
+    isInherited: false,
+    isCustom: true,
+    isNew: true,
+    require: false,
+  }
+
+  customGroups.value.push(newGroup)
+}
+
+const handleCreateGroup = async (groupName) => {
+  try {
+    const newGroup = await createAttributeGroup(groupName)
+
+    const groupIndex = customGroups.value.findIndex((g) => g.isNew)
+    if (groupIndex !== -1) {
+      customGroups.value[groupIndex] = {
+        ...newGroup,
+        isInherited: false,
+        isCustom: true,
+        require: false,
+      }
+    }
+
+    allGroups.value = await getAllGroupsAttribute()
+
+    return newGroup
+  } catch (error) {
+    console.error('Ошибка создания группы:', error)
+    throw error
+  }
+}
+
+const handleCreateAttribute = async (attributeName, groupId) => {
+  try {
+    const newAttribute = await createAttribute(attributeName, groupId)
+
+    allAttributes.value = await getAllAttributes()
+
+    return newAttribute
+  } catch (error) {
+    console.error('Ошибка создания атрибута:', error)
+    throw error
+  }
+}
+
+const handleRemoveCustomGroup = (groupId) => {
+  customGroups.value = customGroups.value.filter((group) => group.id !== groupId)
+
+  const currentAttrs = [...(props.formData.attrs || [])]
+  const filteredAttrs = currentAttrs.filter((attr) => attr.group_id !== groupId)
+
+  handleAttributesUpdate(filteredAttrs)
+}
+
+watch(
+  async () => {
+    if (props.formData) {
+      await updateCurrentCategory()
+      await loadAllData()
+
+      if (currentCat.value && currentCat.value.id) {
+        parentGroupsAttrConnections.value = await searchAllRequiredGroupsInCategoryLevel(currentCat.value)
+        await getCurrentGroupsAttrs(parentGroupsAttrConnections.value)
+      }
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.formData.attrs,
+  () => {
+    // Обновляем при изменении атрибутов
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -161,45 +261,49 @@ watch(async () => {
 
     <!-- Атрибуты товара -->
     <div class="editor-section">
-      <h3 class="section-title">Атрибуты товара</h3>
+      <div class="section-header">
+        <h3 class="section-title">Атрибуты товара</h3>
+        <button type="button" class="btn btn-primary" @click="addCustomGroup">+ Добавить атрибут</button>
+      </div>
+
       <div class="attributes-container">
-        <!-- Выбор группы атрибутов -->
-        <div class="form-group form-group__elems">
-          <div class="form-group__elem">
-            <label class="form-label">Группа атрибутов</label>
-            <SearchList
-              :get-more-items="getGroupsAttributeForSearchList"
-              :current-item="currentGroup"
-              :default-item="defaultGroup"
-              :search-placeholder="'Поиск группы атрибутов...'"
-              :title-placeholder="'Выберите группу атрибутов'"
-              :display-fields="['Name', 'name', 'title']"
-              @change-item="handleGroupAttributeSelect"
-            />
-          </div>
-          <div class="form-group__elem">
-            <label class="form-label">Атрибуты</label>
-            <SearchList
-              :get-more-items="getGroupsAttributeForSearchList"
-              :current-item="currentGroup"
-              :default-item="defaultGroup"
-              :search-placeholder="'Поиск группы атрибутов...'"
-              :title-placeholder="'Выберите группу атрибутов'"
-              :display-fields="['Name', 'name', 'title']"
-              @change-item="handleGroupAttributeSelect"
-            />
-          </div>
+        <!-- Наследуемые группы атрибутов -->
+        <div v-if="parentGroupsAttrs.length > 0" class="inherited-groups">
+          <h4 class="groups-subtitle">Наследуемые атрибуты</h4>
+          <AttributeSelectorForProduct
+            v-for="group in parentGroupsAttrs"
+            :key="group.id"
+            :group-data="group"
+            :selected-attribute="getAttributeForGroup(group.id)"
+            :all-groups="allGroups"
+            :all-attributes="allAttributes"
+            :is-inherited="true"
+            @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
+          />
         </div>
 
-        <!-- Объединенный компонент атрибутов -->
-        <AttributesManager
-          :attributes="filteredAttributes"
-          :selected-attributes="selectedAttributes"
-          :attributes-loaded="attributesLoaded"
-          :get-attribute-name="getAttributeName"
-          @update:selected-attributes="(event) => emit('update:selected-attributes', event)"
-          @remove-attribute="(event) => emit('remove-attribute', event)"
-        />
+        <!-- Пользовательские группы атрибутов -->
+        <div v-if="customGroups.length > 0" class="custom-groups">
+          <h4 class="groups-subtitle">Дополнительные атрибуты</h4>
+          <AttributeSelectorForProduct
+            v-for="group in customGroups"
+            :key="group.id"
+            :group-data="group"
+            :selected-attribute="getAttributeForGroup(group.id)"
+            :all-groups="allGroups"
+            :all-attributes="allAttributes"
+            :is-custom="true"
+            @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
+            @create:group="handleCreateGroup"
+            @create:attribute="handleCreateAttribute"
+            @remove:group="handleRemoveCustomGroup"
+          />
+        </div>
+
+        <!-- Сообщение если нет групп -->
+        <div v-if="allGroupsForDisplay.length === 0" class="no-groups-message">
+          <p>Нет доступных групп атрибутов. Добавьте атрибуты с помощью кнопки выше.</p>
+        </div>
       </div>
     </div>
 
@@ -218,7 +322,36 @@ watch(async () => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.groups-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inherited-groups,
+.custom-groups {
+  margin-bottom: 24px;
+}
+
+.no-groups-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  font-style: italic;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
 .content-editor {
   max-width: 100%;
   padding: 0;
@@ -250,12 +383,6 @@ watch(async () => {
 
 .form-group {
   margin-bottom: 0;
-}
-
-.form-group__elems {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
 }
 
 .form-label {
@@ -292,7 +419,27 @@ watch(async () => {
   font-family: inherit;
 }
 
-.select-wrapper {
-  position: relative;
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #dba250;
+  color: white;
+  &:hover {
+    background: #fbaf45;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(246, 184, 59, 0.3);
+  }
 }
 </style>

@@ -1,20 +1,19 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
 import DragDropImages from '@/components/UI/DragDropImages.vue'
 import SearchList from '@/components/UI/SearchList.vue'
-import AttrGroupToCat from './AttrGroupToCat/AttrGroupToCat.vue'
+import AttrGroupToCategory from './AttrGroupToCat/AttrGroupToCategory.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
+import { useAttributes } from '@/helpers/useAttributes'
 
 const { getAllCategories, getCategoryName } = useCategoriesLevel()
+const { saveCategoryAttributeGroups } = useAttributes()
+
 const props = defineProps({
   formData: Object,
   entityType: String,
   currentId: String,
-  groupsAttribute: {
-    type: Array,
-    default: () => [],
-  },
 })
 const defaultCat = ref({
   id: null,
@@ -22,6 +21,7 @@ const defaultCat = ref({
   level: null,
 })
 const currentCat = ref(defaultCat.value)
+const attributeGroups = ref([])
 
 const emit = defineEmits(['save', 'cancel', 'remove-image', 'update:images', 'change-parent-cat', 'change-level'])
 const config = computed(() => {
@@ -76,6 +76,25 @@ const localImages = computed({
   set: (value) => emit('update:images', value),
 })
 
+const saveCat = async () => {
+  try {
+    // Сначала сохраняем основные данные категории
+    emit('save')
+
+    // Затем сохраняем группы атрибутов
+    if (props.entityType === 'product-groups' && props.currentId && props.currentId !== 'new') {
+      await saveCategoryAttributeGroups(props.currentId, attributeGroups.value)
+      console.log('Группы атрибутов успешно сохранены')
+    }
+  } catch (error) {
+    console.error('Ошибка сохранения категории:', error)
+  }
+}
+
+const handleGroupsUpdate = (updatedGroups) => {
+  attributeGroups.value = updatedGroups
+}
+
 const handleCategorySelect = (category) => {
   currentCat.value = category
   emit('change-parent-cat', category.id)
@@ -90,11 +109,7 @@ const getCategoriesForSearchList = async (params = {}) => {
   try {
     const { search = '', page = 1 } = params
     const newCategories = await getAllCategories(search, page)
-    if (newCategories && newCategories.length > 0) {
-      return Array.isArray(newCategories) ? newCategories : []
-    } else {
-      return []
-    }
+    return Array.isArray(newCategories) ? newCategories : []
   } catch (error) {
     console.error('Ошибка загрузки категорий:', error)
     return []
@@ -116,18 +131,13 @@ const updateCurrentCategory = async () => {
     currentCat.value = defaultCat.value
   }
 }
+
 watch(
   () => props.formData.parent_id,
-  async (newParentId) => {
-    console.log('parent_id changed:', newParentId)
+  async () => {
     await updateCurrentCategory()
   }
 )
-
-onMounted(async () => {
-  console.log('props.formData.parent_id', props.formData.parent_id)
-  await updateCurrentCategory()
-})
 </script>
 <template>
   <div class="content-editor">
@@ -172,7 +182,13 @@ onMounted(async () => {
       </div>
     </div>
 
-    <AttrGroupToCat :entityType="entityType" :id="currentId" :groupsAttribute="groupsAttribute" />
+    <AttrGroupToCategory
+      :entityType="entityType"
+      :id="currentId"
+      @update:groups="handleGroupsUpdate"
+      :form-data="formData"
+    />
+
     <!-- Изображение -->
     <div v-if="props.entityType === 'product-groups' && !formData.parent_id" class="editor-section">
       <h3 class="section-title">Изображение</h3>
@@ -187,12 +203,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <ActionButtons
-      :is-new="currentId === 'new'"
-      :entity-type="entityType"
-      @save="$emit('save')"
-      @cancel="$emit('cancel')"
-    />
+    <ActionButtons :is-new="currentId === 'new'" :entity-type="entityType" @save="saveCat" @cancel="$emit('cancel')" />
   </div>
 </template>
 <style lang="scss" scoped>

@@ -16,7 +16,7 @@ defineEmits(['save', 'cancel', 'test'])
       {{ isNew ? `Создать ${entityType}` : `Сохранить ${entityType}` }}
     </button>
 
-    <button @click="$emit('cancel')" class="btn-danger">
+    <button @click="$emit('cancel')" class="btn-danger" v-if="entityType === product">
       <span class="btn-icon">{{ isNew ? '←' : '🗑️' }}</span>
       {{ isNew ? 'Назад к списку' : `Удалить ${entityType}` }}
     </button>
