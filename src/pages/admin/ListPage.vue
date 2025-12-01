@@ -146,7 +146,7 @@ const sortByF = (event, asc) => {
 
 // Удаление элемента
 const deleteCategory = async (id) => {
-  const link = `${store.getApiDomain}/${pathName.value}/${id}`
+  const link = `${pathName.value}/${id}`
   console.log(link)
   try {
     const response = await del(link)

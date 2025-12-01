@@ -15,7 +15,9 @@ import BackButton from '@/components/UI/BackButton.vue'
 import ProductsEditor from '@/components/Editors/ProductsEditor.vue'
 import AttributeEditor from '@/components/Editors/AttributeEditor.vue'
 import GenericEditor from '@/components/Editors/GenericEditor.vue'
+import { useProduct } from '@/stores/admin/Product'
 
+const { product } = useProduct()
 const route = useRoute()
 const router = useRouter()
 const { get, del } = useApi()
@@ -104,6 +106,7 @@ const saveContent = async () => {
     // Загрузка и связывание файлов (только для продуктов)
     if (name.value === 'products') {
       await handleAttributeOperations()
+      product
     }
 
     // Обновление основного объекта

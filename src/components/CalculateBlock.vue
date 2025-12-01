@@ -54,7 +54,7 @@ onBeforeMount(async () => {
   //     })
   //   })
   // }
-  await getMarket(1)
+  await getMarket()
   itemMarket.value = await getData('../../data/market.json')
 
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')

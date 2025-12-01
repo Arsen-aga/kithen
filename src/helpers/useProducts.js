@@ -37,6 +37,7 @@ export function useProducts() {
       return products
     }
   }
+
   const getAllProducts = async () => {
     let maxPage = 0
     let count = 1
@@ -106,5 +107,10 @@ export function useProducts() {
     }
   }
 
-  return { getAllProducts, getAttributes, getAttributeGroup, getAllProductsToGroup }
+  return {
+    getAllProducts,
+    getAttributes,
+    getAttributeGroup,
+    getAllProductsToGroup,
+  }
 }

@@ -3,7 +3,7 @@ import SearchList from '@/components/UI/SearchList.vue'
 import { useAttributes } from '@/helpers/useAttributes'
 import { ref, watch } from 'vue'
 
-const { getAllAttributes, getAllGroupsAttribute } = useAttributes()
+const { getAllAttributes, getAllGroupsAttribute, getAllAttributesInGroupAttrs } = useAttributes()
 
 const props = defineProps({
   groupData: Object,
@@ -56,15 +56,12 @@ const newGroupName = ref('')
 const newAttributeName = ref('')
 
 const getAttributesForSearchList = async (params = {}) => {
+  console.log('groupData', props.groupData.id)
   try {
     const { search = '', page = 1 } = params
 
-    let attributes = await getAllAttributes(search, page)
-
-    if (props.groupData.id) {
-      attributes = attributes.filter((attr) => attr.group_id === props.groupData.id)
-    }
-
+    let attributes = await getAllAttributesInGroupAttrs(search, page, props.groupData.id)
+    console.log('attributes', attributes)
     return Array.isArray(attributes) ? attributes : []
   } catch (error) {
     console.error('Ошибка загрузки атрибутов:', error)
@@ -182,10 +179,15 @@ const confirmCreateAttribute = async () => {
 
   try {
     const newAttribute = await emit('create:attribute', newAttributeName.value.trim(), props.groupData.id)
+
     if (newAttribute) {
       currentAttribute.value = newAttribute
-      emit('update:selected-attribute', newAttribute)
+      emit('update:selected-attribute', {
+        ...newAttribute,
+        group_id: props.groupData.id,
+      })
       isCreatingAttribute.value = false
+      newAttributeName.value = ''
     }
   } catch (error) {
     console.error('Ошибка создания атрибута:', error)
@@ -312,7 +314,7 @@ initializeValues()
             :disabled="isInherited"
             @change-item="handleAttributeSelect"
           />
-          <div v-if="!isInherited" class="create-option">
+          <div class="create-option">
             <span class="option-divider">или</span>
             <button type="button" class="btn btn-secondary btn-sm" @click="startCreateAttribute">
               Создать новый атрибут

@@ -30,6 +30,22 @@ export function useAttributes() {
       return []
     }
   }
+  const getAllAttributesInGroupAttrs = async (searchQuery, page = 1, group_id) => {
+    let url = `product-attributes?page=${page}&group_id=${group_id}`
+    if (searchQuery) {
+      url += `&name=${encodeURIComponent(searchQuery)}`
+    }
+    try {
+      const newAttributes = await get(url)
+      attributes.value = newAttributes || []
+      attributesLoaded.value = true
+      return newAttributes && newAttributes.length > 0 ? newAttributes : []
+    } catch (error) {
+      console.error('Ошибка загрузки атрибутов:', error)
+      attributesLoaded.value = true
+      return []
+    }
+  }
 
   const loadGroupsAttributes = async () => {
     try {
@@ -291,5 +307,6 @@ export function useAttributes() {
     productToAttributes,
     removeAttributeFromProduct,
     searchAllRequiredGroupsInCategoryLevel,
+    getAllAttributesInGroupAttrs,
   }
 }

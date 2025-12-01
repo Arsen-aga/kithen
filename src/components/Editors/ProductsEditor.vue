@@ -1,11 +1,11 @@
 <script setup>
 import MediaSection from '@/components/Editors/MediaSection.vue'
 import ActionButtons from '@/components/UI/ActionButtons.vue'
-import SearchList from '@/components/UI/SearchList.vue'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 import { useAttributes } from '@/helpers/useAttributes'
 import { ref, computed, watch } from 'vue'
 import AttributeSelectorForProduct from './AttributeSelectorForProduct/AttributeSelectorForProduct.vue'
+import ProductGroups from './Product/ProductGroups.vue'
 
 const props = defineProps({
   formData: Object,
@@ -28,7 +28,7 @@ const {
   createAttributeGroup,
   createAttribute,
 } = useAttributes()
-const { getAllCategories, getCategoryInId } = useCategoriesLevel()
+const { getCategoryInId } = useCategoriesLevel()
 
 const parentGroupsAttrConnections = ref([])
 const parentGroupsAttrs = ref([])
@@ -43,6 +43,16 @@ const defaultCat = ref({
   level: null,
 })
 const currentCat = ref(defaultCat.value)
+
+const showCustomGroups = computed(() => {
+  return (
+    customGroups.value.filter(
+      (group) =>
+        // Показываем группы без ID (новые) или группы с ID но без выбранного атрибута
+        !group.id || (group.id && !getAttributeForGroup(group.id))
+    ).length > 0
+  )
+})
 
 const availableGroups = computed(() => {
   const usedGroupIds = new Set()
@@ -72,16 +82,7 @@ const allGroupsForDisplay = computed(() => {
 const handleAttributesUpdate = (updatedAttributes) => {
   emit('update:selected-attributes', updatedAttributes)
 }
-const getCategoriesForSearchList = async (params = {}) => {
-  try {
-    const { search = '', page = 1 } = params
-    const categories = await getAllCategories(search, page)
-    return Array.isArray(categories) ? categories : []
-  } catch (error) {
-    console.error('Ошибка загрузки групп атрибутов:', error)
-    return []
-  }
-}
+
 const updateCurrentCategory = async () => {
   if (!props.formData.Group) {
     currentCat.value = defaultCat.value
@@ -95,10 +96,6 @@ const updateCurrentCategory = async () => {
     console.error('Ошибка загрузки категории:', error)
     currentCat.value = defaultCat.value
   }
-}
-const handleCategorySelect = (category) => {
-  props.formData.Group = category.id
-  currentCat.value = category
 }
 
 const getCurrentGroupsAttrs = async (connections) => {
@@ -177,16 +174,12 @@ const handleAttributeUpdate = (groupId, attribute) => {
   const filteredAttrs = currentAttrs.filter((attr) => attr.group_id !== groupId)
 
   if (attribute && attribute.id) {
-    filteredAttrs.push(attribute)
+    filteredAttrs.push({
+      ...attribute,
+      group_id: groupId,
+    })
   }
 
-  handleAttributesUpdate(filteredAttrs)
-}
-const handleRemoveAttribute = (attributeId) => {
-  const currentAttrs = [...(props.formData.attrs || [])]
-  const filteredAttrs = currentAttrs.filter((attr) => attr.id !== attributeId)
-
-  console.log('ProductsEditor: Удаление атрибута', attributeId)
   handleAttributesUpdate(filteredAttrs)
 }
 
@@ -242,7 +235,27 @@ const handleCreateAttribute = async (attributeName, groupId) => {
     const newAttribute = await createAttribute(attributeName, groupId)
 
     allAttributes.value = await getAllAttributes()
+    if (newAttribute && groupId) {
+      const currentAttrs = [...(props.formData.attrs || [])]
 
+      // Удаляем старый атрибут этой группы (если есть)
+      const filteredAttrs = currentAttrs.filter((attr) => attr.group_id !== groupId)
+
+      // Добавляем новый созданный атрибут
+      filteredAttrs.push({
+        ...newAttribute,
+        group_id: groupId,
+      })
+
+      // Обновляем атрибуты товара
+      handleAttributesUpdate(filteredAttrs)
+
+      const customGroupIndex = customGroups.value.findIndex((group) => group.id === groupId)
+      if (customGroupIndex !== -1) {
+        // Можно добавить флаг, что группа завершена, если нужно
+        console.log('Атрибут создан и добавлен для кастомной группы:', groupId)
+      }
+    }
     return newAttribute
   } catch (error) {
     console.error('Ошибка создания атрибута:', error)
@@ -345,21 +358,11 @@ watch(
         </div>
 
         <div class="form-group">
-          <label for="group" class="form-label">Категория товара</label>
-          <SearchList
-            :get-more-items="getCategoriesForSearchList"
-            :current-item="currentCat"
-            :default-item="defaultCat"
-            :search-placeholder="'Поиск категории...'"
-            :title-placeholder="'Выберите категорию'"
-            :display-fields="['Name']"
-            :item-style-fn="(item) => ({ paddingLeft: item?.level === 1 ? '30px' : item?.level === 2 ? '50px' : '' })"
-            :display-fn="(item) => (item?.level !== 0 ? '--- ' : '') + (item?.Name || '')"
-            @change-item="handleCategorySelect"
-          />
+          <label for="group" class="form-label">Категории товара</label>
+          <ProductGroups :product-id="formData.id || currentId" :form-data="formData" />
         </div>
 
-        <div class="form-group full-width">
+        <div class="form-group">
           <label for="description" class="form-label">Описание</label>
           <textarea
             id="description"
@@ -374,7 +377,7 @@ watch(
     <!-- Атрибуты товара -->
     <div class="editor-section">
       <div class="section-header">
-        <h3 class="section-title">Атрибуты товара</h3>
+        <h3 class="section-title attr-title">Атрибуты товара</h3>
         <button
           type="button"
           class="btn btn-primary"
@@ -397,13 +400,14 @@ watch(
             :all-groups="allGroups"
             :all-attributes="allAttributes"
             :is-inherited="true"
+            @create:attribute="handleCreateAttribute"
             @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
           />
         </div>
 
         <!-- Группы из существующих атрибутов товара -->
         <div v-if="existingProductGroups.length > 0" class="existing-product-groups">
-          <h4 class="groups-subtitle">Атрибуты товара</h4>
+          <h4 class="groups-subtitle">Основные атрибуты</h4>
           <AttributeSelectorForProduct
             v-for="group in existingProductGroups"
             :key="group.id"
@@ -412,13 +416,14 @@ watch(
             :all-groups="allGroups"
             :all-attributes="allAttributes"
             :is-existing-product-group="true"
+            :is-custom="true"
             @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
             @remove:group="handleRemoveExistingProductGroup"
           />
         </div>
 
         <!-- Пользовательские группы атрибутов -->
-        <div v-if="customGroups.length > 0" class="custom-groups">
+        <div v-if="showCustomGroups" class="custom-groups">
           <h4 class="groups-subtitle">Дополнительные атрибуты</h4>
           <AttributeSelectorForProduct
             v-for="group in customGroups"
@@ -473,10 +478,6 @@ watch(
 
 .existing-product-groups {
   margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #f9f9f9;
 }
 
 .groups-subtitle {
@@ -524,9 +525,14 @@ watch(
   border-bottom: 2px solid #f0f2f5;
 }
 
+.attr-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
