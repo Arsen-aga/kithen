@@ -344,7 +344,7 @@ watch(
   <div class="content-editor">
     <!-- Основная информация -->
     <div class="editor-section">
-      <h3 class="section-title">Основная информация</h3>
+      <h3 class="section-title">Основная информация {{ currentId }}</h3>
       <div class="form-grid">
         <div class="form-group">
           <label for="title" class="form-label">Наименование товара</label>
@@ -417,6 +417,8 @@ watch(
             :all-attributes="allAttributes"
             :is-existing-product-group="true"
             :is-custom="true"
+            @create:group="handleCreateGroup"
+            @create:attribute="handleCreateAttribute"
             @update:selected-attribute="handleAttributeUpdate(group.id, $event)"
             @remove:group="handleRemoveExistingProductGroup"
           />

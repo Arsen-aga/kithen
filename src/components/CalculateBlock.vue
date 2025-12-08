@@ -1,7 +1,5 @@
 <script setup>
 import { ref, onBeforeMount, watch } from 'vue'
-import { getData } from '@/api/getData'
-import { useCatalogBlock } from '@/stores/catalogBlock'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -10,15 +8,19 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
+// import { getData } from '@/api/getData'
 import { useApi } from '@/helpers/useApi'
+import { useCatalogBlock } from '@/stores/catalogBlock'
+
 const { get } = useApi()
 
-import { useResultItems } from '@/stores/result'
-const { addItem } = useResultItems()
+// import { useResultItems } from '@/stores/result'
+// const { addItem } = useResultItems()
+const storeCatalog = useCatalogBlock()
 
 const itemSmeta = ref('')
-const itemMarket = ref('')
-const { catalogBlock } = useCatalogBlock()
+// const itemMarket = ref('')
+
 const itemHouseholdAppliances = ref('')
 const itemSelectedProducts = ref('')
 const itemTechnicallyComplexProducts = ref('')
@@ -27,11 +29,9 @@ const itemTreaty = ref('')
 
 const marketGroups = ref([])
 
-const getMarket = async (groupId = null) => {
+const getMarket = async () => {
   try {
-    // Если не указан ID группы, можно выбрать поведение по умолчанию
-    const endpoint = groupId ? `product-groups/${groupId}` : 'product-groups'
-    const response = await get(endpoint)
+    const response = await get('product-groups')
 
     // Преобразуем ответ в массив (даже если это один объект)
     const data = Array.isArray(response) ? response : [response].filter(Boolean)
@@ -45,6 +45,7 @@ const getMarket = async (groupId = null) => {
     return []
   }
 }
+
 onBeforeMount(async () => {
   // itemSmeta.value = await getData('../../data/smeta.json')
   // if (itemSmeta.value) {
@@ -55,22 +56,13 @@ onBeforeMount(async () => {
   //   })
   // }
   await getMarket()
-  itemMarket.value = await getData('../../data/market.json')
-
+  // itemMarket.value = await getData('../../data/market.json')
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
   // itemSelectedProducts.value = await getData('../../data/selected-products.json')
   // itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
   // itemServices.value = await getData('../../data/services.json')
   // itemTreaty.value = await getData('../../data/treaty.json')
 })
-
-const isOpenCatalog = ref(false)
-watch(
-  () => catalogBlock.value,
-  () => {
-    isOpenCatalog.value = !isOpenCatalog.value
-  }
-)
 </script>
 
 <template>
@@ -80,17 +72,19 @@ watch(
       <AccordionItem v-if="itemSmeta" :content="itemSmeta" :title="itemSmeta.title">
         <AccordionSmeta :items="itemSmeta.items" />
       </AccordionItem>
-
       <AccordionItem
         v-if="marketGroups && marketGroups.length > 0"
         :content="marketGroups"
-        :title="isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
+        :title="storeCatalog.isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
-        <MarketBlock :items="marketGroups" v-show="!isOpenCatalog" />
-        <CatalogBlock v-show="catalogBlock.value && isOpenCatalog" :products="catalogBlock.value" />
+        <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
+        <CatalogBlock
+          v-show="storeCatalog.catalogCategory && storeCatalog.isOpenCatalog"
+          :group-id="storeCatalog.catalogCategory"
+        />
       </AccordionItem>
 
-      <AccordionItem
+      <!-- <AccordionItem
         v-if="itemHouseholdAppliances"
         :content="itemHouseholdAppliances"
         :title="itemHouseholdAppliances.title"
@@ -111,7 +105,7 @@ watch(
       <AccordionItem v-if="itemTreaty" :content="itemTreaty" :title="itemTreaty.title">
         <TreatyBlock :items="itemTreaty.items" />
         <UserBlock class="calculate-block__bottom" />
-      </AccordionItem>
+      </AccordionItem> -->
     </div>
   </div>
 </template>

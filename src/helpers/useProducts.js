@@ -10,7 +10,7 @@ export function useProducts() {
 
     try {
       const firstResponse = await get(`products?Group=${group_id}&page=${count}`, true)
-      console.log('firstResponse', firstResponse)
+      // console.log('firstResponse', firstResponse)
 
       maxPage = parseInt(firstResponse?.headers['x-pagination-page-count']) || 0
 
@@ -74,9 +74,8 @@ export function useProducts() {
 
   const getAllConnectionsAttributesToProduct = async (productId) => {
     try {
-      const connections = await get('product-to-attributes')
-      const attributesConnections = connections.filter((connect) => connect.product_id === productId)
-      return attributesConnections
+      const connections = await get(`product-to-attributes?product_id=${productId}`)
+      return connections
     } catch (error) {
       console.error('Ошибка при получении всех товаров:', error)
     }

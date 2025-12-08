@@ -53,9 +53,7 @@ const initializeOptions = async () => {
   try {
     const attributes = await getAttributes(props.product.id)
     for (const attribute of attributes) {
-      console.log('attribute', attribute)
       const optionName = await getAttributeGroup(attribute.group_id)
-      console.log('optionName', optionName)
       options.value.push({
         option: optionName,
         info: attribute.name,

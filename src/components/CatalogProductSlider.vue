@@ -16,6 +16,7 @@ defineProps({
   },
   video: {
     type: Object,
+    default: null,
   },
   id: {
     type: Number,
@@ -52,7 +53,7 @@ const goToSlide = (index) => {
         @slideChange="onSlideChange"
         class="mySwiper catalog-product-slider__swiper"
       >
-        <template v-if="images?.length || video?.length">
+        <template v-if="images?.length || video">
           <template v-if="images.length">
             <SwiperSlide v-for="(src, index) in images" :key="src + index">
               <a class="catalog-product-slider__img-wrapper" :href="src.url" :data-fancybox="`gallery-${id}`">
@@ -101,7 +102,7 @@ const goToSlide = (index) => {
     </div>
     <div class="catalog-product-slider__swiper-pagination" v-if="images.length + (video ? 1 : 0) > 1">
       <span
-        v-for="(image, index) in [...images, video]"
+        v-for="(image, index) in video ? [...images, video] : images"
         :key="index"
         @click="goToSlide(index)"
         class="catalog-product-slider__swiper-dot"

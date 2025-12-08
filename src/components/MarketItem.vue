@@ -1,8 +1,5 @@
 <script setup>
 import { useCatalogBlock } from '@/stores/catalogBlock'
-import { toast } from 'vue3-toastify'
-import { useApi } from '@/helpers/useApi'
-const { get } = useApi()
 defineProps({
   marketItem: {
     type: Object,
@@ -10,47 +7,28 @@ defineProps({
   },
 })
 
-const getProducts = async (groupId) => {
-  try {
-    const response = await get(`products?Group=${groupId}`)
-    console.log('response', response)
-    const productsInGroup = response.filter((product) => product.Group === groupId)
-    if (productsInGroup.length === 0) {
-      toast.error('В данной категории нет товаров', { autoClose: 1000 })
-      throw new Error('В данной категории нет товаров')
-    }
-    catalogBlock.value = productsInGroup
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-const { catalogBlock } = useCatalogBlock()
-const openCatalog = async (groupId) => {
-  try {
-    await getProducts(groupId)
-  } catch (error) {
-    console.log('В данной категории нет товаров', error)
-  }
-}
+const storeCatalog = useCatalogBlock()
+const openCatalog = (catId) => storeCatalog.openCatalog(catId)
 </script>
 
 <template>
-  <div class="market-item" @click="() => openCatalog(marketItem?.id)">
-    <img
-      v-if="marketItem?.photo"
-      class="market-item__img _img"
-      :src="marketItem?.photo"
-      :alt="marketItem.Name || 'Product'"
-    />
-    <div v-else class="market-item__placeholder">No Image</div>
-    <div v-if="marketItem?.products?.length" class="market-item__num">
-      {{ marketItem.products.length }}
-    </div>
+  <div>
+    <div class="market-item" @click="openCatalog(marketItem.id)">
+      <img
+        v-if="marketItem?.photo"
+        class="market-item__img _img"
+        :src="marketItem?.photo"
+        :alt="marketItem.Name || 'Product'"
+      />
+      <div v-else class="market-item__placeholder">No Image</div>
+      <div v-if="marketItem?.products?.length" class="market-item__num">
+        {{ marketItem.products.length }}
+      </div>
 
-    <h4 class="market-item__title">
-      {{ marketItem?.Name || 'Без названия' }}
-    </h4>
+      <h4 class="market-item__title">
+        {{ marketItem?.Name || 'Без названия' }}
+      </h4>
+    </div>
   </div>
 </template>
 
