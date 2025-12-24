@@ -4,7 +4,6 @@ import { ref, watch } from 'vue'
 import IconArrow from '@/components/icons/IconArrow.vue'
 import ReviewElem from '@/components/ReviewElem.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
-import CustomCalendar from '@/components/UI/CustomCalendar.vue'
 import { useShippingDate } from '@/stores/shippingDate'
 
 const props = defineProps({
@@ -24,11 +23,6 @@ const toggleList = () => {
 
 const formatDateNotYear = (date) => {
   return date.toLocaleString('default', { day: 'numeric', month: 'long' })
-}
-
-const isOpenCalendar = ref(false)
-const openCalendar = () => {
-  isOpenCalendar.value = !isOpenCalendar.value
 }
 
 watch(
@@ -95,18 +89,8 @@ watch(startDate, (newDate) => {
       <p v-if="item.id === 500" class="review-accordion__bottom">
         Ваша кухня будет готова к отгрузке<br />
         с фабрики
-        <LinkButton class="review-accordion__date" color="orange" @click.stop="openCalendar">{{
-          formatDateNotYear(startDate)
-        }}</LinkButton>
+        <LinkButton class="review-accordion__date" color="orange">{{ formatDateNotYear(startDate) }}</LinkButton>
       </p>
-      <CustomCalendar
-        class="review-accordion__calendar"
-        v-show="isOpenCalendar"
-        :isShow="isOpenCalendar"
-        :changeDate="startDate"
-        @update:changeDate="startDate = $event"
-        @update:isShow="isOpenCalendar = $event"
-      />
     </div>
   </div>
 </template>

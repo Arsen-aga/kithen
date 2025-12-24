@@ -9,6 +9,7 @@ import { onMounted, ref } from 'vue'
 import { useApi } from '@/helpers/useApi'
 import { useFileManager } from '@/helpers/useFileManager'
 import { useProducts } from '@/helpers/useProducts'
+import { useSmetaStore } from '@/stores/smeta'
 
 const { get } = useApi()
 const { initFiles } = useFileManager()
@@ -19,6 +20,7 @@ const props = defineProps({
     required: true,
   },
 })
+const storeSmeta = useSmetaStore()
 
 const images = ref([])
 const video = ref([])
@@ -69,6 +71,33 @@ const openModal = () => {
   document.body.style.overflow = 'hidden'
 }
 
+const getParentGroup = async (groupId) => {
+  try {
+    const response = await get(`product-groups/${groupId}`)
+    console.log('response', response)
+    return response
+  } catch (error) {
+    console.log(error)
+  }
+}
+const existProductObject = async (product) => {
+  const { files, attrs, ...cleanProduct } = product
+  const parentCategory = await getParentGroup(product.Group)
+  const category = {
+    id: parentCategory.id,
+    title: parentCategory.Name,
+  }
+  console.log('category', category)
+  storeSmeta.addMarketProduct({
+    ...cleanProduct,
+    images: images.value[0],
+    video: video.value,
+    options: options.value,
+    category,
+  })
+  console.log('marketSelectProducts', storeSmeta.marketSelectProducts)
+}
+
 onMounted(async () => {
   await initializeFiles()
   await initializeOptions()
@@ -98,7 +127,7 @@ onMounted(async () => {
         </div>
         <div class="catalog-product__btns">
           <MainButton @click="openModal">Узнать подробнее</MainButton>
-          <MainButton class="bg-red">Добавить к заказу</MainButton>
+          <MainButton class="bg-red" @click="existProductObject(productToModal)">Добавить к заказу</MainButton>
         </div>
       </div>
     </div>

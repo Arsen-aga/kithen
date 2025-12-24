@@ -1,8 +1,30 @@
 <script setup>
+import { useApi } from '@/helpers/useApi'
 import CalculateBlock from '../components/CalculateBlock.vue'
 import ReviewBlock from '../components/ReviewBlock.vue'
+
+const { get } = useApi()
+
+const getOrders = async () => {
+  try {
+    const response = await get('orders')
+    console.log('response', response)
+  } catch (error) {
+    console.log(error)
+  }
+}
+const getUsers = async () => {
+  try {
+    const response = await get('user-profiles')
+    console.log('response', response)
+  } catch (error) {
+    console.log(error)
+  }
+}
 </script>
 <template>
+  <button @click="getOrders">Получить заказы</button>
+  <button @click="getUsers">Получить Пользователей</button>
   <div class="app-component">
     <CalculateBlock />
     <ReviewBlock />

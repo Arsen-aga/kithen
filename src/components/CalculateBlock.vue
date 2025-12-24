@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, watch } from 'vue'
+import { ref, onBeforeMount, watch, reactive } from 'vue'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -11,12 +11,14 @@ import CatalogBlock from '@/components/CatalogBlock.vue'
 // import { getData } from '@/api/getData'
 import { useApi } from '@/helpers/useApi'
 import { useCatalogBlock } from '@/stores/catalogBlock'
+import { useSmetaStore } from '@/stores/smeta'
 
 const { get } = useApi()
 
 // import { useResultItems } from '@/stores/result'
 // const { addItem } = useResultItems()
 const storeCatalog = useCatalogBlock()
+const storeSmeta = useSmetaStore()
 
 const itemSmeta = ref('')
 // const itemMarket = ref('')
@@ -28,15 +30,16 @@ const itemServices = ref('')
 const itemTreaty = ref('')
 
 const marketGroups = ref([])
+const marketProducts = ref([])
 
 const getMarket = async () => {
   try {
-    const response = await get('product-groups')
+    const response = await get('product-groups?level=0')
 
     // Преобразуем ответ в массив (даже если это один объект)
     const data = Array.isArray(response) ? response : [response].filter(Boolean)
 
-    marketGroups.value = data
+    marketGroups.value = data.slice(0, 13)
     console.log('marketGroups.value', marketGroups.value)
     return data // Возвращаем массив для внешнего использования
   } catch (error) {
@@ -56,6 +59,7 @@ onBeforeMount(async () => {
   //   })
   // }
   await getMarket()
+  marketProducts.value = storeSmeta.marketSelectProducts
   // itemMarket.value = await getData('../../data/market.json')
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
   // itemSelectedProducts.value = await getData('../../data/selected-products.json')
@@ -63,18 +67,22 @@ onBeforeMount(async () => {
   // itemServices.value = await getData('../../data/services.json')
   // itemTreaty.value = await getData('../../data/treaty.json')
 })
+
+watch(
+  () => storeSmeta.marketSelectProducts,
+  (newStoreProducts) => (marketProducts.value = newStoreProducts)
+)
 </script>
 
 <template>
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
-      <AccordionItem v-if="itemSmeta" :content="itemSmeta" :title="itemSmeta.title">
+      <AccordionItem v-if="itemSmeta" :title="itemSmeta.title">
         <AccordionSmeta :items="itemSmeta.items" />
       </AccordionItem>
       <AccordionItem
         v-if="marketGroups && marketGroups.length > 0"
-        :content="marketGroups"
         :title="storeCatalog.isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
         <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
@@ -86,23 +94,22 @@ onBeforeMount(async () => {
 
       <!-- <AccordionItem
         v-if="itemHouseholdAppliances"
-        :content="itemHouseholdAppliances"
+        content="link"
         :title="itemHouseholdAppliances.title"
-      ></AccordionItem>
-      <AccordionItem v-if="itemSelectedProducts" :content="itemSelectedProducts" :title="itemSelectedProducts.title">
-        <SelectedProducts :items="itemSelectedProducts.items" />
+      ></AccordionItem> -->
+      <AccordionItem v-if="marketProducts" title="Выбранные товары">
+        <SelectedProducts :items="marketProducts" />
       </AccordionItem>
-      <AccordionItem
+      <!-- <AccordionItem
         v-if="itemTechnicallyComplexProducts"
-        :content="itemTechnicallyComplexProducts"
         :title="itemTechnicallyComplexProducts.title"
       >
         <ScrollTableBlock :items="itemTechnicallyComplexProducts.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemServices" :content="itemServices" :title="itemServices.title">
+      <AccordionItem v-if="itemServices" :title="itemServices.title">
         <ScrollTableBlock :items="itemServices.items" />
       </AccordionItem>
-      <AccordionItem v-if="itemTreaty" :content="itemTreaty" :title="itemTreaty.title">
+      <AccordionItem v-if="itemTreaty" :title="itemTreaty.title">
         <TreatyBlock :items="itemTreaty.items" />
         <UserBlock class="calculate-block__bottom" />
       </AccordionItem> -->

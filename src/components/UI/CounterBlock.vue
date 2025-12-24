@@ -1,24 +1,38 @@
 <script setup>
-import { ref } from 'vue'
-const emit = defineEmits(['update-price'])
+import { ref, watch } from 'vue'
 
-const counter = ref(1)
+const props = defineProps({
+  counter: {
+    type: [Number || String],
+    default: 1,
+  },
+})
+
+const emit = defineEmits(['update-count'])
+
+const localCounter = ref(props.counter)
 const increment = () => {
-  counter.value++
-  emit('update-price', counter.value)
+  console.log('counter', localCounter)
+  localCounter.value += 1
+  emit('update-count', localCounter.value)
 }
 const decrement = () => {
-  counter.value--
-  emit('update-price', counter.value)
+  localCounter.value -= 1
+  emit('update-count', localCounter.value)
 }
+
+watch(
+  () => props.counter,
+  (newCounter) => (localCounter.value = newCounter)
+)
 </script>
 
 <template>
   <div class="counter">
-    <button class="counter__btn counter__decrement" @click="decrement" :disabled="counter <= 1">
+    <button class="counter__btn counter__decrement" @click="decrement" :disabled="localCounter <= 1">
       <div class="bar"></div>
     </button>
-    <p class="counter__num">{{ counter }}</p>
+    <p class="counter__num">{{ localCounter }}</p>
     <button class="counter__btn counter__increment" @click="increment">
       <div class="bar"></div>
       <div class="bar"></div>

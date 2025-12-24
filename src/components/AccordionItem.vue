@@ -5,7 +5,8 @@ import IconPlus from '@/components/icons/IconPlus.vue'
 
 defineProps({
   content: {
-    type: Object,
+    type: String,
+    default: '',
   },
   title: {
     type: String,
@@ -21,14 +22,10 @@ const open = () => (isOpen.value = !isOpen.value)
   <div class="accordion-item">
     <div class="accordion-item__header" :class="{ active: isOpen }" @click="open">
       <h2 class="accordion-item__title">{{ title }}</h2>
-      <!-- <IconLink v-if="content?.link" /> -->
-      <!-- <IconPlus :open="isOpen" v-else /> -->
-      <IconPlus :open="isOpen" />
+      <IconLink v-if="content === 'link'" />
+      <IconPlus :open="isOpen" v-else />
     </div>
-    <!-- <div v-show="content?.link" class="accordion-item__content" :class="{ active: isOpen }">
-      <slot></slot>
-    </div> -->
-    <div class="accordion-item__content" :class="{ active: isOpen }">
+    <div v-show="content !== 'link'" class="accordion-item__content" :class="{ active: isOpen }">
       <slot></slot>
     </div>
   </div>

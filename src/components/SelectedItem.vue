@@ -3,45 +3,41 @@ import { formatNum } from '@/helpers/formatNum'
 import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import CounterBlock from '@/components/UI/CounterBlock.vue'
 import { ref } from 'vue'
+import { useSmetaStore } from '@/stores/smeta'
 const props = defineProps({
   item: {
     type: Object,
     required: true,
   },
-  checked: {
-    type: Boolean,
-    required: true,
-  },
 })
-const emit = defineEmits(['update-checked'])
+const smetaStore = useSmetaStore()
 
-const toggleCheck = () => {
-  emit('update-checked', !props.checked)
+const updateCountInProduct = (newCount) => {
+  console.log('updateCountInProduct', newCount)
+  smetaStore.changeProductCount(props.item.id, newCount)
 }
-
-const newPrice = ref(props.item.price)
 </script>
 
 <template>
   <div class="selected-item">
-    <CheckboxButtonIcon :checked="checked" @click="toggleCheck" />
+    <CheckboxButtonIcon :checked="checked" />
     <div class="selected-item__inner">
       <div class="selected-item__wrapper-img">
-        <img class="selected-item__img" :src="item.img" :alt="item.title" />
+        <img class="selected-item__img" :src="item.images?.url || '../src/assets/images/no-img.png'" :alt="item.Name" />
       </div>
       <div class="selected-item__info">
-        <h4 class="selected-item__title" v-html="item.title"></h4>
+        <h4 class="selected-item__title" v-html="item.Name"></h4>
         <ul class="selected-item__list" v-if="item.options.length">
           <li class="selected-item__point" v-for="option in item.options" :key="option.id">
-            <span>{{ option.title }}:</span> {{ option.option }}
+            <span>{{ option.option }}:</span> {{ option.info }}
           </li>
         </ul>
       </div>
     </div>
     <div class="selected-item__right">
-      <p class="selected-item__old-price" v-if="item.oldPrice">{{ formatNum(item.oldPrice, 0) }} ₽</p>
-      <p class="selected-item__price">{{ formatNum(newPrice, 0) }} ₽</p>
-      <CounterBlock class="selected-item__counter" />
+      <p class="selected-item__old-price" v-if="item.Price">{{ formatNum(item.Price_0, 0) }} ₽</p>
+      <p class="selected-item__price">{{ formatNum(item.Price, 0) }} ₽</p>
+      <CounterBlock class="selected-item__counter" :counter="item.Count" @update-count="updateCountInProduct" />
     </div>
   </div>
 </template>
