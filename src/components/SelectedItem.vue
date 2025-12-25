@@ -9,18 +9,29 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  checkState: {
+    type: Boolean,
+  },
 })
 const smetaStore = useSmetaStore()
+const checked = ref(false)
+
+const emit = defineEmits(['update-check-state'])
 
 const updateCountInProduct = (newCount) => {
-  console.log('updateCountInProduct', newCount)
   smetaStore.changeProductCount(props.item.id, newCount)
+}
+
+const checkItem = () => {
+  checked.value = !checked.value
+  console.log('checkItem -> props.checkState', props.checkState)
+  emit('update-check-state', checked.value)
 }
 </script>
 
 <template>
   <div class="selected-item">
-    <CheckboxButtonIcon :checked="checked" />
+    <CheckboxButtonIcon :checked="checked" @click="checkItem" />
     <div class="selected-item__inner">
       <div class="selected-item__wrapper-img">
         <img class="selected-item__img" :src="item.images?.url || '../src/assets/images/no-img.png'" :alt="item.Name" />

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, reactive } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 
 const props = defineProps({
   items: {
@@ -12,7 +12,7 @@ import IconCart from '@/components/icons/IconCart.vue'
 import CheckboxButton from '@/components/UI/CheckboxButton.vue'
 import SelectedProduct from '@/components/SelectedProduct.vue'
 
-const itemsStates = reactive(props.items.map(() => false))
+const itemsStates = computed(() => props.items.map((category) => category.products.map(() => false)))
 const isChooseAll = ref(false)
 
 const chooseAll = () => {
@@ -25,19 +25,23 @@ const chooseAll = () => {
   isChooseAll.value = newState
 }
 
-watch(
-  () => itemsStates.every((state) => state),
-  (allGroupsSelected) => {
-    isChooseAll.value = allGroupsSelected.every(Boolean)
-  },
-  { deep: true }
-)
+// watch(
+//   () => itemsStates.value.every((state) => state),
+//   (allGroupsSelected) => {
+//     isChooseAll.value = allGroupsSelected.every(Boolean)
+//   },
+//   { deep: true }
+// )
 
 const isDeleteAll = ref(false)
 const deleteAll = () => {
   isDeleteAll.value = !isDeleteAll.value
 }
 console.log('props.items', props.items)
+
+const tets = () => {
+  console.log('itemsStates.value', itemsStates.value)
+}
 </script>
 
 <template>
@@ -52,8 +56,16 @@ console.log('props.items', props.items)
         Удалить выбранные
       </CheckboxButton>
     </div>
+    <button @click="tets">tets</button>
     <div class="selected-products__items">
-      <SelectedProduct class="selected-products__item" v-for="item in props.items" :key="item.id" :item="item" />
+      <SelectedProduct
+        class="selected-products__item"
+        v-for="(item, index) in props.items"
+        :key="item.id"
+        :item="item"
+        :checkStates="itemsStates[index]"
+        @updateCheckStates="itemsStates[index]"
+      />
     </div>
   </div>
 </template>
