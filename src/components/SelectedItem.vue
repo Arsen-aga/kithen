@@ -2,7 +2,7 @@
 import { formatNum } from '@/helpers/formatNum'
 import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import CounterBlock from '@/components/UI/CounterBlock.vue'
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { useSmetaStore } from '@/stores/smeta'
 const props = defineProps({
   item: {
@@ -14,18 +14,25 @@ const props = defineProps({
   },
 })
 const smetaStore = useSmetaStore()
-const checked = ref(false)
-
 const emit = defineEmits(['update-check-state'])
+
+const checked = computed({
+  get: () => props.checkState || false,
+  set: (newValue) => {
+    console.log('newValue', newValue);
+    emit('update-check-state', newValue)
+  }
+})
+
 
 const updateCountInProduct = (newCount) => {
   smetaStore.changeProductCount(props.item.id, newCount)
 }
 
 const checkItem = () => {
+  console.log('checked.value', checked.value);
   checked.value = !checked.value
-  console.log('checkItem -> props.checkState', props.checkState)
-  emit('update-check-state', checked.value)
+  console.log('checked.value', checked.value);
 }
 </script>
 

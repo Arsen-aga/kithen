@@ -13,9 +13,10 @@ const props = defineProps({
 const emit = defineEmits(['update-check-states'])
 
 const changeCheckState = (newCheckState, index) => {
-  console.log('changeCheckState -> newCheckState', newCheckState)
-  console.log('props.checkStates', props.checkStates)
-  emit('update-check-states')
+  emit(
+    'update-check-states',
+    props.checkStates.map((state, i) => (i === index ? newCheckState : state))
+  )
 }
 </script>
 

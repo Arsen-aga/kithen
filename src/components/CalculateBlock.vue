@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, watch, reactive } from 'vue'
+import { ref, onBeforeMount, watch, computed } from 'vue'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -11,14 +11,12 @@ import CatalogBlock from '@/components/CatalogBlock.vue'
 // import { getData } from '@/api/getData'
 import { useApi } from '@/helpers/useApi'
 import { useCatalogBlock } from '@/stores/catalogBlock'
-import { useSmetaStore } from '@/stores/smeta'
 
 const { get } = useApi()
 
 // import { useResultItems } from '@/stores/result'
 // const { addItem } = useResultItems()
 const storeCatalog = useCatalogBlock()
-const storeSmeta = useSmetaStore()
 
 const itemSmeta = ref('')
 // const itemMarket = ref('')
@@ -30,7 +28,7 @@ const itemServices = ref('')
 const itemTreaty = ref('')
 
 const marketGroups = ref([])
-const marketProducts = ref([])
+
 
 const getMarket = async () => {
   try {
@@ -59,7 +57,6 @@ onBeforeMount(async () => {
   //   })
   // }
   await getMarket()
-  marketProducts.value = storeSmeta.marketSelectProducts
   // itemMarket.value = await getData('../../data/market.json')
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
   // itemSelectedProducts.value = await getData('../../data/selected-products.json')
@@ -68,10 +65,7 @@ onBeforeMount(async () => {
   // itemTreaty.value = await getData('../../data/treaty.json')
 })
 
-watch(
-  () => storeSmeta.marketSelectProducts,
-  (newStoreProducts) => (marketProducts.value = newStoreProducts)
-)
+
 </script>
 
 <template>
@@ -97,8 +91,8 @@ watch(
         content="link"
         :title="itemHouseholdAppliances.title"
       ></AccordionItem> -->
-      <AccordionItem v-if="marketProducts" title="Выбранные товары">
-        <SelectedProducts :items="marketProducts" />
+      <AccordionItem  title="Выбранные товары">
+        <SelectedProducts />
       </AccordionItem>
       <!-- <AccordionItem
         v-if="itemTechnicallyComplexProducts"
