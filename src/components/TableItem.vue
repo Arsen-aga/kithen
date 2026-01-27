@@ -12,13 +12,13 @@ defineProps({
 
 <template>
   <div class="table-item__tr" v-for="item in tableItems" :key="item.key">
-    <div class="table-item__td">{{ item.title }}</div>
-    <div class="table-item__td">{{ item.unit }}</div>
-    <div class="table-item__td">{{ formatNum(item.quantity, 2) }}</div>
-    <div class="table-item__td">{{ formatNum(item.price, 2) }} ₽</div>
-    <div class="table-item__td">{{ formatNum(item.quantity * item.price, 2) }} ₽</div>
+    <div class="table-item__td">{{ item.Name }}</div>
+    <div class="table-item__td">{{ item.unit || 'шт' }}</div>
+    <div class="table-item__td">{{ formatNum(item.Count, 2) }}</div>
+    <div class="table-item__td">{{ formatNum(item.Price, 2) }} ₽</div>
+    <div class="table-item__td">{{ item.p_sum ? item.p_sum : formatNum(item.Count * item.Price, 2) }} ₽</div>
     <div class="table-item__td"><LinkButton class="table-item__link" color="gray">Заменить материал</LinkButton></div>
-    <div class="table-item__td">{{ item.percent ? item.percent + '%' : '' }}</div>
+    <div class="table-item__td">{{ item.SalePercent ? item.SalePercent + '%' : '' }}</div>
   </div>
 </template>
 

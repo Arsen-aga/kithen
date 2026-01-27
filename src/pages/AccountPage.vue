@@ -2,40 +2,40 @@
 import { useApi } from '@/helpers/useApi'
 import CalculateBlock from '../components/CalculateBlock.vue'
 import ReviewBlock from '../components/ReviewBlock.vue'
-import { ref } from 'vue'
+import { useSmetaStore } from '@/stores/smeta'
+import { onMounted } from 'vue'
 
 const { get } = useApi()
+const smetaStore = useSmetaStore()
 
-const getOrders = async () => {
+const getOrder = async () => {
   try {
     const response = await get('orders')
-    console.log('response', response)
-    getOneOrder(response)
+    return getOneOrder(response)
   } catch (error) {
     console.log(error)
   }
 }
-const testOrder = ref({});
 const getOneOrder = (orders) => {
-  orders.forEach(order => {
-    console.log('order', JSON.parse(order.order));
-    // console.log('order', JSON.parse(order.Order_mat));
-    testOrder.value = JSON.parse(order.order)
-    console.log('order', testOrder.value.Order_mat);
-  });
+  const parsOrder = JSON.parse(orders[0].order)
+  return parsOrder
 }
-const getUsers = async () => {
-  try {
-    const response = await get('user-profiles')
-    console.log('response', response)
-  } catch (error) {
-    console.log(error)
-  }
-}
+// const getUsers = async () => {
+//   try {
+//     const response = await get('user-profiles')
+//     console.log('response', response)
+//   } catch (error) {
+//     console.log(error)
+//   }
+// }
+
+onMounted(async () => {
+  smetaStore.initSmeta(await getOrder())
+  console.log('smetaStore.smeta', smetaStore.smeta);
+})
 </script>
 <template>
-  <button @click="getOrders">Получить заказы</button>
-  <button @click="getUsers">Получить Пользователей</button>
+  <!-- <button @click="getUsers">Получить Пользователей</button> -->
   <div class="app-component">
     <CalculateBlock />
     <ReviewBlock />

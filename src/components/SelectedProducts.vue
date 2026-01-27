@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import IconCart from '@/components/icons/IconCart.vue'
 import CheckboxButton from '@/components/UI/CheckboxButton.vue'

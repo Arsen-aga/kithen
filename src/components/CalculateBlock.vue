@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount, watch, computed } from 'vue'
+import { ref, onBeforeMount } from 'vue'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -18,11 +18,8 @@ const { get } = useApi()
 // const { addItem } = useResultItems()
 const storeCatalog = useCatalogBlock()
 
-const itemSmeta = ref('')
-// const itemMarket = ref('')
 
 const itemHouseholdAppliances = ref('')
-const itemSelectedProducts = ref('')
 const itemTechnicallyComplexProducts = ref('')
 const itemServices = ref('')
 const itemTreaty = ref('')
@@ -48,18 +45,8 @@ const getMarket = async () => {
 }
 
 onBeforeMount(async () => {
-  // itemSmeta.value = await getData('../../data/smeta.json')
-  // if (itemSmeta.value) {
-  //   itemSmeta.value.items.forEach((item) => {
-  //     item.table.forEach((elem) => {
-  //       addItem(item.id, elem)
-  //     })
-  //   })
-  // }
   await getMarket()
-  // itemMarket.value = await getData('../../data/market.json')
   // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
-  // itemSelectedProducts.value = await getData('../../data/selected-products.json')
   // itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
   // itemServices.value = await getData('../../data/services.json')
   // itemTreaty.value = await getData('../../data/treaty.json')
@@ -72,8 +59,8 @@ onBeforeMount(async () => {
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
-      <AccordionItem v-if="itemSmeta" :title="itemSmeta.title">
-        <AccordionSmeta :items="itemSmeta.items" />
+      <AccordionItem title="Подробная смета">
+        <AccordionSmeta/>
       </AccordionItem>
       <AccordionItem
         v-if="marketGroups && marketGroups.length > 0"
@@ -91,7 +78,7 @@ onBeforeMount(async () => {
         content="link"
         :title="itemHouseholdAppliances.title"
       ></AccordionItem> -->
-      <AccordionItem  title="Выбранные товары">
+      <AccordionItem title="Выбранные товары">
         <SelectedProducts />
       </AccordionItem>
       <!-- <AccordionItem

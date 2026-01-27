@@ -1,21 +1,16 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useResultItems } from '@/stores/result'
+import { computed, watch, ref } from 'vue'
 import MainButton from '@/components/UI/MainButton.vue'
 import TableOpen from '@/components/TableOpen.vue'
 import TitileDotsPrice from '@/components/UI/TitileDotsPrice.vue'
-import { findItemToId } from '@/helpers/findItemToId'
-const { resultItems } = useResultItems()
+import { useSmetaStore } from '@/stores/smeta'
 
-const props = defineProps({
-  items: {
-    type: Array,
-    required: true,
-  },
-})
+const smetaStore = useSmetaStore()
+const items = computed(() => smetaStore.smetaTables || []);
 
-const tablesStates = ref(props.items.map(() => false))
-const openTable = () => {
+const tablesStates = ref([])
+console.log('tablesStates.value', tablesStates.value);
+const openTable = () => { 
   const allOpen = tablesStates.value.every((state) => state)
   tablesStates.value = tablesStates.value.map(() => !allOpen)
 }
@@ -24,6 +19,9 @@ const allTablesOpen = computed(() => tablesStates.value.every((state) => state))
 const updateTableState = (index, state) => {
   tablesStates.value[index] = state
 }
+watch(items, (newItems) => {
+  tablesStates.value = newItems.map(() => false)
+}, { immediate: true })
 </script>
 
 <template>
@@ -33,7 +31,7 @@ const updateTableState = (index, state) => {
     </MainButton>
     <div class="accordion-smeta__items">
       <div class="accordion-smeta__item" v-for="(item, index) in items" :key="item.id">
-        <TitileDotsPrice :title="item.title" :price="findItemToId(resultItems[0].elems, item.id)?.price" />
+        <TitileDotsPrice :title="item.title" :price="item?.price" />
         <TableOpen
           v-if="item.table.length"
           :is-open-all-table="tablesStates[index]"
