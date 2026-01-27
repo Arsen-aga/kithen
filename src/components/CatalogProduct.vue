@@ -81,7 +81,7 @@ const getParentGroup = async (groupId) => {
   }
 }
 const existProductObject = async (product) => {
-  const { files, attrs, ...cleanProduct } = product
+  const { ...cleanProduct } = product
   const parentCategory = await getParentGroup(product.Group)
   const category = {
     id: parentCategory.id,

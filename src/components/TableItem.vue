@@ -1,6 +1,8 @@
 <script setup>
 import { formatNum } from '@/helpers/formatNum'
+import { ref } from 'vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
+import SmetaModal from '@/components/UI/SmetaModal.vue'
 
 defineProps({
   tableItems: {
@@ -8,6 +10,20 @@ defineProps({
     require: true,
   },
 })
+const activeModalItem = ref(null)
+const activeModalProducts = ref([])
+
+const openModal = (item, products) => {
+  activeModalItem.value = item
+  activeModalProducts.value = products
+  document.body.style.overflow = 'hidden'
+}
+
+const closeModal = () => {
+  activeModalItem.value = null
+  activeModalProducts.value = []
+  document.body.style.overflow = ''
+}
 </script>
 
 <template>
@@ -17,9 +33,15 @@ defineProps({
     <div class="table-item__td">{{ formatNum(item.Count, 2) }}</div>
     <div class="table-item__td">{{ formatNum(item.Price, 2) }} ₽</div>
     <div class="table-item__td">{{ item.p_sum ? item.p_sum : formatNum(item.Count * item.Price, 2) }} ₽</div>
-    <div class="table-item__td"><LinkButton class="table-item__link" color="gray">Заменить материал</LinkButton></div>
+    <div class="table-item__td"><LinkButton v-if="item.Ar_Specification?.length > 0" class="table-item__link" color="gray" @click="() => openModal(item, item.Ar_Specification)">Заменить материал</LinkButton></div>
     <div class="table-item__td">{{ item.SalePercent ? item.SalePercent + '%' : '' }}</div>
   </div>
+    <SmetaModal 
+    v-if="activeModalItem !== null && activeModalProducts.length" 
+    :products="activeModalProducts" 
+    @close-modal="closeModal"
+    :replace-item="activeModalItem"
+  />
 </template>
 
 <style lang="scss" scoped>

@@ -17,18 +17,42 @@ export const useSmetaStore = defineStore('smeta', () => {
       const existingTable = tables.find((table) => table.id === elem.group_strukt.id)
       if (existingTable) {
         existingTable.table.push(elem)
-        existingTable.price += elem.Price || 0
+        existingTable.price += elem.p_sum || 0
       } else {
         tables.push({
           id: elem.group_strukt.id,
           title: elem.group_strukt.Name,
-          price: elem.Price || 0, 
+          price: elem.p_sum || 0,
           table: [elem],
         })
       }
     })
-    console.log('tables', tables)
     return tables
+  }
+
+  const changeElemInSortSmeta = (oldElem, newElem) => {
+    if (!oldElem || !newElem || !oldElem.group_strukt || !oldElem.p_id) {
+      return
+    }
+    smetaTables.value = smetaTables.value.map((smetaTable) => {
+      if (smetaTable.id !== oldElem.group_strukt.id) {
+        return smetaTable
+      }
+      const elemIndex = smetaTable.table.findIndex((elem) => elem.p_id === oldElem.p_id)
+      console.log('elemIndex', elemIndex);
+      if (elemIndex === -1) {
+        return smetaTable
+      }
+      const updatedTable = smetaTable.table.map((item, index) => (index === elemIndex ? { ...newElem } : { ...item }))
+      const totalPrice = updatedTable.reduce((sum, item) => {
+        return sum + (parseFloat(item.p_sum) || 0)
+      }, 0)
+      return {
+        ...smetaTable,
+        table: updatedTable,
+        price: parseFloat(totalPrice.toFixed(2)),
+      }
+    })
   }
 
   // selectProducts
@@ -94,6 +118,7 @@ export const useSmetaStore = defineStore('smeta', () => {
     smeta,
     initSmeta,
     smetaTables,
+    changeElemInSortSmeta,
     marketSelectProducts,
     addMarketProduct,
     deleteMarketProduct,
