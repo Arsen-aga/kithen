@@ -15,6 +15,8 @@ const token = store.getBearer
 
 const login = ref('')
 const password = ref('')
+const loginInput = ref('')
+const passwordInput  = ref('')
 
 const goLogin = () => {
   axios
@@ -64,6 +66,12 @@ const getUser = (id, token) => {
     })
 }
 
+const handleLoginEnter = () => {
+  if (login.value.trim() !== '') {
+    passwordInput.value.focus()
+  }
+}
+
 onMounted(() => {})
 </script>
 
@@ -73,18 +81,18 @@ onMounted(() => {})
     <div class="form__inputs">
       <label for="login">
         <span class="form__label-title">Логин</span>
-        <input class="form__inp" v-model="login" type="text" id="login" placeholder="Введите логин" />
+        <input ref="loginInput" class="form__inp" v-model="login" type="text" id="login" placeholder="Введите логин" @keyup.enter="handleLoginEnter" />
       </label>
       <label for="password">
         <span class="form__label-title">Пароль</span>
-        <input class="form__inp" v-model="password" type="password" id="password" placeholder="Введите пароль" />
+        <input ref="passwordInput" class="form__inp" v-model="password" type="password" id="password" placeholder="Введите пароль" @keyup.enter="goLogin" />
       </label>
       <MainButton @click="goLogin" class="text-red" sizeButton="middle-btn form__btn">Войти</MainButton>
     </div>
-    <div class="form__description">
+    <!-- <div class="form__description">
       <p>Еще не зарегистрированы?</p>
       <router-link to="/admin">Регистрация</router-link>
-    </div>
+    </div> -->
   </div>
 </template>
 
