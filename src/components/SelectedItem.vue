@@ -27,6 +27,7 @@ const checked = computed({
 
 const updateCountInProduct = (newCount) => {
   smetaStore.changeProductCount(props.item.id, newCount)
+  console.log('newCount', newCount);
 }
 
 const checkItem = () => {
@@ -34,6 +35,7 @@ const checkItem = () => {
   checked.value = !checked.value
   console.log('checked.value', checked.value);
 }
+console.log('props.item', props.item);
 </script>
 
 <template>
@@ -53,8 +55,8 @@ const checkItem = () => {
       </div>
     </div>
     <div class="selected-item__right">
-      <p class="selected-item__old-price" v-if="item.Price">{{ formatNum(item.Price_0, 0) }} ₽</p>
-      <p class="selected-item__price">{{ formatNum(item.Price, 0) }} ₽</p>
+      <p class="selected-item__old-price" v-if="item.Price">{{ formatNum(item.price_old ? item.price_old : item.Price_0, 0) }} ₽</p>
+      <p class="selected-item__price">{{ formatNum(item.price_new ? item.price_new : item.Price, 0) }} ₽</p>
       <CounterBlock class="selected-item__counter" :counter="item.Count" @update-count="updateCountInProduct" />
     </div>
   </div>

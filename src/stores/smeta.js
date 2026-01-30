@@ -3,14 +3,14 @@ import { defineStore } from 'pinia'
 
 export const useSmetaStore = defineStore('smeta', () => {
   const smeta = ref()
-  const smetaTables = ref()
-
+  
   // smeta
   const initSmeta = (order) => {
     smeta.value = order
     smetaTables.value = sortSmetaTables(smeta.value.Order_mat)
   }
-
+  // smetaTables
+  const smetaTables = ref()
   const sortSmetaTables = (allElems) => {
     const tables = []
     allElems.forEach((elem) => {
@@ -85,9 +85,10 @@ export const useSmetaStore = defineStore('smeta', () => {
   }
   const changeProductCount = (productId, count) => {
     const product = getMarketProduct(productId)
+    console.log('product', product);
     product.Count = count
-    // console.log('123', 123)
-    // if (count < 1) deleteMarketProduct(productId)
+    product.price_old = count * product.Price_0
+    product.price_new = count * product.Price
   }
   const getMarketProduct = (productId) => {
     for (let index = 0; index < marketSelectProducts.value.length; index++) {

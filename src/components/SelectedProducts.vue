@@ -43,7 +43,7 @@ const updateStates = (newStates, index) => {
 watch(
   () => smetaStore.marketSelectProducts,
   (newItems) => resetCheckStatusProduct(newItems),
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 </script>
 
