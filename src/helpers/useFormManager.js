@@ -136,6 +136,7 @@ export function useFormManager(entityType, routeParams) {
       photo: itemData.photo || null,
       parent_id: itemData.parent_id || null,
       level: itemData.level || 0,
+      article: itemData.id_1s || null
     }
 
     formData.value = { ...formData.value, ...commonFields }

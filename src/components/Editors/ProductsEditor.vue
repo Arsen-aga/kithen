@@ -344,7 +344,10 @@ watch(
   <div class="content-editor">
     <!-- Основная информация -->
     <div class="editor-section">
-      <h3 class="section-title">Основная информация {{ currentId }}</h3>
+      <div class="section-header">
+        <h3 class="section-title attr-title">Основная информация {{ currentId }}</h3>
+        <p class="product-article">Артикул: {{ formData.article }}</p>
+      </div>
       <div class="form-grid">
         <div class="form-group">
           <label for="title" class="form-label">Наименование товара</label>
@@ -525,6 +528,10 @@ watch(
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 2px solid #f0f2f5;
+}
+
+.product-article{
+  font-weight: 500;
 }
 
 .attr-title {

@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 export const useSmetaStore = defineStore('smeta', () => {
   const smeta = ref()
-  
+
   // smeta
   const initSmeta = (order) => {
     smeta.value = order
@@ -14,20 +14,45 @@ export const useSmetaStore = defineStore('smeta', () => {
   const sortSmetaTables = (allElems) => {
     const tables = []
     allElems.forEach((elem) => {
-      const existingTable = tables.find((table) => table.id === elem.group_strukt.id)
+      console.log('elem.Table', elem.Table)
+      // const existingTable = tables.find((table) => table.id === elem.group_strukt.id)
+      // if (existingTable) {
+      //   existingTable.table.push(elem)
+      //   existingTable.price += elem.p_sum || 0
+      // } else {
+      //   tables.push({
+      //     id: elem.group_strukt.id,
+      //     title: elem.group_strukt.Name,
+      //     price: elem.p_sum || 0,
+      //     table: [elem],
+      //   })
+      // }
+      const existingTable = tables.find((table) => table.id === elem.Table)
       if (existingTable) {
         existingTable.table.push(elem)
         existingTable.price += elem.p_sum || 0
       } else {
         tables.push({
-          id: elem.group_strukt.id,
-          title: elem.group_strukt.Name,
+          id: elem.Table,
+          title: filterTableName(elem.Table) + elem.Table,
           price: elem.p_sum || 0,
           table: [elem],
         })
       }
     })
+    console.log('tables', tables)
     return tables
+  }
+
+  const filterTableName = (id) => {
+    switch (id) {
+      case 1:
+        return 'Корпуса'
+      case 2:
+        return 'Фасады'
+      case 3:
+        return 'Фурнитура'
+    }
   }
 
   const changeElemInSortSmeta = (oldElem, newElem) => {
@@ -39,7 +64,7 @@ export const useSmetaStore = defineStore('smeta', () => {
         return smetaTable
       }
       const elemIndex = smetaTable.table.findIndex((elem) => elem.p_id === oldElem.p_id)
-      console.log('elemIndex', elemIndex);
+      console.log('elemIndex', elemIndex)
       if (elemIndex === -1) {
         return smetaTable
       }
@@ -85,7 +110,7 @@ export const useSmetaStore = defineStore('smeta', () => {
   }
   const changeProductCount = (productId, count) => {
     const product = getMarketProduct(productId)
-    console.log('product', product);
+    console.log('product', product)
     product.Count = count
     product.price_old = count * product.Price_0
     product.price_new = count * product.Price

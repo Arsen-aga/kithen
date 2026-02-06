@@ -34,7 +34,7 @@ const getMarket = async () => {
     // Преобразуем ответ в массив (даже если это один объект)
     const data = Array.isArray(response) ? response : [response].filter(Boolean)
 
-    marketGroups.value = data.slice(0, 13)
+    marketGroups.value = data
     console.log('marketGroups.value', marketGroups.value)
     return data // Возвращаем массив для внешнего использования
   } catch (error) {

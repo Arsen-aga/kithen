@@ -1,14 +1,20 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router';
 import IconMap from '@/components/icons/IconMapPoint.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
 
+const router = useRouter();
 const salon = ref('Технологи')
+
+router
 </script>
 
 <template>
   <section class="user-block">
-    <img alt="logo" class="logo user-block__logo" src="@/assets/images/logo.svg" />
+    <div @click="router.push('/admin')" class="logo-link">
+      <img alt="logo" class="logo user-block__logo" src="@/assets/images/logo.svg" />
+    </div>
     <div class="user-block__right">
       <IconMap class="user-block__right-icon" />
       <div class="user-block__right-info">
@@ -41,5 +47,9 @@ const salon = ref('Технологи')
       font-weight: 500;
     }
   }
+}
+
+.logo-link{
+  cursor: pointer;
 }
 </style>
