@@ -7,7 +7,6 @@ import LinkButton from '@/components/UI/LinkButton.vue'
 const router = useRouter();
 const salon = ref('Технологи')
 
-router
 </script>
 
 <template>
