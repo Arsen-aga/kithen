@@ -381,14 +381,6 @@ watch(
     <div class="editor-section">
       <div class="section-header">
         <h3 class="section-title attr-title">Атрибуты товара</h3>
-        <button
-          type="button"
-          class="btn btn-primary"
-          @click="addCustomGroup"
-          :disabled="availableGroups.length === 0 && customGroups.some((g) => g.isNew)"
-        >
-          + Добавить атрибут
-        </button>
       </div>
 
       <div class="attributes-container">
@@ -456,6 +448,16 @@ watch(
         <div v-if="availableGroups.length === 0 && customGroups.length > 0" class="no-available-groups-message">
           <p>Все доступные группы атрибутов уже добавлены к товару.</p>
         </div>
+        <div class="attributes-container__footer">
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="addCustomGroup"
+            :disabled="availableGroups.length === 0 && customGroups.some((g) => g.isNew)"
+          >
+            + Добавить атрибут
+          </button>
+        </div>
       </div>
     </div>
 
@@ -511,6 +513,10 @@ watch(
   max-width: 100%;
   padding: 0;
 }
+.attributes-container__footer{
+  display: flex;
+  justify-content: flex-end;
+}
 
 .editor-section {
   background: white;
@@ -530,7 +536,7 @@ watch(
   border-bottom: 2px solid #f0f2f5;
 }
 
-.product-article{
+.product-article {
   font-weight: 500;
 }
 
