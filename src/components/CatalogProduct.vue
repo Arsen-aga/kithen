@@ -54,12 +54,14 @@ const initializeFiles = async () => {
 const initializeOptions = async () => {
   try {
     const attributes = await getAttributes(props.product.id)
-    for (const attribute of attributes) {
-      const optionName = await getAttributeGroup(attribute.group_id)
-      options.value.push({
-        option: optionName,
-        info: attribute.name,
-      })
+    if(attributes.length){
+      for (const attribute of attributes) {
+        const optionName = await getAttributeGroup(attribute.group_id)
+        options.value.push({
+          option: optionName,
+          info: attribute.name,
+        })
+      }
     }
   } catch (error) {
     console.log(error)
@@ -84,8 +86,8 @@ const existProductObject = async (product) => {
   const { ...cleanProduct } = product
   const parentCategory = await getParentGroup(product.Group)
   const category = {
-    id: parentCategory.id,
-    title: parentCategory.Name,
+    id: parentCategory ? parentCategory.id : 'no_cat',
+    title: parentCategory ? parentCategory.Name : 'Без категории',
   }
   console.log('category', category)
   storeSmeta.addMarketProduct({

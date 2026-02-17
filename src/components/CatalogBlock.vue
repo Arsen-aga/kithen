@@ -1,12 +1,13 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import MainButton from '@/components/UI/MainButton.vue'
-import IconSearch from '@/components/icons/IconSearch.vue'
+// import IconSearch from '@/components/icons/IconSearch.vue'
 import CatalogFilter from '@/components/CatalogFilter.vue'
 import CatalogProduct from '@/components/CatalogProduct.vue'
 import { useApi } from '@/helpers/useApi'
 import { toast } from 'vue3-toastify'
 import { useCatalogBlock } from '@/stores/catalogBlock'
+import SearchInput from '@/components/UI/SearchInput.vue'
 
 const storeCatalog = useCatalogBlock()
 const { get } = useApi()
@@ -178,10 +179,7 @@ onUnmounted(() => {
   <div class="catalog-block">
     <div class="catalog-block__top">
       <MainButton class="catalog-block__btn" :show-arrows="true" @click="closeCatalog">Вернуться</MainButton>
-      <div class="catalog-block__search-wrapper">
-        <IconSearch class="catalog-block__search-icon" />
-        <input class="catalog-block__search" type="text" placeholder="Поиск" v-model="searchQuery" />
-      </div>
+      <SearchInput class="catalog-block__search" placeholder="Поиск..." v-model="searchQuery" />
     </div>
     <div class="catalog-block__inner" ref="scrollContainer" @scroll.passive="handleScroll">
       <div class="catalog-block__content">
@@ -222,29 +220,10 @@ onUnmounted(() => {
   &__btn {
     padding: 16px 20px 14px;
   }
-  &__search-wrapper {
-    position: relative;
-  }
-  &__search-icon {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 15px;
-  }
-  &__search {
+  &__search{
     max-width: 220px;
-    width: 100%;
-    height: 50px;
-    background-color: #fafbfc;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 15px 20px 13px 43px;
-    font-family: 'Jost';
-    font-weight: 400;
-    font-size: 14px;
-    line-height: calc(22 / 14 * 100%);
-    color: var(--default-color);
   }
+
   &__inner {
     padding: 20px 0;
     max-height: 1320px;

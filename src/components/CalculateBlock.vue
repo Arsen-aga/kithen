@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onBeforeMount } from 'vue'
+import { useApi } from '@/helpers/useApi'
+import { useCatalogBlock } from '@/stores/catalogBlock'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
@@ -8,16 +10,10 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
-// import { getData } from '@/api/getData'
-import { useApi } from '@/helpers/useApi'
-import { useCatalogBlock } from '@/stores/catalogBlock'
+import CalculateSearchProoducts from './UI/CalculateSearchProoducts.vue'
 
 const { get } = useApi()
-
-// import { useResultItems } from '@/stores/result'
-// const { addItem } = useResultItems()
 const storeCatalog = useCatalogBlock()
-
 
 const itemHouseholdAppliances = ref('')
 const itemTechnicallyComplexProducts = ref('')
@@ -26,16 +22,13 @@ const itemTreaty = ref('')
 
 const marketGroups = ref([])
 
-
 const getMarket = async () => {
   try {
     const response = await get('product-groups?level=0')
-
-    // Преобразуем ответ в массив (даже если это один объект)
     const data = Array.isArray(response) ? response : [response].filter(Boolean)
     marketGroups.value = data.slice(0, 13)
     console.log('marketGroups.value', marketGroups.value)
-    return data // Возвращаем массив для внешнего использования
+    return data
   } catch (error) {
     console.error('Ошибка получения данных маркета', error)
     marketGroups.value = []
@@ -45,12 +38,9 @@ const getMarket = async () => {
 
 onBeforeMount(async () => {
   await getMarket()
-  // itemHouseholdAppliances.value = await getData('../../data/household-appliances.json')
-  // itemTechnicallyComplexProducts.value = await getData('../../data/technically-complex-products.json')
-  // itemServices.value = await getData('../../data/services.json')
-  // itemTreaty.value = await getData('../../data/treaty.json')
 })
 
+const showProducts = ref(false)
 
 </script>
 
@@ -59,17 +49,20 @@ onBeforeMount(async () => {
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
       <AccordionItem title="Подробная смета">
-        <AccordionSmeta/>
+        <AccordionSmeta />
       </AccordionItem>
       <AccordionItem
         v-if="marketGroups && marketGroups.length > 0"
         :title="storeCatalog.isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
-        <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
-        <CatalogBlock
-          v-show="storeCatalog.catalogCategory && storeCatalog.isOpenCatalog"
-          :group-id="storeCatalog.catalogCategory"
-        />
+        <CalculateSearchProoducts class="calculate-block__products" v-model:show-products="showProducts"/>
+        <template v-if="!showProducts">
+          <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
+          <CatalogBlock
+            v-show="storeCatalog.catalogCategory && storeCatalog.isOpenCatalog"
+            :group-id="storeCatalog.catalogCategory"
+          />
+        </template>
       </AccordionItem>
 
       <!-- <AccordionItem
@@ -116,11 +109,13 @@ onBeforeMount(async () => {
     display: grid;
     gap: 10px;
   }
-
   &__bottom {
     margin-top: 50px;
     padding-top: 30px;
     border-top: 1px solid rgba($color: #464451, $alpha: 0.1);
+  }
+  &__products {
+    margin-top: 15px;
   }
 }
 </style>
