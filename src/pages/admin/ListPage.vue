@@ -4,7 +4,11 @@ import { useRoute } from 'vue-router'
 import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
 import { useApi } from '@/helpers/useApi'
+import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
 
+import SearchList from '@/components/UI/SearchList.vue'
+
+const { getAllCategories, getCategoryInId } = useCategoriesLevel()
 const { get, del } = useApi()
 
 const route = useRoute()
@@ -25,6 +29,16 @@ const isLoading = ref(false)
 const hasMore = ref(true)
 const observer = ref(null)
 const lastElement = ref(null)
+
+// Новые переменные для фильтрации по категории
+const selectedCategory = ref(null)
+const defaultCategory = ref({
+  id: null,
+  Name: 'Все категории',
+  level: null,
+})
+const showCategoryFilter = ref(false)
+
 
 // Методы для бесконечной ленты
 const loadMoreCategories = async () => {
@@ -160,23 +174,78 @@ const deleteCategory = async (id) => {
   }
 }
 
+
+// Функция для получения категорий для SearchList
+const getCategoriesForFilter = async (params = {}) => {
+  try {
+    const { search = '', page = 1 } = params
+    const categories = await getAllCategories(search, page)
+    return categories
+  } catch (error) {
+    console.error('Ошибка загрузки категорий:', error)
+    return []
+  }
+}
+
+// Открытие фильтра по категориям
+const openCategoryFilter = () => {
+  showCategoryFilter.value = true
+}
+
+// Закрытие фильтра по категориям
+const closeCategoryFilter = () => {
+  showCategoryFilter.value = false
+}
+
+// Обработчик выбора категории для фильтрации
+const handleCategoryFilter = async (category) => {
+  selectedCategory.value = category.id ? category : null
+  closeCategoryFilter()
+  
+  // Перезагружаем товары с новым фильтром
+  await getContent()
+}
+
+// Сброс фильтра по категории
+const clearCategoryFilter = () => {
+  selectedCategory.value = null
+  getContent()
+}
+
+
+
+
+
+
 // Загрузка данных (первая страница)
 const getContent = async () => {
   resetPagination()
 
   try {
     let url = `${pathName.value}?page=${currentPage.value}`
+    
+    // Добавляем параметры фильтрации
+    const params = new URLSearchParams()
+    
     if (searchQuery.value) {
-      url += `&Name=${encodeURIComponent(searchQuery.value)}`
+      params.append('Name', searchQuery.value)
+    }
+    
+    // Добавляем фильтр по категории для товаров
+    if (pathName.value === 'products' && selectedCategory.value?.id) {
+      params.append('category_id', selectedCategory.value.id)
+    }
+    
+    const queryString = params.toString()
+    if (queryString) {
+      url += `&${queryString}`
     }
 
     const response = await get(url)
     categories.value = response || []
     console.log('Загружены данные для:', pathName.value, categories.value)
 
-    // Проверяем, есть ли еще данные
     if (categories.value.length < 10) {
-      // Если элементов меньше ожидаемого количества
       hasMore.value = false
     }
   } catch (error) {
@@ -280,6 +349,33 @@ onUnmounted(() => {
     <!-- Заголовок и кнопка добавления -->
     <div class="categories-header">
       <h2 class="page-title">{{ getPageTitle() }}</h2>
+      <!-- Фильтр по категориям для товаров -->
+      <div v-if="isProductsPage" class="category-filter-wrapper">
+        <div class="selected-category" @click="openCategoryFilter">
+          <span class="category-label">Категория:</span>
+          <span class="category-value">{{ selectedCategory?.Name || 'Все категории' }}</span>
+          <span class="dropdown-arrow">▼</span>
+        </div>
+        <button 
+          v-if="selectedCategory" 
+          class="clear-filter-btn" 
+          @click="clearCategoryFilter"
+          title="Сбросить фильтр"
+        >
+          ×
+        </button>
+        <SearchList class="category-filter-wrapper__select" v-if="showCategoryFilter"
+          :get-more-items="getCategoriesForFilter"
+          :current-item="selectedCategory || defaultCategory"
+          :default-item="defaultCategory"
+          :search-placeholder="'Поиск категории...'"
+          :title-placeholder="'Выберите категорию'"
+          :display-fields="['Name']"
+          :item-style-fn="(item) => ({ paddingLeft: item?.level === 1 ? '30px' : item?.level === 2 ? '50px' : '' })"
+          :display-fn="(item) => (item?.level !== 0 ? '--- ' : '') + (item?.Name || '')"
+          @change-item="handleCategoryFilter"
+        />
+      </div>
       <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }" class="btn-primary">
         <span class="btn-icon">➕</span>
         Добавить
@@ -755,5 +851,136 @@ onUnmounted(() => {
   font-size: 14px;
   margin: 0;
   opacity: 0.7;
+}
+
+.category-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  margin-left: 20px;
+  position: relative;
+}
+
+.category-filter-wrapper__select{
+  position: absolute;
+  top: 0;
+  transform: translateY(100%);
+  z-index: 1;
+  width: 300px;
+}
+
+.selected-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #f5f5f5);
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selected-category:hover {
+  background: var(--bg-hover, #e8e8e8);
+  border-color: var(--primary-color, #4a90e2);
+}
+
+.category-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+}
+
+.category-value {
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #666);
+  margin-left: 4px;
+}
+
+.clear-filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  background: var(--bg-secondary, #f5f5f5);
+  color: var(--text-secondary, #666);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-filter-btn:hover {
+  background: var(--danger-color, #dc3545);
+  color: white;
+  border-color: var(--danger-color, #dc3545);
+}
+.category-filter-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #eee);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary, #999);
+  padding: 0 4px;
+}
+
+.close-btn:hover {
+  color: var(--text-primary, #333);
 }
 </style>
