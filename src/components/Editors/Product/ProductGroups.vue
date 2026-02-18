@@ -191,7 +191,7 @@ const displayCategories = () => {
       connectionId: null,
     })
   }
-
+  
   // Дополнительные категории
   categories.push(
     ...productCategories.value.map((cat) => ({

@@ -2,7 +2,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
 import { useApi } from '@/helpers/useApi'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
@@ -10,11 +9,10 @@ import MainPagination from '@/components/UI/MainPagination.vue'
 
 import SearchList from '@/components/UI/SearchList.vue'
 
-const { getAllCategories, getCategoryInId } = useCategoriesLevel()
+const { getAllCategories } = useCategoriesLevel()
 const { get, del } = useApi()
 
 const route = useRoute()
-const store = useDefaultItems()
 
 // Получаем pathName из параметров роута
 const pathName = computed(() => route.params.pathName)
@@ -39,7 +37,6 @@ const defaultCategory = ref({
   Name: 'Все категории',
   level: null,
 })
-const showCategoryFilter = ref(false)
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
@@ -116,21 +113,11 @@ const getCategoriesForFilter = async (params = {}) => {
   }
 }
 
-// Открытие фильтра по категориям
-const openCategoryFilter = () => {
-  showCategoryFilter.value = true
-}
-
-// Закрытие фильтра по категориям
-const closeCategoryFilter = () => {
-  showCategoryFilter.value = false
-}
-
 // Обработчик выбора категории для фильтрации
 const handleCategoryFilter = async (category) => {
+  console.log('category', category);
   selectedCategory.value = category.id ? category : null
-  closeCategoryFilter()
-  
+
   // Перезагружаем товары с новым фильтром
   await getContent()
 }
@@ -144,31 +131,31 @@ const clearCategoryFilter = () => {
 // Загрузка данных с пагинацией
 const getContent = async (page = currentPage.value) => {
   if (isLoading.value) return
-  
+
   isLoading.value = true
 
   try {
     let url = `${pathName.value}`
     const params = new URLSearchParams()
-    
+
     // Добавляем параметры пагинации
     params.append('page', page)
     params.append('limit', perPage.value)
-    
+
     if (searchQuery.value) {
       params.append('Name', searchQuery.value)
     }
-    
+
     // Добавляем фильтр по категории для товаров
     if (pathName.value === 'products' && selectedCategory.value?.id) {
-      params.append('category_id', selectedCategory.value.id)
+      params.append('Group', selectedCategory.value.id)
     }
-    
+
     const queryString = params.toString()
     if (queryString) {
       url += `?${queryString}`
     }
-
+    console.log('url', url);
     const response = await get(url, true) // true для получения заголовков
 
     // Получаем заголовки пагинации
@@ -194,7 +181,6 @@ const getContent = async (page = currentPage.value) => {
     if (tableContainer) {
       tableContainer.scrollTop = 0
     }
-
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
     categories.value = []
@@ -294,20 +280,8 @@ onUnmounted(() => {
       <h2 class="page-title">{{ getPageTitle() }}</h2>
       <!-- Фильтр по категориям для товаров -->
       <div v-if="isProductsPage" class="category-filter-wrapper">
-        <div class="selected-category" @click="openCategoryFilter">
-          <span class="category-label">Категория:</span>
-          <span class="category-value">{{ selectedCategory?.Name || 'Все категории' }}</span>
-          <span class="dropdown-arrow">▼</span>
-        </div>
-        <button 
-          v-if="selectedCategory" 
-          class="clear-filter-btn" 
-          @click="clearCategoryFilter"
-          title="Сбросить фильтр"
-        >
-          ×
-        </button>
-        <SearchList class="category-filter-wrapper__select" v-if="showCategoryFilter"
+        <SearchList
+          class="category-filter-wrapper__select"
           :get-more-items="getCategoriesForFilter"
           :current-item="selectedCategory || defaultCategory"
           :default-item="defaultCategory"
@@ -318,6 +292,9 @@ onUnmounted(() => {
           :display-fn="(item) => (item?.level !== 0 ? '--- ' : '') + (item?.Name || '')"
           @change-item="handleCategoryFilter"
         />
+        <button v-if="selectedCategory" class="clear-filter-btn" @click="clearCategoryFilter" title="Сбросить фильтр">
+          ×
+        </button>
       </div>
       <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: 'new' } }" class="btn-primary">
         <span class="btn-icon">➕</span>
@@ -370,11 +347,7 @@ onUnmounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="category in filteredCategories"
-            :key="category.id"
-            class="table-row"
-          >
+          <tr v-for="category in filteredCategories" :key="category.id" class="table-row">
             <td class="cell-id">{{ category.id }}</td>
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
@@ -792,12 +765,8 @@ onUnmounted(() => {
   position: relative;
 }
 
-.category-filter-wrapper__select{
-  position: absolute;
-  top: 0;
-  transform: translateY(100%);
-  z-index: 1;
-  width: 300px;
+.category-filter-wrapper__select {
+  min-width: 400px;
 }
 
 .selected-category {
