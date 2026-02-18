@@ -1,3 +1,4 @@
+<!-- CategoriesList.vue -->
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -5,6 +6,7 @@ import { useDefaultItems } from '@/stores/default'
 import { toast } from 'vue3-toastify'
 import { useApi } from '@/helpers/useApi'
 import { useCategoriesLevel } from '@/helpers/useCategoriesLevel'
+import MainPagination from '@/components/UI/MainPagination.vue'
 
 import SearchList from '@/components/UI/SearchList.vue'
 
@@ -23,12 +25,12 @@ const sortBy = ref('idAsc')
 const categories = ref([])
 const attributeGroups = ref([])
 
-// Переменные для бесконечной ленты
+// Параметры пагинации
 const currentPage = ref(1)
+const totalPages = ref(1)
+const totalCount = ref(0)
+const perPage = ref(10)
 const isLoading = ref(false)
-const hasMore = ref(true)
-const observer = ref(null)
-const lastElement = ref(null)
 
 // Новые переменные для фильтрации по категории
 const selectedCategory = ref(null)
@@ -38,78 +40,6 @@ const defaultCategory = ref({
   level: null,
 })
 const showCategoryFilter = ref(false)
-
-
-// Методы для бесконечной ленты
-const loadMoreCategories = async () => {
-  if (isLoading.value || !hasMore.value) return
-
-  isLoading.value = true
-  currentPage.value++
-
-  try {
-    let url = `${pathName.value}?page=${currentPage.value}`
-    if (searchQuery.value) {
-      url += `&Name=${encodeURIComponent(searchQuery.value)}`
-    }
-
-    const response = await get(url)
-    const newCategories = response
-
-    if (newCategories && newCategories.length > 0) {
-      const uniqueNewCategories = newCategories.filter(
-        (newCat) => !categories.value.some((existingCat) => existingCat.id === newCat.id)
-      )
-      categories.value = [...categories.value, ...uniqueNewCategories]
-      // Если пришло меньше 10 элементов (или другого ожидаемого количества), значит страницы кончились
-      if (newCategories.length < 10 || uniqueNewCategories.length === 0) {
-        // Можете изменить на ожидаемое количество элементов на странице
-        hasMore.value = false
-      }
-    } else {
-      hasMore.value = false
-    }
-
-    console.log(`Загружена страница ${currentPage.value}:`, newCategories)
-  } catch (error) {
-    console.error('Ошибка загрузки данных:', error)
-    hasMore.value = false
-    toast.error('Ошибка загрузки данных', { autoClose: 1000 })
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// Инициализация Intersection Observer
-const initObserver = () => {
-  if (observer.value) {
-    observer.value.disconnect()
-  }
-
-  observer.value = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && !isLoading.value && hasMore.value) {
-        loadMoreCategories()
-      }
-    },
-    {
-      rootMargin: '100px', // Загружать заранее, когда до конца осталось 100px
-      threshold: 0.1,
-    }
-  )
-
-  if (lastElement.value) {
-    observer.value.observe(lastElement.value)
-  }
-}
-
-// Сброс состояния при смене страницы
-const resetPagination = () => {
-  currentPage.value = 1
-  categories.value = []
-  hasMore.value = true
-  isLoading.value = false
-}
 
 // Фильтрация и сортировка категорий
 const filteredCategories = computed(() => {
@@ -174,7 +104,6 @@ const deleteCategory = async (id) => {
   }
 }
 
-
 // Функция для получения категорий для SearchList
 const getCategoriesForFilter = async (params = {}) => {
   try {
@@ -212,20 +141,19 @@ const clearCategoryFilter = () => {
   getContent()
 }
 
-
-
-
-
-
-// Загрузка данных (первая страница)
-const getContent = async () => {
-  resetPagination()
+// Загрузка данных с пагинацией
+const getContent = async (page = currentPage.value) => {
+  if (isLoading.value) return
+  
+  isLoading.value = true
 
   try {
-    let url = `${pathName.value}?page=${currentPage.value}`
-    
-    // Добавляем параметры фильтрации
+    let url = `${pathName.value}`
     const params = new URLSearchParams()
+    
+    // Добавляем параметры пагинации
+    params.append('page', page)
+    params.append('limit', perPage.value)
     
     if (searchQuery.value) {
       params.append('Name', searchQuery.value)
@@ -238,20 +166,49 @@ const getContent = async () => {
     
     const queryString = params.toString()
     if (queryString) {
-      url += `&${queryString}`
+      url += `?${queryString}`
     }
 
-    const response = await get(url)
-    categories.value = response || []
+    const response = await get(url, true) // true для получения заголовков
+
+    // Получаем заголовки пагинации
+    const paginationHeaders = {
+      currentPage: response.headers['x-pagination-current-page'],
+      pageCount: response.headers['x-pagination-page-count'],
+      perPage: response.headers['x-pagination-per-page'],
+      totalCount: response.headers['x-pagination-total-count'],
+    }
+
+    // Обновляем состояние пагинации
+    currentPage.value = Number(paginationHeaders.currentPage) || page
+    totalPages.value = Number(paginationHeaders.pageCount) || 1
+    totalCount.value = Number(paginationHeaders.totalCount) || 0
+    perPage.value = Number(paginationHeaders.perPage) || 10
+
+    // Получаем массив данных
+    categories.value = response.data || response || []
     console.log('Загружены данные для:', pathName.value, categories.value)
 
-    if (categories.value.length < 10) {
-      hasMore.value = false
+    // Прокручиваем таблицу вверх при смене страницы
+    const tableContainer = document.querySelector('.table-container')
+    if (tableContainer) {
+      tableContainer.scrollTop = 0
     }
+
   } catch (error) {
     console.error('Ошибка загрузки данных:', error)
+    categories.value = []
+    totalPages.value = 0
+    totalCount.value = 0
     toast.error('Ошибка загрузки данных', { autoClose: 1000 })
+  } finally {
+    isLoading.value = false
   }
+}
+
+// Обработчик смены страницы
+const handlePageChange = (page) => {
+  getContent(page)
 }
 
 // Обработчик поиска с debounce
@@ -260,9 +217,9 @@ const handleSearch = () => {
     clearTimeout(searchTimeout.value)
   }
 
-  // Устанавливаем новый таймаут
   searchTimeout.value = setTimeout(() => {
-    getContent()
+    currentPage.value = 1 // Сбрасываем на первую страницу
+    getContent(1)
   }, 500)
 }
 
@@ -306,40 +263,26 @@ onMounted(async () => {
   if (pathName.value === 'product-attributes') {
     await loadAttributeGroups()
   }
-
-  // Инициализируем observer после загрузки DOM
-  setTimeout(() => {
-    initObserver()
-  }, 100)
-})
-
-// Обновляем observer при изменении данных
-watch(filteredCategories, () => {
-  setTimeout(() => {
-    initObserver()
-  }, 100)
-})
-
-watch(searchQuery, () => {
-  handleSearch() // ← ДОБАВЛЕНО
 })
 
 // Отслеживание изменения pathName
 watch(pathName, async (newPathName) => {
-  await getContent()
+  currentPage.value = 1 // Сбрасываем на первую страницу
+  await getContent(1)
   if (newPathName === 'product-attributes') {
     await loadAttributeGroups()
   }
 })
 
-// Очистка observer при размонтировании
+// Отслеживание поиска
+watch(searchQuery, () => {
+  handleSearch()
+})
+
+// Очистка таймаута при размонтировании
 onUnmounted(() => {
-  if (observer.value) {
-    observer.value.disconnect()
-  }
   if (searchTimeout.value) {
-    // ← ДОБАВЛЕНО
-    clearTimeout(searchTimeout.value) // ← ДОБАВЛЕНО
+    clearTimeout(searchTimeout.value)
   }
 })
 </script>
@@ -390,12 +333,6 @@ onUnmounted(() => {
       </div>
 
       <div class="filters-group">
-        <!-- <button class="filter-btn" :class="{ active: sortBy === 'idAsc' }" @click="sortByF($event, 'idAsc')">
-          <span>№ ↑</span>
-        </button>
-        <button class="filter-btn" :class="{ active: sortBy === 'idDesc' }" @click="sortByF($event, 'idDesc')">
-          <span>№ ↓</span>
-        </button> -->
         <button class="filter-btn" :class="{ active: sortBy === 'nameAsc' }" @click="sortByF($event, 'nameAsc')">
           <span>Имя A-Z</span>
         </button>
@@ -427,7 +364,6 @@ onUnmounted(() => {
         <thead>
           <tr>
             <th class="column-id">ID</th>
-            <!-- <th class="column-id">№</th> -->
             <th class="column-name">Название</th>
             <th v-if="pathName === 'product-attributes'" class="column-group">Группа</th>
             <th class="column-actions">Действия</th>
@@ -435,17 +371,11 @@ onUnmounted(() => {
         </thead>
         <tbody>
           <tr
-            v-for="(category, index) in filteredCategories"
+            v-for="category in filteredCategories"
             :key="category.id"
             class="table-row"
-            :ref="
-              (el) => {
-                if (index === filteredCategories.length - 1) lastElement = el
-              }
-            "
           >
             <td class="cell-id">{{ category.id }}</td>
-            <!-- <td class="cell-id">{{ index + 1 }}</td> -->
             <td class="cell-name">
               <RouterLink :to="{ name: 'Edit', params: { name: pathName, id: category.id } }" class="name-link">
                 <div class="name-content">
@@ -498,11 +428,6 @@ onUnmounted(() => {
         <span>Загрузка...</span>
       </div>
 
-      <!-- Сообщение о конце списка -->
-      <div v-if="!hasMore && filteredCategories.length > 0" class="end-of-list">
-        <span>Все элементы загружены</span>
-      </div>
-
       <!-- Состояние пустой таблицы -->
       <div v-if="filteredCategories.length === 0 && !isLoading" class="empty-state">
         <div class="empty-icon">📭</div>
@@ -510,6 +435,18 @@ onUnmounted(() => {
         <p class="empty-description">Попробуйте изменить параметры поиска или фильтрации</p>
       </div>
     </div>
+
+    <!-- Пагинация -->
+    <MainPagination
+      v-if="totalPages > 1"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-count="totalCount"
+      :per-page="perPage"
+      :show-info="true"
+      @page-change="handlePageChange"
+      @update:currentPage="handlePageChange"
+    />
   </div>
 </template>
 
@@ -635,7 +572,6 @@ onUnmounted(() => {
 .table-container {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .data-table {
@@ -654,6 +590,9 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .column-id {
@@ -816,15 +755,6 @@ onUnmounted(() => {
   100% {
     transform: rotate(360deg);
   }
-}
-
-/* Конец списка */
-.end-of-list {
-  text-align: center;
-  padding: 20px;
-  color: #6b7280;
-  font-size: 14px;
-  border-top: 1px solid #e5e7eb;
 }
 
 /* Состояние пустой таблицы */

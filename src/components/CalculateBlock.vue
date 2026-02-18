@@ -10,7 +10,7 @@ import SelectedProducts from '@/components/SelectedProducts.vue'
 import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
 import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
-import CalculateSearchProoducts from './UI/CalculateSearchProoducts.vue'
+import CalculateSearchProoducts from './CalculateSearchProoducts.vue'
 
 const { get } = useApi()
 const storeCatalog = useCatalogBlock()
@@ -55,7 +55,7 @@ const showProducts = ref(false)
         v-if="marketGroups && marketGroups.length > 0"
         :title="storeCatalog.isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
-        <CalculateSearchProoducts class="calculate-block__products" v-model:show-products="showProducts"/>
+        <CalculateSearchProoducts class="calculate-block__products" v-model:show-products="showProducts" v-show="!storeCatalog.isOpenCatalog"/>
         <template v-if="!showProducts">
           <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
           <CatalogBlock

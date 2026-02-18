@@ -60,7 +60,6 @@ const loadItemData = async () => {
     }
     return
   }
-
   try {
     const response = await get(`${name.value}/${id.value}`)
     currentItem.value = response
@@ -86,6 +85,7 @@ const initializeEditorData = () => {
     itemData.files?.filter((file) => file.type === 'photo'),
     'images'
   )
+  console.log('formData.value',formData.value );
   formData.value.video = initFiles(
     itemData.files?.filter((file) => file.type === 'video'),
     'video'
