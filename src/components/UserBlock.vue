@@ -1,17 +1,29 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useDefaultItems } from '@/stores/default'
+
 import IconMap from '@/components/icons/IconMapPoint.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
 
-const router = useRouter();
+const router = useRouter()
 const salon = ref('Технологи')
 
+const store = useDefaultItems()
+const user = computed(() => store.getUser)
+
+const goToAdmin = () => {
+  if (user.value.role.item_name === 'admin') {
+    console.log(user.value.username)
+    console.log(user.value.role.item_name)
+    router.push('/admin')
+  }
+}
 </script>
 
 <template>
   <section class="user-block">
-    <div @click="router.push('/admin')" class="logo-link">
+    <div @click="goToAdmin" class="logo-link">
       <img alt="logo" class="logo user-block__logo" src="@/assets/images/logo.svg" />
     </div>
     <div class="user-block__right">
@@ -48,7 +60,7 @@ const salon = ref('Технологи')
   }
 }
 
-.logo-link{
+.logo-link {
   cursor: pointer;
 }
 </style>

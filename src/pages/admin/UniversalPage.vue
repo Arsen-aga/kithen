@@ -268,6 +268,7 @@ onMounted(async () => {
 })
 
 const removeFile = async (file, filesArray = null) => {
+  file.productId = id;
   handleFileRemove(file, Number(id.value), filesArray)
 }
 

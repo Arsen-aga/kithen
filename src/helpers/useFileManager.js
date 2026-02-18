@@ -76,15 +76,18 @@ export function useFileManager() {
   }
 
   const deleteMarkedFiles = async () => {
+    console.log('deleteMarkedFiles', filesToDelete.value);
     if (filesToDelete.value.length === 0) return
-
+    console.log('deleteMarkedFiles', 222222);
+    
     console.log('Удаляем помеченные файлы:', filesToDelete.value)
-
+    
     try {
       for (const file of filesToDelete.value) {
         // Удаляем физический файл с сервера
         await deleteFile(file)
-
+        console.log('deleteFile', file);
+        
         // Удаляем связь с продуктом (если есть productId)
         if (file.productId) {
           await removeFileFromProduct(file.productId, file)
@@ -116,7 +119,7 @@ export function useFileManager() {
   const removeFileFromProduct = async (productId, file) => {
     console.log('удалили файл', productId, file)
     try {
-      const connection = await get('product-to-files')
+      const connection = await get(`product-to-files?product_id=${productId}`)
       console.log(connection)
       const foundConnection = connection?.find(
         (item) => item.product_id === productId && item.filename === file.nameUrl

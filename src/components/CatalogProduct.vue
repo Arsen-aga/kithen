@@ -1,15 +1,19 @@
 <script setup>
 import { formatNum } from '@/helpers/formatNum'
 import { toast } from 'vue3-toastify'
-import MainButton from '@/components/UI/MainButton.vue'
-import CatalogProductSlider from '@/components/CatalogProductSlider.vue'
-import CatalogProductModal from '@/components/UI/CatalogProductModal.vue'
-
-import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { onMounted, ref, computed } from 'vue'
 import { useApi } from '@/helpers/useApi'
 import { useFileManager } from '@/helpers/useFileManager'
 import { useProducts } from '@/helpers/useProducts'
 import { useSmetaStore } from '@/stores/smeta'
+import { useDefaultItems } from '@/stores/default'
+import MainButton from '@/components/UI/MainButton.vue'
+import CatalogProductSlider from '@/components/CatalogProductSlider.vue'
+import CatalogProductModal from '@/components/UI/CatalogProductModal.vue'
+import IconArrow from '@/components/icons/IconArrow.vue'
+
+const router = useRouter()
 
 const { get } = useApi()
 const { initFiles } = useFileManager()
@@ -20,6 +24,9 @@ const props = defineProps({
     required: true,
   },
 })
+
+const store = useDefaultItems()
+const user = computed(() => store.getUser)
 const storeSmeta = useSmetaStore()
 
 const images = ref([])
@@ -54,7 +61,7 @@ const initializeFiles = async () => {
 const initializeOptions = async () => {
   try {
     const attributes = await getAttributes(props.product.id)
-    if(attributes.length){
+    if (attributes.length) {
       for (const attribute of attributes) {
         const optionName = await getAttributeGroup(attribute.group_id)
         options.value.push({
@@ -110,11 +117,26 @@ onMounted(async () => {
     options: options.value,
   }
 })
+const goToEditProduct = (productId) => {
+  if (user.value.role.item_name === 'admin') {
+    console.log(user.value.username)
+    console.log(user.value.role.item_name)
+    router.push({ name: 'Edit', params: { name: 'products', id: productId } })
+  }
+}
 </script>
 
 <template>
   <div>
     <div class="catalog-product">
+      <div
+        v-if="user.role.item_name === 'admin'"
+        class="catalog-product__edit"
+        :class="{ rotate: isOpenList }"
+        @click="() => goToEditProduct(product.id)"
+      >
+        <IconArrow />
+      </div>
       <CatalogProductSlider class="catalog-product__swiper-wrapper" :images="images" :id="product.id" :video="video" />
       <div class="catalog-product__info">
         <h4 class="catalog-product__title">{{ product.Name }}</h4>
@@ -154,6 +176,31 @@ onMounted(async () => {
     z-index: 10;
     scale: 1.05;
     box-shadow: 0px 0px 70px rgba(163, 169, 183, 0.2);
+  }
+
+  &__edit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    background-color: rgba($color: #464451, $alpha: 0.1);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    z-index: 10;
+
+    svg{
+      rotate: 225deg;
+      transform: translate(1px, 2px);
+    }
+
+    &:hover {
+      scale: 1.1;
+    }
   }
 
   &__info {
