@@ -3,7 +3,7 @@ import { formatNum } from '@/helpers/formatNum'
 import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import CounterBlock from '@/components/UI/CounterBlock.vue'
 import { computed } from 'vue'
-import { useSmetaStore } from '@/stores/smeta'
+import { useSmetaStore } from '@/stores/smeta/index'
 const props = defineProps({
   item: {
     type: Object,

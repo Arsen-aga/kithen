@@ -98,9 +98,9 @@ const getProducts = async (page = currentPage.value) => {
     // Получаем массив товаров из ответа
     products.value = response.data || response
 
-    if (products.value.length === 0) {
-      toast.error('В данной категории нет товаров', { autoClose: 1000 })
-    }
+    // if (products.value.length === 0) {
+    //   toast.error('В данной категории нет товаров', { autoClose: 1000 })
+    // }
 
     // Обновляем диапазон цен
     minPrice.value = priceRange.value.min

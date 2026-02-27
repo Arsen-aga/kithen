@@ -4,7 +4,7 @@ import CheckboxButtonIcon from '@/components/UI/CheckboxButtonIcon.vue'
 import IconCart from '@/components/icons/IconCart.vue'
 import CheckboxButton from '@/components/UI/CheckboxButton.vue'
 import SelectedProduct from '@/components/SelectedProduct.vue'
-import { useSmetaStore } from '@/stores/smeta'
+import { useSmetaStore } from '@/stores/smeta/index'
 
 const smetaStore = useSmetaStore()
 const marketProducts = computed(() => smetaStore.marketSelectProducts || [])
@@ -22,6 +22,7 @@ const chooseAll = () => {
 
 const deleteSelected = () => {
   const deletedProductsIds = getDeletedProducts()
+  if(!deletedProductsIds) return;
   deletedProductsIds.forEach((productId) => smetaStore.deleteMarketProduct(productId))
   isChooseAll.value = false
   if (marketProducts.value.length) itemsStates.value = resetCheckStatusProduct(marketProducts.value)
@@ -29,10 +30,14 @@ const deleteSelected = () => {
 
 const getDeletedProducts = () => {
   const deletedProductsIds = []
-  itemsStates.value.map((cat, index) => {
-    cat.map((p, i) => p && deletedProductsIds.push(marketProducts.value[index].products[i].id))
-  })
-  return deletedProductsIds
+  if(itemsStates.value && itemsStates.value.length){
+    itemsStates.value.map((cat, index) => {
+      cat.map((p, i) => p && deletedProductsIds.push(marketProducts.value[index].products[i].id))
+    })
+    return deletedProductsIds
+  } else{
+    return null
+  }
 }
 
 const updateStates = (newStates, index) => {

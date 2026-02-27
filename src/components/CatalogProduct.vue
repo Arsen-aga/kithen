@@ -6,7 +6,7 @@ import { onMounted, ref, computed } from 'vue'
 import { useApi } from '@/helpers/useApi'
 import { useFileManager } from '@/helpers/useFileManager'
 import { useProducts } from '@/helpers/useProducts'
-import { useSmetaStore } from '@/stores/smeta'
+import { useSmetaStore } from '@/stores/smeta/index'
 import { useDefaultItems } from '@/stores/default'
 import MainButton from '@/components/UI/MainButton.vue'
 import CatalogProductSlider from '@/components/CatalogProductSlider.vue'
@@ -132,7 +132,6 @@ const goToEditProduct = (productId) => {
       <div
         v-if="user.role.item_name === 'admin'"
         class="catalog-product__edit"
-        :class="{ rotate: isOpenList }"
         @click="() => goToEditProduct(product.id)"
       >
         <IconArrow />

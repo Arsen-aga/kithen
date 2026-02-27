@@ -2,23 +2,26 @@
 import { ref, onBeforeMount } from 'vue'
 import { useApi } from '@/helpers/useApi'
 import { useCatalogBlock } from '@/stores/catalogBlock'
+import { useSmetaStore } from '@/stores/smeta/index'
 import UserBlock from '@/components/UserBlock.vue'
 import AccordionItem from '@/components/AccordionItem.vue'
 import AccordionSmeta from '@/components/AccordionSmeta.vue'
 import MarketBlock from '@/components/MarketBlock.vue'
 import SelectedProducts from '@/components/SelectedProducts.vue'
-import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
-import TreatyBlock from '@/components/TreatyBlock.vue'
+// import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
+// import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
 import CalculateSearchProoducts from './CalculateSearchProoducts.vue'
+import MainButton from './UI/MainButton.vue'
 
-const { get } = useApi()
+const { get, patch } = useApi()
 const storeCatalog = useCatalogBlock()
+const smetaStore = useSmetaStore()
 
-const itemHouseholdAppliances = ref('')
-const itemTechnicallyComplexProducts = ref('')
-const itemServices = ref('')
-const itemTreaty = ref('')
+// const itemHouseholdAppliances = ref('')
+// const itemTechnicallyComplexProducts = ref('')
+// const itemServices = ref('')
+// const itemTreaty = ref('')
 
 const marketGroups = ref([])
 
@@ -27,7 +30,6 @@ const getMarket = async () => {
     const response = await get('product-groups?level=0')
     const data = Array.isArray(response) ? response : [response].filter(Boolean)
     marketGroups.value = data.slice(0, 13)
-    console.log('marketGroups.value', marketGroups.value)
     return data
   } catch (error) {
     console.error('Ошибка получения данных маркета', error)
@@ -42,12 +44,32 @@ onBeforeMount(async () => {
 
 const showProducts = ref(false)
 
+// const test = () => {
+//   smetaStore.getResultOrder()
+// }
+
+const updateOrder = async () => {
+  smetaStore.getResultOrder()
+  try {
+    if(smetaStore.smetaOrder.order !== smetaStore.smetaOrderOld.order){
+      const date = new Date()
+      const timestamp = date.getTime();
+      smetaStore.smetaOrder.s_date = Math.floor(timestamp / 1000)
+      console.log('отличаются', smetaStore.smetaOrder);
+      patch(`orders/${smetaStore.smetaOrder.id}`, smetaStore.getResultOrder())
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
 </script>
 
 <template>
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
+      <!-- <MainButton @click="() => test()">test</MainButton> -->
+      <MainButton @click="() => updateOrder()">update Order</MainButton>
       <AccordionItem title="Подробная смета">
         <AccordionSmeta />
       </AccordionItem>
@@ -55,7 +77,11 @@ const showProducts = ref(false)
         v-if="marketGroups && marketGroups.length > 0"
         :title="storeCatalog.isOpenCatalog ? 'Каталог товаров' : 'Маркет'"
       >
-        <CalculateSearchProoducts class="calculate-block__products" v-model:show-products="showProducts" v-show="!storeCatalog.isOpenCatalog"/>
+        <CalculateSearchProoducts
+          class="calculate-block__products"
+          v-model:show-products="showProducts"
+          v-show="!storeCatalog.isOpenCatalog"
+        />
         <template v-if="!showProducts">
           <MarketBlock :items="marketGroups" v-show="!storeCatalog.isOpenCatalog" />
           <CatalogBlock

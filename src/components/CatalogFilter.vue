@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onBeforeMount, watch } from 'vue'
-import { getData } from '@/api/getData'
+import { ref, onBeforeMount, watch, onMounted } from 'vue'
 import IconArrowLink from '@/components/icons/IconArrowLink.vue'
 import IconCheckbox from '@/components/icons/IconCheckbox.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
 import RangeInput from '@/components/UI/RangeInput.vue'
+import { useApi } from '@/helpers/useApi'
 
+const { get } = useApi()
 const props = defineProps({
   minPrice: Number,
   maxPrice: Number,
@@ -71,6 +72,42 @@ const openColorsList = () => {
   isOpenColorsList.value = !isOpenColorsList.value
 }
 
+const attributesGroup = ref([])
+
+const getAtributesGroup = async () => {
+  // let page = 1
+  // let pageCount = 1
+  try {
+    const response = await get('product-attribute-groups?hasProduct=1', true)
+    // console.log('headers', response.headers);
+    attributesGroup.value = response.data;
+  } catch (error) {
+    console.error(error)
+  }
+}
+const getAtributes = async () => {
+  let page = 1;
+  let pageCount = 1;
+
+  try {
+    for (const attrGroup of attributesGroup.value) {
+      let response = await get(`product-attributes?group_id=${attrGroup.id}&hasProduct=1`, true)
+      console.log('headers', response.headers);
+
+      pageCount = response['x-pagination-page-count']
+
+      while(page <= pageCount){
+        page++;
+        response = await get(`product-attributes?group_id=${attrGroup.id}&hasProduct=1`)
+      }
+
+      // attributesGroup.value.attributes = response.data
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const brends = ref([
   { id: 0, title: 'Maunfeld' },
   { id: 1, title: 'Korting' },
@@ -87,6 +124,11 @@ const colors = ref([
   { id: 4, title: 'Серый' },
   { id: 5, title: 'Красный' },
 ])
+
+// onMounted(async () => {
+//   await getAtributesGroup()
+//   await getAtributes()
+// })
 </script>
 
 <template>

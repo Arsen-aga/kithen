@@ -2,7 +2,7 @@
 import { formatNum } from '@/helpers/formatNum'
 import { onMounted, onUnmounted } from 'vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
-import { useSmetaStore } from '@/stores/smeta'
+import { useSmetaStore } from '@/stores/smeta/index'
 const smetaStore = useSmetaStore()
 
 

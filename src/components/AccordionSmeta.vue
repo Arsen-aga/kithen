@@ -3,7 +3,7 @@ import { computed, watch, ref } from 'vue'
 import MainButton from '@/components/UI/MainButton.vue'
 import TableOpen from '@/components/TableOpen.vue'
 import TitileDotsPrice from '@/components/UI/TitileDotsPrice.vue'
-import { useSmetaStore } from '@/stores/smeta'
+import { useSmetaStore } from '@/stores/smeta/index'
 
 const smetaStore = useSmetaStore()
 const items = computed(() => smetaStore.smetaTables || []);
