@@ -1,20 +1,23 @@
 <script setup>
 import { ref, computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   placeholder: {
     type: String,
   },
+  modelValue: { type: String}
 })
 
 const rawPhone = ref('')
+const emit = defineEmits(['update:modelValue'])
 
 const formattedPhone = computed({
   get() {
-    return formatPhone(rawPhone.value)
+    return formatPhone(props.modelValue ? props.modelValue : rawPhone.value)
   },
   set(value) {
     rawPhone.value = value.replace(/\D/g, '')
+    emit('update:modelValue', rawPhone.value)
   },
 })
 
@@ -70,6 +73,17 @@ const onPhoneKeyDown = (e) => {
   if (e.keyCode === 8 && rawPhone.value.length === 1) {
     rawPhone.value = ''
   }
+  // Запрещаем ввод букв и символов
+  const isNumber = /^\d$/.test(e.key)
+  const isControlKey = [
+    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+    'Home', 'End'
+  ].includes(e.key)
+  
+  if (!isNumber && !isControlKey && e.key !== ' ') {
+    e.preventDefault()
+  }
 }
 
 const onPhonePaste = (e) => {
@@ -77,29 +91,41 @@ const onPhonePaste = (e) => {
   if (pasted) {
     const pastedText = pasted.getData('Text')
     if (!/\D/g.test(pastedText)) {
-      rawPhone.value = rawPhone.value
+      rawPhone.value
     }
   }
 }
 
-const onPhoneClick = (e) => {
-  const input = e.target
-  input.setSelectionRange(4, 4)
-}
 </script>
 <template>
   <input
+    class="input-phone"
     type="text"
     v-model="formattedPhone"
     @input="onPhoneInput"
     @keydown="onPhoneKeyDown"
     @paste="onPhonePaste"
-    @click="onPhoneClick"
     :placeholder="placeholder"
     maxlength="18"
   />
 </template>
 
 <style lang="scss" scoped>
-/* Добавьте стили, если необходимо */
+.input-phone {
+  width: 100%;
+  height: 76px;
+  padding: 26px 25px 24px;
+  background-color: var(--light-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-family: 'Jost';
+  font-weight: 400;
+  font-size: 18px;
+  line-height: calc(26 / 18 * 100%);
+  color: var(--default-color);
+
+  &::placeholder {
+    color: rgba($color: #464451, $alpha: 0.3);
+  }
+}
 </style>

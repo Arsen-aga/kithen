@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export const useSmetaTables = (smeta) => {
+export const useSmetaTables = () => {
   const smetaTables = ref([])
 
   const sortSmetaTables = (allElems) => {

@@ -4,13 +4,10 @@ import SettingButton from '@/components/UI/SettingButton.vue'
 import TitileDotsPrice from '@/components/UI/TitileDotsPrice.vue'
 import TreatyItem from '@/components/TreatyItem.vue'
 import SettingModal from '@/components/SettingModal.vue'
+import ContractNumber from '@/components/TreatyDetals/ContractNumber.vue'
+import UserPhone from '@/components/TreatyDetals/UserPhone.vue'
+import UserFloor from '@/components/TreatyDetals/UserFloor.vue'
 
-defineProps({
-  item: {
-    type: Object,
-    required: true,
-  },
-})
 
 const isOpenSettings = ref(false)
 const openSettings = () => {
@@ -25,7 +22,7 @@ const closeSettings = () => {
 <template>
   <div class="treaty-detals">
     <div class="treaty-detals__top">
-      <TitileDotsPrice :title="item.title" :dots="false" />
+      <TitileDotsPrice title="Детали договора" :dots="false" />
       <div class="treaty-detals__settings">
         <SettingButton class="treaty-detals__settings-btn" @click="openSettings" :is-active="isOpenSettings" />
         <SettingModal
@@ -36,7 +33,16 @@ const closeSettings = () => {
       </div>
     </div>
     <div class="treaty-detals__items">
-      <TreatyItem v-for="elem in item.elems" :key="elem.id" :item="elem" />
+      <TreatyItem title="Номер договора">
+        <ContractNumber/>
+      </TreatyItem>
+      <TreatyItem title="Телефон">
+        <UserPhone/>
+      </TreatyItem>
+      <TreatyItem title="Телефон">
+        <UserFloor/>
+      </TreatyItem>
+      <!-- <TreatyItem v-for="elem in item.elems" :key="elem.id" :item="elem" /> -->
     </div>
   </div>
 </template>

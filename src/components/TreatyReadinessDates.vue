@@ -1,6 +1,6 @@
 <script setup>
 import TitileDotsPrice from '@/components/UI/TitileDotsPrice.vue'
-import TreatyItem from '@/components/TreatyItem.vue'
+import TreatyItem from '@/components/TreatyItemOld.vue'
 
 defineProps({
   item: {
@@ -12,15 +12,15 @@ defineProps({
 
 <template>
   <div class="treaty-dates">
-    <TitileDotsPrice class="treaty-dates__title" :title="item.title" :dots="false" />
+    <TitileDotsPrice class="treaty-dates__title" title="Даты готовности" :dots="false" />
     <div class="treaty-dates__items">
-      <TreatyItem
+      <!-- <TreatyItem
         v-for="(elem, index) in item.elems"
         :key="elem.id"
         :item="elem"
         :is-calendar="true"
         :is-shipping="!index ? true : false"
-      />
+      /> -->
     </div>
   </div>
 </template>

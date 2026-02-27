@@ -9,7 +9,7 @@ import AccordionSmeta from '@/components/AccordionSmeta.vue'
 import MarketBlock from '@/components/MarketBlock.vue'
 import SelectedProducts from '@/components/SelectedProducts.vue'
 // import ScrollTableBlock from '@/components/ScrollTableBlock.vue'
-// import TreatyBlock from '@/components/TreatyBlock.vue'
+import TreatyBlock from '@/components/TreatyBlock.vue'
 import CatalogBlock from '@/components/CatalogBlock.vue'
 import CalculateSearchProoducts from './CalculateSearchProoducts.vue'
 import MainButton from './UI/MainButton.vue'
@@ -21,7 +21,6 @@ const smetaStore = useSmetaStore()
 // const itemHouseholdAppliances = ref('')
 // const itemTechnicallyComplexProducts = ref('')
 // const itemServices = ref('')
-// const itemTreaty = ref('')
 
 const marketGroups = ref([])
 
@@ -44,9 +43,9 @@ onBeforeMount(async () => {
 
 const showProducts = ref(false)
 
-// const test = () => {
-//   smetaStore.getResultOrder()
-// }
+const test = () => {
+  smetaStore.getResultOrder()
+}
 
 const updateOrder = async () => {
   smetaStore.getResultOrder()
@@ -68,7 +67,7 @@ const updateOrder = async () => {
   <div class="calculate-block">
     <UserBlock class="calculate-block__header" />
     <div class="calculate-block__accordion">
-      <!-- <MainButton @click="() => test()">test</MainButton> -->
+      <MainButton @click="() => test()">test</MainButton>
       <MainButton @click="() => updateOrder()">update Order</MainButton>
       <AccordionItem title="Подробная смета">
         <AccordionSmeta />
@@ -107,11 +106,11 @@ const updateOrder = async () => {
       </AccordionItem>
       <AccordionItem v-if="itemServices" :title="itemServices.title">
         <ScrollTableBlock :items="itemServices.items" />
-      </AccordionItem>
-      <AccordionItem v-if="itemTreaty" :title="itemTreaty.title">
-        <TreatyBlock :items="itemTreaty.items" />
-        <UserBlock class="calculate-block__bottom" />
       </AccordionItem> -->
+      <AccordionItem title="Коммерческое предложение">
+        <TreatyBlock />
+        <UserBlock class="calculate-block__bottom" />
+      </AccordionItem>
     </div>
   </div>
 </template>

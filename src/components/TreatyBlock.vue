@@ -5,18 +5,13 @@ import MainButton from '@/components/UI/MainButton.vue'
 import LinkButton from '@/components/UI/LinkButton.vue'
 import IconTopLink from '@/components/icons/IconTopLink.vue'
 
-defineProps({
-  items: {
-    type: Array,
-    required: true,
-  },
-})
+
 </script>
 
 <template>
   <div class="treaty-block">
-    <TreatyDetals class="treaty-block__detals" :item="items[0]" />
-    <TreatyReadinessDates class="treaty-block__dates" :item="items[1]" />
+    <TreatyDetals class="treaty-block__detals" />
+    <TreatyReadinessDates class="treaty-block__dates" />
     <div class="treaty-block__bottom">
       <div class="treaty-block__btns">
         <MainButton size-button="big-btn" class="treaty-block__btn text-red">Сформировать предложение в PDF</MainButton>
