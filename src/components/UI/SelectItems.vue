@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import IconArrow from '@/components/icons/IconArrow.vue'
 const props = defineProps({
   items: {
@@ -9,20 +9,28 @@ const props = defineProps({
   classArrow: String,
 })
 
-const isOpen = ref(false)
-const selectedValue = ref('')
+const emit = defineEmits(['updateItems'])
 
-const selectedText = computed(() => {
-  const selectedItem = props.items.find((item) => item.title === selectedValue.value)
-  return selectedItem ? selectedItem.title : props.items[0].title
-})
+const isOpen = ref(false)
+const selectedValue = ref(null)
+
+const setInitialValue = () => {
+  if (props.items && props.items.length > 0) {
+    // Ищем элемент с selected=1, если нет - берем первый
+    const initialItem = props.items.find((item) => item.selected === 1) ?? props.items[0]
+    selectedValue.value = initialItem
+  } else {
+    selectedValue.value = null
+  }
+}
 
 const toggleSelect = () => {
   isOpen.value = !isOpen.value
 }
 
 const selectItem = (item) => {
-  selectedValue.value = item.title
+  selectedValue.value = item
+  emit('updateItems', item)
   isOpen.value = false
 }
 
@@ -33,9 +41,14 @@ const handleClickOutside = (event) => {
     isOpen.value = false
   }
 }
+watch(() => props.items, () => {
+  setInitialValue()
+}, { immediate: true, deep: true })
 
-// Add event listener for clicks outside the component
-document.addEventListener('click', handleClickOutside)
+onMounted(() => {
+   setInitialValue()
+  document.addEventListener('click', handleClickOutside)
+})
 
 // Cleanup the event listener when the component is unmounted
 onBeforeUnmount(() => {
@@ -47,18 +60,17 @@ onBeforeUnmount(() => {
   <div class="custom-select" @click.stop="toggleSelect">
     <IconArrow class="custom-select__arrow" :class="classArrow" />
     <div class="custom-select__wrapper">
-      <div class="select-selected">{{ selectedText }}</div>
+      <div class="select-selected">{{ selectedValue ? selectedValue.Name || selectedValue.title : 'Выберите вариант'}}</div>
     </div>
-    <input type="hidden" :value="selectedValue" />
     <div class="select-items" v-show="isOpen">
       <div
         v-for="item in items"
-        :key="item.title"
-        :data-select="item.title"
+        :key="item.title ?? item.Name"
+        :data-select="item.title ?? item.Name"
         @click.stop="selectItem(item)"
-        :class="{ active: selectedValue === item.title }"
+        :class="{ active: selectedValue === item.title ?? item.Name }"
       >
-        {{ item.title }}
+        {{ item.title ?? item.Name }}
       </div>
     </div>
   </div>

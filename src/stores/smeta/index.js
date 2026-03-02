@@ -20,7 +20,6 @@ export const useSmetaStore = defineStore('smeta', () => {
     smetaOrder.value = structuredClone(order)
     smeta.value = JSON.parse(smetaOrder.value.order)
     smetaTablesModule.initTables(smeta.value.Order_mat)
-    treatyModule.initTreaty()
     console.log('smeta', smeta.value);
     console.log('smetaOrder', smetaOrder.value);
   }
@@ -39,7 +38,9 @@ export const useSmetaStore = defineStore('smeta', () => {
     getResultOrder,
     
     // Данные и функции из модуля treaty
-    changePhone: treatyModule.changePhone,
+    changeDelivery: treatyModule.changeDelivery,
+    changePromotion: treatyModule.changePromotion,
+    changePayment: treatyModule.changePayment,
     
     
     // Данные и функции из модуля таблиц

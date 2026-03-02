@@ -7,6 +7,12 @@ import SettingModal from '@/components/SettingModal.vue'
 import ContractNumber from '@/components/TreatyDetals/ContractNumber.vue'
 import UserPhone from '@/components/TreatyDetals/UserPhone.vue'
 import UserFloor from '@/components/TreatyDetals/UserFloor.vue'
+import AgreementFrom from '@/components/TreatyDetals/AgreementFrom.vue'
+import DeliveryMethod from '@/components/TreatyDetals/DeliveryMethod.vue'
+import AMODeal from '@/components/TreatyDetals/AMODeal.vue'
+import SelectStock from '@/components/TreatyDetals/SelectStock.vue'
+import AdditionalDiscount from '@/components/TreatyDetals/AdditionalDiscount.vue'
+import PaymentMethod from '@/components/TreatyDetals/PaymentMethod.vue'
 
 
 const isOpenSettings = ref(false)
@@ -33,21 +39,42 @@ const closeSettings = () => {
       </div>
     </div>
     <div class="treaty-detals__items">
-      <TreatyItem title="Номер договора">
+      <TreatyItem title="Номер договора" class="disable">
         <ContractNumber/>
       </TreatyItem>
       <TreatyItem title="Телефон">
         <UserPhone/>
       </TreatyItem>
-      <TreatyItem title="Телефон">
+      <TreatyItem title="Этаж">
         <UserFloor/>
       </TreatyItem>
-      <!-- <TreatyItem v-for="elem in item.elems" :key="elem.id" :item="elem" /> -->
+      <TreatyItem title="Договор От" class="disable">
+        <AgreementFrom/>
+      </TreatyItem>
+      <TreatyItem title="Способ доставки">
+        <DeliveryMethod/>
+      </TreatyItem>
+      <TreatyItem title="Сделка АМО" class="disable">
+        <AMODeal/>
+      </TreatyItem>
+      <TreatyItem title="Выбрать акцию">
+        <SelectStock/>
+      </TreatyItem>
+      <TreatyItem title="Доп. скидка" class="disable">
+        <AdditionalDiscount/>
+      </TreatyItem>
+      <TreatyItem title="Способ оплаты">
+        <PaymentMethod/>
+      </TreatyItem>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.disable{
+  opacity: 0.3;
+  pointer-events: none;
+}
 .treaty-detals {
   background-color: var(--page-bg);
   border-radius: 14px;

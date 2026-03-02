@@ -1,30 +1,21 @@
 <script setup>
+import { formatDate } from '@/helpers/formatDate'
 import { useSmetaStore } from '@/stores/smeta/index'
 import { computed } from 'vue'
-
 const smetaStore = useSmetaStore()
-const floor = computed({
-  get: () => smetaStore.smeta?.User_floor ?? 0,
-  set: (value) => {
-    console.log('value', value);
-    console.log('smetaStore.smeta', smetaStore.smeta);
-    if (smetaStore.smeta) {
-      smetaStore.smeta.User_floor = value
-    }
-  }
-})
+const agreementDate = computed(() => formatToDate(smetaStore.smetaOrder?.s_date) ?? formatToDate())
+const formatToDate = (date = null) => {
+  const toDate = date ? new Date(date * 1000) : new Date()
+  return formatDate(toDate)
+}
 </script>
 
 <template>
-  <input
-    class="user-floor"
-    type="number"
-    v-model="floor"
-    min="0"
-  />
+  <input class="agreement-from" type="text" :value="agreementDate" disabled />
 </template>
+
 <style lang="scss" scoped>
-.user-floor {
+.agreement-from {
   width: 100%;
   height: 76px;
   padding: 26px 25px 24px;
@@ -36,10 +27,5 @@ const floor = computed({
   font-size: 18px;
   line-height: calc(26 / 18 * 100%);
   color: var(--default-color);
-  max-width: 120px;
-
-  &::placeholder {
-    color: rgba($color: #464451, $alpha: 0.3);
-  }
 }
 </style>

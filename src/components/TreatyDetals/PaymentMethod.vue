@@ -1,30 +1,22 @@
 <script setup>
+import SelectItems from '@/components/UI/SelectItems.vue'
 import { useSmetaStore } from '@/stores/smeta/index'
 import { computed } from 'vue'
-
 const smetaStore = useSmetaStore()
-const floor = computed({
-  get: () => smetaStore.smeta?.User_floor ?? 0,
-  set: (value) => {
-    console.log('value', value);
-    console.log('smetaStore.smeta', smetaStore.smeta);
-    if (smetaStore.smeta) {
-      smetaStore.smeta.User_floor = value
-    }
-  }
-})
+const OrderPaymentItems = computed(() =>smetaStore.smeta?.Order_PaymentMethod ?? null)
+
+const updateItems = (item) => {
+  smetaStore.changePayment(item)
+}
+
 </script>
 
 <template>
-  <input
-    class="user-floor"
-    type="number"
-    v-model="floor"
-    min="0"
-  />
+   <SelectItems class="payment-method" @updateItems="updateItems" :items="OrderPaymentItems" />
 </template>
+
 <style lang="scss" scoped>
-.user-floor {
+.payment-method {
   width: 100%;
   height: 76px;
   padding: 26px 25px 24px;
@@ -36,10 +28,5 @@ const floor = computed({
   font-size: 18px;
   line-height: calc(26 / 18 * 100%);
   color: var(--default-color);
-  max-width: 120px;
-
-  &::placeholder {
-    color: rgba($color: #464451, $alpha: 0.3);
-  }
 }
 </style>
